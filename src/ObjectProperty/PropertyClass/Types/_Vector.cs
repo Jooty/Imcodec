@@ -18,20 +18,29 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Imcodec.IO;
 
 namespace Imcodec.ObjectProperty.PropertyClass.Types;
 
 /// <summary>
-/// The reflected byte property of a given <see cref="PropertyClass"/>.
+/// Represents a vector of reflected values.
 /// </summary>
-public sealed class ReflByte : ReflectedType<byte> {
+internal sealed unsafe class _Vector<T>() : ReflectedType<T[]> where T : ReflectedType<T> {
 
-    public override bool Load(byte value, BinaryReader reader) {
+    internal override bool Decode(out T[] value, BitReader reader) {
+        // Ensure that reading another 4 bytes is possible.
+        var typeSizeInBits = sizeof(float) * 8;
+        if (reader.BitPos() + typeSizeInBits > reader.Count() * 8) {
+            throw new InvalidOperationException($"Reading another {typeSizeInBits / 8} bytes is not possible.");
+        }
 
+        value = default; //todo
+        return true;
     }
 
-    public override void Save(byte value, BinaryWriter writer) {
-
+    internal override bool Encode(T[] values, BitWriter writer) {
+        // writer.Writer.Write(value); // todo
+        return true;
     }
 
 }

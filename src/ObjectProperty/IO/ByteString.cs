@@ -21,7 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using System.Diagnostics;
 using System.Text;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.IO;
 
 [DebuggerDisplay("{ToString()}")]
 public struct ByteString {

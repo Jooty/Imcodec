@@ -20,31 +20,26 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.ObjectProperty.PropertyClass;
 
 /// <summary>
 /// Represents an abstract base class for reflected types.
 /// </summary>
-public abstract class ReflectedType<T> {
+internal abstract class ReflectedType<T>() {
 
     /// <summary>
-    /// Gets or sets the value of the reflected type.
-    /// </summary>
-    public T? Value { get; set; }
-
-    /// <summary>
-    /// Loads the value of the specified type from the binary reader.
+    /// Decodes the value of the specified type from the binary reader.
     /// </summary>
     /// <param name="value">The value to load.</param>
     /// <param name="reader">The binary reader to read from.</param>
     /// <returns><c>true</c> if the value was successfully loaded; otherwise, <c>false</c>.</returns>
-    public abstract bool Load(T value, BinaryReader reader);
+    internal abstract bool Decode(out T value, BitReader reader);
 
     /// <summary>
-    /// Saves the value of the specified type to the binary writer.
+    /// Encodes the value of the specified type to the binary writer.
     /// </summary>
-    /// <param name="value">The value to save.</param>
     /// <param name="writer">The binary writer to write to.</param>
-    public abstract void Save(T value, BinaryWriter writer);
+    /// <returns><c>true</c> if the value was successfully saved; otherwise, <c>false</c>.</returns>
+    internal abstract bool Encode(T value, BitWriter writer);
 
 }

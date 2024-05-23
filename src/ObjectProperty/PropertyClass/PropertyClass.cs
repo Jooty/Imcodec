@@ -18,6 +18,8 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Imcodec.IO;
+
 namespace Imcodec.ObjectProperty.PropertyClass;
 
 /// <summary>
@@ -25,58 +27,50 @@ namespace Imcodec.ObjectProperty.PropertyClass;
 /// </summary>
 public abstract partial class PropertyClass {
 
-    private readonly Dictionary<string, Func<Property>> _propertyGetters;
+    internal readonly Dictionary<string, IProperty> _propertyReflections = [];
 
-    public PropertyClass() {
-        _propertyGetters = [];
+    /// <summary>
+    /// Called before encoding the object to the binary stream.
+    /// </summary>
+    public virtual void OnPreEncode() { }
+
+    /// <summary>
+    /// Called after encoding the object to the binary stream.
+    /// </summary>
+    public virtual void OnPostEncode() { }
+
+    /// <summary>
+    /// Called before decoding the object from the binary stream.
+    /// </summary>
+    public virtual void OnPreDecode() { }
+
+    /// <summary>
+    /// Called after decoding the object from the binary stream.
+    /// </summary>
+    public virtual void OnPostDecode() { }
+
+    internal bool Decode(BitReader reader) {
+        OnPreDecode();
+        foreach (var property in _propertyReflections.Values) {
+            var castedProp = property as Property<object>
+                ?? throw new Exception($"Failed to cast property to {typeof(Property<object>).Name}");
+
+            if (castedProp.NoTransfer) {
+                continue;
+            }
+
+            if (!castedProp.Decode(reader)) {
+                return false;
+            }
+        }
+        OnPostDecode();
+
+        return true;
     }
 
-    /// <summary>
-    /// Called before saving the object to the binary stream.
-    /// </summary>
-    public virtual void OnPreSave() {
-        if (_propertyGetters.Count <= 0) {
-            throw new InvalidOperationException("No properties to save. Ensure that the properties are registered before saving.");
-        }
-    }
-
-    /// <summary>
-    /// Called after saving the object to the binary stream.
-    /// </summary>
-    public virtual void OnPostSave() { }
-
-    /// <summary>
-    /// Called before loading the object from the binary stream.
-    /// </summary>
-    public virtual void OnPreLoad() { }
-
-    /// <summary>
-    /// Called after loading the object from the binary stream.
-    /// </summary>
-    public virtual void OnPostLoad() { }
-
-    /// <summary>
-    /// Registers a property with the specified name and getter function.
-    /// </summary>
-    /// <param name="name">The name of the property.</param>
-    /// <param name="getter">A function that returns the property value.</param>
-    public void RegisterProperty(string name, Func<Property> getter) {
-        // Ensure that this property is not already registered.
-        if (_propertyGetters.ContainsKey(name)) {
-            throw new InvalidOperationException($"Property '{name}' is already registered.");
-        }
-
-        _propertyGetters[name] = getter;
-    }
-
-    /// <summary>
-    /// Unregisters a property with the specified name.
-    /// </summary>
-    /// <param name="name">The name of the property to unregister.</param>
-    public void UnregisterProperty(string name) {
-        if (!_propertyGetters.Remove(name)) {
-            throw new InvalidOperationException($"Property '{name}' is not registered.");
-        }
+    internal IProperty this[string name] {
+        get => _propertyReflections[name];
+        set => _propertyReflections[name] = value;
     }
 
 }
