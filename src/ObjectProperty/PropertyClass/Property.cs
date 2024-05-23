@@ -31,7 +31,7 @@ public interface IProperty { }
 /// <summary>
 /// Represents a property with its associated flags, transferability, and a pointer to the data.
 /// </summary>
-public sealed class Property<T>(PropertyFlags flags, bool noTransfer, object value) : IProperty {
+public sealed class Property<T>(PropertyFlags flags, bool noTransfer, Func<T> getValue, Action<T> setValue) : IProperty {
 
     /// <summary>
     /// Gets or sets the flags associated with the property.
@@ -46,7 +46,7 @@ public sealed class Property<T>(PropertyFlags flags, bool noTransfer, object val
     /// <summary>
     /// Gets or sets the value of the property.
     /// </summary>
-    public T Value { get; set; } = (T)value;
+    public T Value { get => getValue(); set => setValue(value); }
 
     /// <summary>
     /// The type of the property.

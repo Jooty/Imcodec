@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="char"/>.
 /// </summary>
-internal sealed unsafe class _Char() : ReflectedType<char> {
+internal sealed class _Char() : ReflectedType<char> {
 
     internal override bool Decode(out char value, BitReader reader) {
         // Ensure that reading another byte is possible.

@@ -18,6 +18,8 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+
+
 using Imcodec.IO;
 
 namespace Imcodec.ObjectProperty.PropertyClass;
@@ -25,7 +27,7 @@ namespace Imcodec.ObjectProperty.PropertyClass;
 /// <summary>
 /// Defines class capable of undergoing binary serialization.
 /// </summary>
-public abstract partial class PropertyClass {
+public abstract class PropertyClass {
 
     internal readonly Dictionary<string, IProperty> _propertyReflections = [];
 
@@ -49,28 +51,40 @@ public abstract partial class PropertyClass {
     /// </summary>
     public virtual void OnPostDecode() { }
 
-    internal bool Decode(BitReader reader) {
-        OnPreDecode();
-        foreach (var property in _propertyReflections.Values) {
-            var castedProp = property as Property<object>
-                ?? throw new Exception($"Failed to cast property to {typeof(Property<object>).Name}");
-
-            if (castedProp.NoTransfer) {
-                continue;
-            }
-
-            if (!castedProp.Decode(reader)) {
-                return false;
-            }
+    /// <summary>
+    /// Registers a property with the specified name, flags, and accessors.
+    /// </summary>
+    /// <typeparam name="T">The type of the property value.</typeparam>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="flags">The flags associated with the property.</param>
+    /// <param name="noTransfer">A boolean value indicating whether the property should be transferred.</param>
+    /// <param name="getValue">A function that retrieves the value of the property.</param>
+    /// <param name="setValue">An action that sets the value of the property.</param>
+    /// <returns><c>true</c> if the property is successfully registered; otherwise, <c>false</c>.</returns>
+    internal bool RegisterProperty<T>(string name, PropertyFlags flags, bool noTransfer, Func<T> getValue, Action<T> setValue) {
+        if (_propertyReflections.ContainsKey(name)) {
+            return false;
         }
-        OnPostDecode();
 
+        _propertyReflections[name] = new Property<T>(flags, noTransfer, getValue, setValue);
         return true;
     }
 
+    /// <summary>
+    /// Unregisters a property with the specified name.
+    /// </summary>
+    /// <param name="name">The name of the property to unregister.</param>
+    /// <returns><c>true</c> if the property was successfully unregistered; otherwise, <c>false</c>.</returns>
+    internal bool UnregisterProperty(string name) => _propertyReflections.Remove(name);
+
     internal IProperty this[string name] {
-        get => _propertyReflections[name];
-        set => _propertyReflections[name] = value;
+        get {
+            if (_propertyReflections.TryGetValue(name, out var property)) {
+                return property;
+            }
+
+            return null;
+        }
     }
 
 }

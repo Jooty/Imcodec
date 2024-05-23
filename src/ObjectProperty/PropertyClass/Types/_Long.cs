@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="long"/>.
 /// </summary>
-internal sealed unsafe class _Long() : ReflectedType<long> {
+internal sealed class _Long() : ReflectedType<long> {
 
     internal override bool Decode(out long value, BitReader reader) {
         // Ensure that reading another 8 bytes is possible.

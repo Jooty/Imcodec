@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="float"/>.
 /// </summary>
-internal sealed unsafe class _Float() : ReflectedType<float> {
+internal sealed class _Float() : ReflectedType<float> {
 
     internal override bool Decode(out float value, BitReader reader) {
         // Ensure that reading another 4 bytes is possible.

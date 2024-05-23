@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="short"/>.
 /// </summary>
-internal sealed unsafe class _Short() : ReflectedType<short> {
+internal sealed class _Short() : ReflectedType<short> {
 
     internal override bool Decode(out short value, BitReader reader) {
         // Ensure that reading another 2 bytes is possible.

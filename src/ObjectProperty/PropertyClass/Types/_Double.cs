@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="double"/>.
 /// </summary>
-internal sealed unsafe class _Double() : ReflectedType<double> {
+internal sealed class _Double() : ReflectedType<double> {
 
     internal override bool Decode(out double value, BitReader reader) {
         // Ensure that reading another 8 bytes is possible.

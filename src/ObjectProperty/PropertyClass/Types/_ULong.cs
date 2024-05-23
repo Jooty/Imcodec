@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="ulong"/>.
 /// </summary>
-internal sealed unsafe class _ULong() : ReflectedType<ulong> {
+internal sealed class _ULong() : ReflectedType<ulong> {
 
     internal override bool Decode(out ulong value, BitReader reader) {
         // Ensure that reading another 8 bytes is possible.

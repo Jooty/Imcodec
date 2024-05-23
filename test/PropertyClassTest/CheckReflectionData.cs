@@ -26,7 +26,7 @@ public class PropClassTest : PropertyClass {
     public byte ByteTest { get; set; } = 127;
 
     public PropClassTest() {
-        this["ByteTest"] = new Property<byte>(PropertyFlags.Prop_Public, false, ByteTest);
+        this.RegisterProperty("ByteTest", PropertyFlags.Prop_Public, false, () => ByteTest, (value) => ByteTest = (byte)value);
     }
 }
 
@@ -34,6 +34,10 @@ public class CheckReflectionData {
 
     [Fact]
     public void CheckPropClassReflections_Byte() {
+        // Create a new instance of the property class test. This will register the property.
+        // Then, we'll change the property around a few times and see if we can still get the same value
+        // by checking the reflected type.
+
         var propClassTest = new PropClassTest();
         var bytePropReflection = propClassTest["ByteTest"] as Property<byte>;
 
@@ -42,11 +46,29 @@ public class CheckReflectionData {
         Assert.Equal(127, bytePropReflection.Value);
 
         // Now change the value of the property
-        bytePropReflection.Value = 255;
+        propClassTest.ByteTest = 255;
         Assert.Equal(255, bytePropReflection.Value);
 
         var secondBytePropReflection = propClassTest["ByteTest"] as Property<byte>;
         Assert.Equal(255, secondBytePropReflection.Value);
+    }
+
+    [Fact]
+    public void RemovePropClassReflection_Byte() {
+        // Create a new instance of the property class test. This will register the property.
+        // Then, we'll remove the property and see if we can still get the same value
+        // by checking the reflected type.
+
+        var propClassTest = new PropClassTest();
+        var bytePropReflection = propClassTest["ByteTest"] as Property<byte>;
+
+        Assert.NotNull(bytePropReflection);
+        Assert.False(bytePropReflection.NoTransfer);
+        Assert.Equal(127, bytePropReflection.Value);
+
+        // Now remove the property
+        propClassTest.UnregisterProperty("ByteTest");
+        Assert.Null(propClassTest["ByteTest"]);
     }
 
 }

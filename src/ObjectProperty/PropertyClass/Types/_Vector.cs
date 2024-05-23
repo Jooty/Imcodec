@@ -25,21 +25,15 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a vector of reflected values.
 /// </summary>
-internal sealed unsafe class _Vector<T>() : ReflectedType<T[]> where T : ReflectedType<T> {
+internal sealed class _Vector<T>() : ReflectedType<T[]> where T : ReflectedType<T> {
 
     internal override bool Decode(out T[] value, BitReader reader) {
-        // Ensure that reading another 4 bytes is possible.
-        var typeSizeInBits = sizeof(float) * 8;
-        if (reader.BitPos() + typeSizeInBits > reader.Count() * 8) {
-            throw new InvalidOperationException($"Reading another {typeSizeInBits / 8} bytes is not possible.");
-        }
-
         value = default; //todo
         return true;
     }
 
     internal override bool Encode(T[] values, BitWriter writer) {
-        // writer.Writer.Write(value); // todo
+        // todo
         return true;
     }
 

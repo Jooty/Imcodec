@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="int"/>.
 /// </summary>
-internal sealed unsafe class _Int() : ReflectedType<int> {
+internal sealed class _Int() : ReflectedType<int> {
 
     internal override bool Decode(out int value, BitReader reader) {
         // Ensure that reading another 4 bytes is possible.

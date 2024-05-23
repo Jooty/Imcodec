@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.PropertyClass.Types;
 /// <summary>
 /// Represents a reflected type of <see cref="byte"/>.
 /// </summary>
-internal sealed unsafe class _Byte() : ReflectedType<byte> {
+internal sealed class _Byte() : ReflectedType<byte> {
 
     internal override bool Decode(out byte value, BitReader reader) {
         // Ensure that reading another byte is possible.
