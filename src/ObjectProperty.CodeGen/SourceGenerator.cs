@@ -18,28 +18,12 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.IO;
-
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
-
-/// <summary>
-/// Represents a reflected type of <see cref="byte"/>.
-/// </summary>
-internal sealed class _Byte() : ReflectedType<byte> {
-
-    internal override bool Decode(out byte value, BitReader reader) {
-        // Ensure that reading another byte is possible.
-        if (reader.BitPos() + 8 > reader.Count() * 8) {
-            throw new InvalidOperationException("Reading another byte is not possible.");
-        }
-
-        value = reader.Reader.ReadByte();
-        return true;
-    }
-
-    internal override bool Encode(byte value, BitWriter writer) {
-        writer.Writer.Write(value);
-        return true;
-    }
-
-}
+// todo
+//using Microsoft.CodeAnalysis;
+//using Microsoft.CodeAnalysis.CSharp.Syntax;
+//
+//namespace Imcodec.ObjectProperty.CodeGen;
+//
+//public sealed class SourceGenerator : IIncrementalGenerator {
+//
+//}

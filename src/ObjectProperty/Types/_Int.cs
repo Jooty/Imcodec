@@ -20,25 +20,25 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.ObjectProperty.Types;
 
 /// <summary>
-/// Represents a reflected type of <see cref="float"/>.
+/// Represents a reflected type of <see cref="int"/>.
 /// </summary>
-internal sealed class _Float() : ReflectedType<float> {
+internal sealed class _Int() : PropertyType<int> {
 
-    internal override bool Decode(out float value, BitReader reader) {
+    internal override bool Decode(out int value, BitReader reader) {
         // Ensure that reading another 4 bytes is possible.
-        var typeSizeInBits = sizeof(float) * 8;
+        var typeSizeInBits = sizeof(int) * 8;
         if (reader.BitPos() + typeSizeInBits > reader.Count() * 8) {
             throw new InvalidOperationException($"Reading another {typeSizeInBits / 8} bytes is not possible.");
         }
 
-        value = reader.Reader.ReadSingle();
+        value = reader.Reader.ReadInt32();
         return true;
     }
 
-    internal override bool Encode(float value, BitWriter writer) {
+    internal override bool Encode(int value, BitWriter writer) {
         writer.Writer.Write(value);
         return true;
     }

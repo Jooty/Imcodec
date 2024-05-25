@@ -20,12 +20,12 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.ObjectProperty.Types;
 
 /// <summary>
 /// Represents a reflected type of <see cref="bool"/>.
 /// </summary>
-internal sealed class _Bool() : ReflectedType<bool> {
+internal sealed class _Bool() : PropertyType<bool> {
 
     internal override bool Decode(out bool value, BitReader reader) {
         // Ensure that reading another byte is possible.

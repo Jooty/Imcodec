@@ -20,25 +20,25 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.ObjectProperty.Types;
 
 /// <summary>
-/// Represents a reflected type of <see cref="uint"/>.
+/// Represents a reflected type of <see cref="long"/>.
 /// </summary>
-internal sealed class _UInt() : ReflectedType<uint> {
+internal sealed class _Long() : PropertyType<long> {
 
-    internal override bool Decode(out uint value, BitReader reader) {
-        // Ensure that reading another 4 bytes is possible.
-        var typeSizeInBits = sizeof(uint) * 8;
+    internal override bool Decode(out long value, BitReader reader) {
+        // Ensure that reading another 8 bytes is possible.
+        var typeSizeInBits = sizeof(long) * 8;
         if (reader.BitPos() + typeSizeInBits > reader.Count() * 8) {
             throw new InvalidOperationException($"Reading another {typeSizeInBits / 8} bytes is not possible.");
         }
 
-        value = reader.Reader.ReadUInt32();
+        value = reader.Reader.ReadInt64();
         return true;
     }
 
-    internal override bool Encode(uint value, BitWriter writer) {
+    internal override bool Encode(long value, BitWriter writer) {
         writer.Writer.Write(value);
         return true;
     }

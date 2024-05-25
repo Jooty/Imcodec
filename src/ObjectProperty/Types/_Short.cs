@@ -20,25 +20,25 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.ObjectProperty.Types;
 
 /// <summary>
-/// Represents a reflected type of <see cref="ushort"/>.
+/// Represents a reflected type of <see cref="short"/>.
 /// </summary>
-internal sealed class _UShort() : ReflectedType<ushort> {
+internal sealed class _Short() : PropertyType<short> {
 
-    internal override bool Decode(out ushort value, BitReader reader) {
+    internal override bool Decode(out short value, BitReader reader) {
         // Ensure that reading another 2 bytes is possible.
-        var typeSizeInBits = sizeof(ushort) * 8;
+        var typeSizeInBits = sizeof(short) * 8;
         if (reader.BitPos() + typeSizeInBits > reader.Count() * 8) {
             throw new InvalidOperationException($"Reading another {typeSizeInBits / 8} bytes is not possible.");
         }
 
-        value = reader.Reader.ReadUInt16();
+        value = reader.Reader.ReadInt16();
         return true;
     }
 
-    internal override bool Encode(ushort value, BitWriter writer) {
+    internal override bool Encode(short value, BitWriter writer) {
         writer.Writer.Write(value);
         return true;
     }

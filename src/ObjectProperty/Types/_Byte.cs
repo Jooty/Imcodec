@@ -20,25 +20,24 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.ObjectProperty.Types;
 
 /// <summary>
-/// Represents a reflected type of <see cref="double"/>.
+/// Represents a reflected type of <see cref="byte"/>.
 /// </summary>
-internal sealed class _Double() : ReflectedType<double> {
+internal sealed class _Byte() : PropertyType<byte> {
 
-    internal override bool Decode(out double value, BitReader reader) {
-        // Ensure that reading another 8 bytes is possible.
-        var typeSizeInBits = sizeof(double) * 8;
-        if (reader.BitPos() + typeSizeInBits > reader.Count() * 8) {
-            throw new InvalidOperationException($"Reading another {typeSizeInBits / 8} bytes is not possible.");
+    internal override bool Decode(out byte value, BitReader reader) {
+        // Ensure that reading another byte is possible.
+        if (reader.BitPos() + 8 > reader.Count() * 8) {
+            throw new InvalidOperationException("Reading another byte is not possible.");
         }
 
-        value = reader.Reader.ReadDouble();
+        value = reader.Reader.ReadByte();
         return true;
     }
 
-    internal override bool Encode(double value, BitWriter writer) {
+    internal override bool Encode(byte value, BitWriter writer) {
         writer.Writer.Write(value);
         return true;
     }

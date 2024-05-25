@@ -18,7 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.ObjectProperty.PropertyClass;
+using Imcodec.ObjectProperty;
 
 namespace Imcodec.Test.PropertyClassTest;
 
@@ -28,6 +28,8 @@ public class PropClassTest : PropertyClass {
     public PropClassTest() {
         this.RegisterProperty("ByteTest", PropertyFlags.Prop_Public, false, () => ByteTest, (value) => ByteTest = (byte)value);
     }
+
+    public override uint GetHash() => throw new NotImplementedException();
 }
 
 public class CheckReflectionData {

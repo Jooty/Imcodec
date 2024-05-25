@@ -18,9 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System;
-using System.IO;
-
 namespace Imcodec.IO;
 
 public abstract class BitManipulator : IDisposable {

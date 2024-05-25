@@ -18,7 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-namespace Imcodec.ObjectProperty.PropertyClass;
+namespace Imcodec.ObjectProperty;
 
 [Flags]
 public enum PropertyFlags {

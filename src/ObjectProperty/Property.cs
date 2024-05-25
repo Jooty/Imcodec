@@ -18,9 +18,10 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Imcodec.Cryptography;
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass;
+namespace Imcodec.ObjectProperty;
 
 /// <summary>
 /// Represents a property with its associated flags, transferability, and a pointer to the data.
@@ -31,27 +32,24 @@ public interface IProperty { }
 /// <summary>
 /// Represents a property with its associated flags, transferability, and a pointer to the data.
 /// </summary>
-public sealed class Property<T>(PropertyFlags flags, bool noTransfer, Func<T> getValue, Action<T> setValue) : IProperty {
+public sealed class Property<T>(T? val) : IProperty {
+
+    public class TestPropertyClass : PropertyClass {
+        public override uint GetHash() => 0;
+
+        public Property<bool> MyProperty = new(true);
+        public Property<byte> MyProperty2 = new(0);
+    }
 
     /// <summary>
-    /// Gets or sets the flags associated with the property.
+    /// A reference to the value of the property.
     /// </summary>
-    public PropertyFlags Flags { get; set; } = flags;
+    public T? Value = val;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the property should not be transferred.
+    /// The type reader relevant to the property.
     /// </summary>
-    public bool NoTransfer { get; set; } = noTransfer;
-
-    /// <summary>
-    /// Gets or sets the value of the property.
-    /// </summary>
-    public T Value { get => getValue(); set => setValue(value); }
-
-    /// <summary>
-    /// The type of the property.
-    /// </summary>
-    internal ReflectedType<T> Type { get; } = TypeDetermine.GetAs<T>()
+    internal PropertyType<T> _type { get; } = PropertyType<T>.NewAs()
         ?? throw new InvalidOperationException($"No reflected type found for {typeof(T).Name}.");
 
     /// <summary>
@@ -59,15 +57,15 @@ public sealed class Property<T>(PropertyFlags flags, bool noTransfer, Func<T> ge
     /// </summary>
     /// <param name="writer">The <see cref="BitWriter"/> to use for encoding.</param>
     /// <returns><c>true</c> if the encoding is successful; otherwise, <c>false</c>.</returns>
-    internal bool Encode(BitWriter writer) => Type.Encode(Value, writer);
+    internal bool Encode(BitWriter writer) => _type.Encode(Value, writer);
 
     /// <summary>
     /// Decodes the value of the property from the given <see cref="BitReader"/>.
     /// </summary>
     /// <param name="reader">The <see cref="BitReader"/> to read the value from.</param>
     /// <returns><c>true</c> if the value was successfully decoded and assigned to the property; otherwise, <c>false</c>.</returns>
-    internal bool Decode(BitReader reader) {
-        if (Type.Decode(out T value, reader)) {
+    internal bool Decode(BitReader reader, SerializerFlags serializerFlags) {
+        if (_type.Decode(out T value, reader)) {
             Value = value;
             return true;
         }

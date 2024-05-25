@@ -20,12 +20,12 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 
-namespace Imcodec.ObjectProperty.PropertyClass.Types;
+namespace Imcodec.ObjectProperty.Types;
 
 /// <summary>
 /// Represents a vector of reflected values.
 /// </summary>
-internal sealed class _Vector<T>() : ReflectedType<T[]> where T : ReflectedType<T> {
+internal sealed class _Vector<T>() : PropertyType<T[]> where T : PropertyType<T> {
 
     internal override bool Decode(out T[] value, BitReader reader) {
         value = default; //todo
