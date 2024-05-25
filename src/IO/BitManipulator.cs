@@ -20,6 +20,7 @@ modification, are permitted provided that the following conditions are met:
 
 namespace Imcodec.IO;
 
+
 public abstract class BitManipulator : IDisposable {
 
     protected Stream Stream { get; set; }
@@ -101,7 +102,7 @@ public abstract class BitManipulator : IDisposable {
     /// <summary>
     /// Reset the current bit position.
     /// </summary>
-    protected void AlignBitToByte() {
+    protected void ResetBitPos() {
         if (BitPosition > 7) {
             return;
         }
@@ -132,7 +133,7 @@ public abstract class BitManipulator : IDisposable {
     /// <param name="bit">The bit position to seek to.</param>
     public void SeekBit(int bit) {
         Stream.Position = bit >> 3;
-        AlignBitToByte();
+        ResetBitPos();
 
         var remainingBits = bit - ((bit >> 3) << 3);
         for (int i = 0; i < remainingBits; i++) {

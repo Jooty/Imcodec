@@ -29,9 +29,7 @@ public abstract class PropertyClass {
 
     public abstract uint GetHash();
 
-    public PropertyClass() {
-        var myProperties = GetType().GetProperties();
-    }
+    private List<IProperty> Properties { get; } = [];
 
     /// <summary>
     /// Called before encoding the object to the binary stream.
@@ -69,6 +67,10 @@ public abstract class PropertyClass {
 
         OnPostDecode();
         return true;
+    }
+
+    protected void RegisterProperty<T>(Property<T> property) {
+        Properties.Add(property);
     }
 
 }
