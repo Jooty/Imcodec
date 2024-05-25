@@ -26,6 +26,9 @@ using Imcodec.ObjectProperty.Strings;
 
 namespace Imcodec.ObjectProperty;
 
+/// <summary>
+/// Declares how a certain type of property should be encoded and decoded.
+/// </summary>
 internal static class StreamPropertyCodec {
 
     private static readonly Dictionary<Type, Func<BitReader, object>> s_primitiveReaders = new()
@@ -93,29 +96,35 @@ internal static class StreamPropertyCodec {
     };
 
     /// <summary>
-    /// Tries to get a reader function for the specified type.
+    /// Tries to get the reader for the specified type.
     /// </summary>
-    /// <param name="r">The type to get the reader function for.</param>
-    /// <returns>A reader function for the specified type, or null if one could not be found.</returns>
-    internal static Func<BitReader, object> TryGetReader(Type r) {
-        if (s_primitiveReaders.TryGetValue(r, out var func)) {
-            return func!;
+    /// <typeparam name="T">The type for which to get the reader.</typeparam>
+    /// <param name="codec">The reader function for the specified type, if found; otherwise, <c>null</c>.</param>
+    /// <returns><c>true</c> if the reader for the specified type is found; otherwise, <c>false</c>.</returns>
+    internal static bool TryGetReader<T>(out Func<BitReader, object> codec) {
+        if (s_primitiveReaders.TryGetValue(typeof(T), out var func)) {
+            codec = func;
+            return false;
         }
 
-        return null!;
+        codec = null!;
+        return false;
     }
 
     /// <summary>
-    /// Tries to get a writer function for the specified type.
+    /// Tries to get the writer for a specified type.
     /// </summary>
-    /// <param name="r">The type to get the writer function for.</param>
-    /// <returns>The writer function if found, otherwise null.</returns>
-    public static Action<BitWriter, object> TryGetWriter(Type r) {
-        if (s_primitiveWriters.TryGetValue(r, out var func)) {
-            return func!;
+    /// <typeparam name="T">The type for which to get the writer.</typeparam>
+    /// <param name="codec">The writer for the specified type, if found; otherwise, null.</param>
+    /// <returns>true if the writer for the specified type is found; otherwise, false.</returns>
+    internal static bool TryGetWriter<T>(out Action<BitWriter, object> codec) {
+        if (s_primitiveWriters.TryGetValue(typeof(T), out var func)) {
+            codec = func;
+            return true;
         }
 
-        return null!;
+        codec = null!;
+        return false;
     }
 
 }

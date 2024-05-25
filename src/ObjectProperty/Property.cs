@@ -47,13 +47,25 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
     private Action<T> Setter { get; } = setter;
 
     internal bool Encode(BitWriter writer, SerializerFlags serializerFlags) {
-        var val = Getter();
+        if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {
+            var val = Getter();
+            codec.Invoke(writer, val!);
 
-        return true;
+            return true;
+        } else {
+            throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");
+        }
     }
 
     internal bool Decode(BitReader reader, SerializerFlags serializerFlags) {
-        return false;
+        if (StreamPropertyCodec.TryGetReader<T>(out var codec)) {
+            var val = codec.Invoke(reader);
+            Setter((T) val!);
+
+            return true;
+        } else {
+            throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");
+        }
     }
 
 }

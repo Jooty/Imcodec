@@ -51,14 +51,14 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
     /// <summary>
     /// States the behaviors of the serializer.
     /// </summary>
-    public SerializerFlags Behaviors { get; set; } = Behaviors;
+    public SerializerFlags SerializerFlags { get; set; } = Behaviors;
 
     public bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) where T : PropertyClass {
         output = default;
         var reader = new BitReader(inputBuffer);
 
         // If the behaviors flag is set to use compression, decompress the input buffer.
-        if (Behaviors.HasFlag(SerializerFlags.Compress)) {
+        if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
             reader = Decompress(reader);
             if (reader == null) {
                 return false;
@@ -115,10 +115,10 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
 
         propertyClass?.OnPreDecode();
         if (Versionable) {
-            propertyClass?.DecodeVersionable(inputBuffer, Behaviors, propertyMask);
+            propertyClass?.DecodeVersionable(inputBuffer, SerializerFlags, propertyMask);
         }
         else {
-            propertyClass?.Decode(inputBuffer, Behaviors, propertyMask);
+            propertyClass?.Decode(inputBuffer, SerializerFlags, propertyMask);
         }
         propertyClass?.OnPostDecode();
 

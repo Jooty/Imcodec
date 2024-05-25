@@ -51,19 +51,47 @@ public abstract class PropertyClass {
     /// </summary>
     public virtual void OnPostDecode() { }
 
+    /// <summary>
+    /// Encodes the object properties using the specified <see cref="BitWriter"/> and <see cref="ObjectSerializer"/>.
+    /// </summary>
+    /// <param name="writer">The <see cref="BitWriter"/> used to write the encoded data.</param>
+    /// <param name="serializer">The <see cref="ObjectSerializer"/> used to serialize the object properties.</param>
+    /// <returns><c>true</c> if the encoding is successful; otherwise, <c>false</c>.</returns>
     internal bool Encode(BitWriter writer, ObjectSerializer serializer) {
         OnPreEncode();
 
+        foreach (var property in Properties) {
+            var castedProperty = property as Property<object>
+                ?? throw new InvalidOperationException($"Property {property.GetType().Name} is not a Property<object>");
 
+            var encodeSuccess = castedProperty.Encode(writer, serializer.SerializerFlags);
+            if (!encodeSuccess) {
+                return false;
+            }
+        }
 
         OnPostEncode();
         return true;
     }
 
+    /// <summary>
+    /// Decodes the object properties using the specified <see cref="BitReader"/> and <see cref="ObjectSerializer"/>.
+    /// </summary>
+    /// <param name="reader">The <see cref="BitReader"/> used for decoding.</param>
+    /// <param name="serializer">The <see cref="ObjectSerializer"/> used for decoding.</param>
+    /// <returns><c>true</c> if the decoding is successful for all properties; otherwise, <c>false</c>.</returns>
     internal bool Decode(BitReader reader, ObjectSerializer serializer) {
         OnPreDecode();
 
+        foreach (var property in Properties) {
+            var castedProperty = property as Property<object>
+                ?? throw new InvalidOperationException($"Property {property.GetType().Name} is not a Property<object>");
 
+            var decodeSuccess = castedProperty.Decode(reader, serializer.SerializerFlags);
+            if (!decodeSuccess) {
+                return false;
+            }
+        }
 
         OnPostDecode();
         return true;
