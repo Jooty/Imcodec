@@ -49,7 +49,7 @@ public class LootTableTest {
     public void TryDeserializeLootTableBlob() {
         var serializer = new ObjectSerializer();
         var byteBlob = Convert.FromHexString(LOOT_TABLE_BLOB);
-        var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, out var lootTable);
+        var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, PropertyFlags.Prop_Public, out var lootTable);
 
         Assert.True(deserializeSuccess);
         Assert.NotNull(lootTable);

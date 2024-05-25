@@ -80,7 +80,7 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
     /// <param name="inputBuffer">The <see cref="BitReader"/> containing the compressed data.</param>
     /// <returns>A <see cref="BitReader"/> containing the decompressed data.</returns>
     protected virtual BitReader? Decompress(BitReader inputBuffer) {
-        var uncompressedLength = inputBuffer.Reader.ReadInt32();
+        var uncompressedLength = inputBuffer.ReadInt32();
         var decompressedData = Compression.Decompress(inputBuffer.GetData()[4..]);
 
         // If the decompressed data length does not match the recorded length, log it and return null.
@@ -99,7 +99,7 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
     /// <returns><c>true</c> if the object was preloaded successfully; otherwise, <c>false</c>.</returns>
     protected virtual bool PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
         propertyClass = null;
-        var hash = inputBuffer.Reader.ReadUInt32();
+        var hash = inputBuffer.ReadUInt32();
         if (hash == 0) {
             return false;
         }
@@ -114,12 +114,7 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
         }
 
         propertyClass?.OnPreDecode();
-        if (Versionable) {
-            propertyClass?.DecodeVersionable(inputBuffer, SerializerFlags, propertyMask);
-        }
-        else {
-            propertyClass?.Decode(inputBuffer, SerializerFlags, propertyMask);
-        }
+        propertyClass?.Decode(inputBuffer, this);
         propertyClass?.OnPostDecode();
 
         return propertyClass;

@@ -46,22 +46,33 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
     private Func<T> Getter { get; } = getter;
     private Action<T> Setter { get; } = setter;
 
-    internal bool Encode(BitWriter writer, SerializerFlags serializerFlags) {
-        if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {
-            var val = Getter();
-            codec.Invoke(writer, val!);
+    internal bool Encode(BitWriter writer, ObjectSerializer serializer) {
+        var val = Getter();
 
+        // If val is of type PropertyClass, encode the object properties.
+        if (val is PropertyClass propertyClass) {
+            return propertyClass.Encode(writer, serializer);
+        }
+
+        if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {
+            codec.Invoke(writer, val!);
             return true;
         } else {
             throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");
         }
     }
 
-    internal bool Decode(BitReader reader, SerializerFlags serializerFlags) {
-        if (StreamPropertyCodec.TryGetReader<T>(out var codec)) {
-            var val = codec.Invoke(reader);
-            Setter((T) val!);
+    internal bool Decode(BitReader reader, ObjectSerializer serializer) {
+        var val = Getter();
 
+        // If val is of type PropertyClass, decode the object properties.
+        if (val is PropertyClass propertyClass) {
+            return propertyClass.Decode(reader, serializer);
+        }
+
+        if (StreamPropertyCodec.TryGetReader<T>(out var codec)) {
+            val = (T?) codec.Invoke(reader);
+            Setter(val!);
             return true;
         } else {
             throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");

@@ -31,8 +31,7 @@ namespace Imcodec.ObjectProperty;
 /// </summary>
 internal static class StreamPropertyCodec {
 
-    private static readonly Dictionary<Type, Func<BitReader, object>> s_primitiveReaders = new()
-    {
+    private static readonly Dictionary<Type, Func<BitReader, object>> s_primitiveReaders = new() {
         { typeof(byte),           (r) => r.ReadUInt8()                     },
         { typeof(char),           (r) => r.ReadUInt8()                     },
         { typeof(bool),           (r) => r.ReadBit()                       },
@@ -63,8 +62,7 @@ internal static class StreamPropertyCodec {
         { typeof(U24),            (r) => r.ReadBits<U24>(24)               },
     };
 
-    private static readonly Dictionary<Type, Action<BitWriter, object>> s_primitiveWriters = new()
-    {
+    private static readonly Dictionary<Type, Action<BitWriter, object>> s_primitiveWriters = new() {
         { typeof(byte),           (r, v) => r.WriteUInt8((byte)v)                },
         { typeof(char),           (r, v) => r.WriteUInt8(Convert.ToByte(v))      },
         { typeof(bool),           (r, v) => r.WriteBit((bool)v)                  },

@@ -64,7 +64,7 @@ public abstract class PropertyClass {
             var castedProperty = property as Property<object>
                 ?? throw new InvalidOperationException($"Property {property.GetType().Name} is not a Property<object>");
 
-            var encodeSuccess = castedProperty.Encode(writer, serializer.SerializerFlags);
+            var encodeSuccess = castedProperty.Encode(writer, serializer);
             if (!encodeSuccess) {
                 return false;
             }
@@ -87,7 +87,7 @@ public abstract class PropertyClass {
             var castedProperty = property as Property<object>
                 ?? throw new InvalidOperationException($"Property {property.GetType().Name} is not a Property<object>");
 
-            var decodeSuccess = castedProperty.Decode(reader, serializer.SerializerFlags);
+            var decodeSuccess = castedProperty.Decode(reader, serializer);
             if (!decodeSuccess) {
                 return false;
             }
