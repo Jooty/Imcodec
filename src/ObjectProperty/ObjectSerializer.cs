@@ -40,7 +40,9 @@ public enum SerializerFlags {
 /// <param name="Versionable">If true, <see cref="Property"/> hashes and sizes
 /// are stored in the binary stream. Otherwise, the data is serialized in order of declaration.</param>
 /// <param name="Behaviors">States the behaviors of the serializer.</param>
-public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors = SerializerFlags.None) {
+/// <param name="propertyMask">The property flags to use for serialization.</param>
+public class ObjectSerializer(bool Versionable = true,
+                              SerializerFlags Behaviors = SerializerFlags.None) {
 
     /// <summary>
     /// States whether the object is versionable. If true, <see cref="Property"/> hashes and sizes
@@ -53,8 +55,33 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
     /// </summary>
     public SerializerFlags SerializerFlags { get; set; } = Behaviors;
 
+    /// <summary>
+    /// The property flags to use for serialization.
+    /// </summary>
+    public PropertyFlags PropertyMask { get; set; } = PropertyFlags.Prop_Transmit | PropertyFlags.Prop_AuthorityTransmit;
+
+    /// <summary>
+    /// Deserializes the input buffer into an instance of type T. The property mask is set to <see cref="PropertyMask"/>,
+    /// which is the default or the last set property mask.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to deserialize.</typeparam>
+    /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
+    /// <param name="output">The deserialized object of type T.</param>
+    /// <returns>True if deserialization is successful; otherwise, false.</returns>
+    public bool Deserialize<T>(byte[] inputBuffer, out T output) where T : PropertyClass
+        => Deserialize(inputBuffer, PropertyMask, out output);
+
+    /// <summary>
+    /// Deserializes the input buffer into an instance of the specified type.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to deserialize.</typeparam>
+    /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
+    /// <param name=""propertyMask"">The property flags to use for serialization.</param>
+    /// <param name="output">When this method returns, contains the deserialized object of type <typeparamref name="T"/>.</param>
+    /// <returns><c>true</c> if the deserialization is successful; otherwise, <c>false</c>.</returns>
     public bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) where T : PropertyClass {
         output = default;
+        this.PropertyMask = propertyMask;
         var reader = new BitReader(inputBuffer);
 
         // If the behaviors flag is set to use compression, decompress the input buffer.
@@ -65,7 +92,7 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
             }
         }
 
-        var propertyClass = DeserializeInternal(reader, propertyMask);
+        var propertyClass = DeserializeInternal(reader);
         if (propertyClass == null) {
             return false;
         }
@@ -75,9 +102,30 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
     }
 
     /// <summary>
+    /// Compresses the data using the specified <see cref="BitWriter"/>.
+    /// </summary>
+    /// <param name="writer">The <see cref="BitWriter"/> containing the data to compress.</param>
+    /// <returns>A <see cref="BitWriter"/> containing the compressed data.</returns>
+    protected virtual BitWriter Compress(BitWriter writer) {
+        var uncompressedSize = writer.GetData().Length;
+        var compressedData = Compression.Compress(writer.GetData());
+
+        var bufferSize = compressedData.Length + 4;
+        var tempBuffer = new byte[bufferSize];
+
+        using var memoryStream = new MemoryStream(tempBuffer);
+        using var binaryWriter = new BinaryWriter(memoryStream);
+
+        binaryWriter.Write(uncompressedSize);
+        binaryWriter.Write(compressedData);
+
+        return new BitWriter(tempBuffer);
+    }
+
+    /// <summary>
     /// Decompresses the data using the specified <see cref="BitReader"/>.
     /// </summary>
-    /// <param name="inputBuffer">The <see cref="BitReader"/> containing the compressed data.</param>
+    /// <param name="inputBuffer">Th    /// ee cref="BitReader"/> containing the compressed data.</param>
     /// <returns>A <see cref="BitReader"/> containing the decompressed data.</returns>
     protected virtual BitReader? Decompress(BitReader inputBuffer) {
         var uncompressedLength = inputBuffer.ReadInt32();
@@ -108,7 +156,7 @@ public class ObjectSerializer(bool Versionable = true, SerializerFlags Behaviors
         return propertyClass != null;
     }
 
-    private PropertyClass? DeserializeInternal(BitReader inputBuffer, PropertyFlags propertyMask) {
+    private PropertyClass? DeserializeInternal(BitReader inputBuffer) {
         if (!PreloadObject(inputBuffer, out var propertyClass)) {
             return null;
         }

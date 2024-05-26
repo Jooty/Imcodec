@@ -53,6 +53,7 @@ public class LootTableTest {
 
         Assert.True(deserializeSuccess);
         Assert.NotNull(lootTable);
+        Assert.NotNull(lootTable.m_goldInfo);
     }
 
 }

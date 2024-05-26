@@ -29,7 +29,7 @@ public abstract class PropertyClass {
 
     public abstract uint GetHash();
 
-    private List<IProperty> Properties { get; } = [];
+    protected List<IProperty> Properties { get; } = [];
 
     /// <summary>
     /// Called before encoding the object to the binary stream.
@@ -60,9 +60,15 @@ public abstract class PropertyClass {
     internal bool Encode(BitWriter writer, ObjectSerializer serializer) {
         OnPreEncode();
 
+        writer.WriteUInt32(GetHash());
+
         foreach (var property in Properties) {
             var castedProperty = property as Property<object>
                 ?? throw new InvalidOperationException($"Property {property.GetType().Name} is not a Property<object>");
+
+            if (!ShouldEncodeProperty(castedProperty, serializer)) {
+                continue;
+            }
 
             var encodeSuccess = castedProperty.Encode(writer, serializer);
             if (!encodeSuccess) {
@@ -83,9 +89,16 @@ public abstract class PropertyClass {
     internal bool Decode(BitReader reader, ObjectSerializer serializer) {
         OnPreDecode();
 
+        // We don't want to read the hash here, since the caller should have already read it.
+        // Otherwise, we wouldn't be here in the first place.
+
         foreach (var property in Properties) {
             var castedProperty = property as Property<object>
-                ?? throw new InvalidOperationException($"Property {property.GetType().Name} is not a Property<object>");
+                ?? throw new InvalidOperationException($"Property {property.GetType()} is not a {typeof(Property<object>).Name}");
+
+            if (!ShouldEncodeProperty(castedProperty, serializer)) {
+                continue;
+            }
 
             var decodeSuccess = castedProperty.Decode(reader, serializer);
             if (!decodeSuccess) {
@@ -97,8 +110,19 @@ public abstract class PropertyClass {
         return true;
     }
 
-    protected void RegisterProperty<T>(Property<T> property) {
-        Properties.Add(property);
+    private static bool ShouldEncodeProperty(Property<object> castedProperty, ObjectSerializer serializer) {
+        // Any property with the encoding flag set will always be encoded so long as the serializer requests it.
+        var dirtyEncode = serializer.SerializerFlags.HasFlag(SerializerFlags.AlwaysEncode)
+            && castedProperty.Flags.HasFlag(PropertyFlags.Prop_Encode);
+
+        // Skip properties that are not marked for serialization, or are deprecated and not dirty encoded.
+        if ((castedProperty.Flags & serializer.PropertyMask) != castedProperty.Flags
+            || castedProperty.Flags.HasFlag(PropertyFlags.Prop_Deprecated)
+            && !dirtyEncode) {
+            return false;
+        }
+
+        return true;
     }
 
 }

@@ -18,12 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-/*
-
-This is what the CodeGen should look like.
-
-*/
-
 namespace Imcodec.ObjectProperty.CodeGen;
 
 public static class Generation {
@@ -44,6 +38,11 @@ public partial class LootInfoList : PropertyClass {
     public GoldLootInfo m_goldInfo { get; set; }
     public List<LootInfo> m_loot { get; set; }
 
+    public LootInfoList() {
+        base.Properties.Add(new Property<GoldLootInfo>(461650270, PropertyFlags.Prop_Public, () => m_goldInfo, (val) => m_goldInfo = val));
+        base.Properties.Add(new Property<List<LootInfo>>(1119240234, PropertyFlags.Prop_Public, () => m_loot, (val) => m_loot = val));
+    }
+
 }
 
 public partial class GoldLootInfo : LootInfo {
@@ -52,6 +51,10 @@ public partial class GoldLootInfo : LootInfo {
 
     public int m_goldAmount { get; set; }
 
+    public GoldLootInfo() {
+        base.Properties.Add(new Property<int>(0, PropertyFlags.Prop_Public, () => m_goldAmount, (val) => m_goldAmount = val));
+    }
+
 }
 
 public partial class LootInfo : LootInfoBase {
@@ -59,6 +62,10 @@ public partial class LootInfo : LootInfoBase {
     public override uint GetHash() => 1119240234;
 
     public LOOT_TYPE m_lootType { get; set; }
+
+    public LootInfo() {
+        base.Properties.Add(new Property<LOOT_TYPE>(0, PropertyFlags.Prop_Public, () => m_lootType, (val) => m_lootType = val));
+    }
 
     public enum LOOT_TYPE {
 
