@@ -66,13 +66,28 @@ public abstract class PropertyClass {
             var castedProperty = property as Property<object>
                 ?? throw new InvalidOperationException($"Property {property.GetType().Name} is not a Property<object>");
 
-            if (!ShouldEncodeProperty(castedProperty, serializer)) {
+            if (!IsPropertyEligibleForProcessing(castedProperty, serializer)) {
                 continue;
+            }
+
+            // If the object is versionable, we need to write the hash and size of the property.
+            var sizeBitPos = writer.BitPos();
+            if (serializer.Versionable) {
+                writer.WriteUInt32(0); // Placeholder for the size.
+                writer.WriteUInt32(castedProperty.Hash);
             }
 
             var encodeSuccess = castedProperty.Encode(writer, serializer);
             if (!encodeSuccess) {
                 return false;
+            }
+
+            // If the object is versionable, we need to write the size of the property.
+            if (serializer.Versionable) {
+                var size = writer.BitPos() - sizeBitPos;
+                writer.SeekBit(sizeBitPos);
+                writer.WriteUInt32((uint)size);
+                writer.SeekBit(sizeBitPos + size);
             }
         }
 
@@ -96,8 +111,23 @@ public abstract class PropertyClass {
             var castedProperty = property as Property<object>
                 ?? throw new InvalidOperationException($"Property {property.GetType()} is not a {typeof(Property<object>).Name}");
 
-            if (!ShouldEncodeProperty(castedProperty, serializer)) {
+            if (!IsPropertyEligibleForProcessing(castedProperty, serializer)) {
                 continue;
+            }
+
+            // If the object is versionable, we need to read the hash and size of the property.
+            if (serializer.Versionable) {
+                var size = reader.ReadUInt32();
+                var hash = reader.ReadUInt32();
+
+                if (hash != castedProperty.Hash) {
+                    return false;
+                }
+
+                // The size is in bits. Ensure that the remaining buffer is large enough to read the property.
+                if (reader.BitPos() + size > reader.Count() * 8) {
+                    return false;
+                }
             }
 
             var decodeSuccess = castedProperty.Decode(reader, serializer);
@@ -110,15 +140,17 @@ public abstract class PropertyClass {
         return true;
     }
 
-    private static bool ShouldEncodeProperty(Property<object> castedProperty, ObjectSerializer serializer) {
+    private static bool IsPropertyEligibleForProcessing(Property<object> castedProperty, ObjectSerializer serializer) {
         // Any property with the encoding flag set will always be encoded so long as the serializer requests it.
         var dirtyEncode = serializer.SerializerFlags.HasFlag(SerializerFlags.AlwaysEncode)
             && castedProperty.Flags.HasFlag(PropertyFlags.Prop_Encode);
 
+        // Check if the property mask is met and if the property is deprecated.
+        var propertyMaskMet = (castedProperty.Flags & serializer.PropertyMask) == castedProperty.Flags;
+        var deprecated = castedProperty.Flags.HasFlag(PropertyFlags.Prop_Deprecated);
+
         // Skip properties that are not marked for serialization, or are deprecated and not dirty encoded.
-        if ((castedProperty.Flags & serializer.PropertyMask) != castedProperty.Flags
-            || castedProperty.Flags.HasFlag(PropertyFlags.Prop_Deprecated)
-            && !dirtyEncode) {
+        if (!propertyMaskMet || (deprecated && !dirtyEncode)) {
             return false;
         }
 

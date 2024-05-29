@@ -77,6 +77,17 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
     internal bool Decode(BitReader reader, ObjectSerializer serializer) {
         var val = Getter();
 
+        // If the val is a list, decode the list elements.
+        if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>)) {
+            var len = serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)
+                ? reader.ReadUInt8()
+                : reader.ReadUInt32();
+
+            for (int i = 0; i < len; i++) {
+
+            }
+        }
+
         // If val is of type PropertyClass, decode the object properties.
         if (val is PropertyClass propertyClass) {
             return Property<T>.DecodeNestedPropertyClass(reader, propertyClass, serializer);
