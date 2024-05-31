@@ -102,7 +102,7 @@ internal static class StreamPropertyCodec {
     internal static bool TryGetReader<T>(out Func<BitReader, object> codec) {
         if (s_primitiveReaders.TryGetValue(typeof(T), out var func)) {
             codec = func;
-            return false;
+            return true;
         }
 
         codec = null!;

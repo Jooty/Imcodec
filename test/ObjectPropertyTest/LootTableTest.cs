@@ -18,24 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-/*
-
-Blob: 2A 03 67 48 01 00 00 00 89 87 6B 65 05 00 00 00 00 00 05 00 00 00 5E 39 84 1B 01 00 00 00 02 00 00 00
-
-Structure:
-
-- LootInfoList
-    - m_goldInfo (GoldLootInfo):
-        - m_goldAmount: 2
-        - m_lootType  : LOOT_TYPE_GOLD
-    - m_loot (list) (1) (LootInfo):
-        - MagicXPLootInfo:
-            - m_experience : 5
-            - m_lootType   : LOOT_TYPE_MAGIC_XP
-            - m_magicSchool: ""
-
-*/
-
 using Imcodec.ObjectProperty;
 using Imcodec.ObjectProperty.CodeGen;
 
@@ -47,13 +29,18 @@ public class LootTableTest {
 
     [Fact]
     public void TryDeserializeLootTableBlob() {
-        var serializer = new ObjectSerializer();
+        var serializer = new ObjectSerializer(false);
         var byteBlob = Convert.FromHexString(LOOT_TABLE_BLOB);
         var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, PropertyFlags.Prop_Public, out var lootTable);
 
         Assert.True(deserializeSuccess);
         Assert.NotNull(lootTable);
         Assert.NotNull(lootTable.m_goldInfo);
+        Assert.True(lootTable.m_goldInfo.m_goldAmount == 2);
+        Assert.True(lootTable.m_goldInfo.m_lootType == LootInfo.LOOT_TYPE.LOOT_TYPE_GOLD);
+
+        Assert.NotNull(lootTable.m_loot);
+        Assert.True(lootTable.m_loot.Count == 1);
     }
 
 }
