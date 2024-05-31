@@ -22,7 +22,7 @@ using Imcodec.Identification;
 using Imcodec.IO;
 using Imcodec.Mathematics;
 using Imcodec.ObjectProperty.Bit;
-using Imcodec.ObjectProperty.Strings;
+using Imcodec.Strings;
 
 namespace Imcodec.ObjectProperty;
 

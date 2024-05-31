@@ -21,55 +21,47 @@ modification, are permitted provided that the following conditions are met:
 using System.Diagnostics;
 using System.Text;
 
-namespace Imcodec.ObjectProperty.Strings;
+namespace Imcodec.Strings;
 
 [DebuggerDisplay("{ToString()}")]
-public struct ByteString {
+public readonly struct WideByteString {
 
     private readonly byte[] _bytes;
 
-    public ByteString(byte[] bytes) {
+    public WideByteString(byte[] bytes) {
         _bytes = bytes;
     }
 
-    public ByteString(string toString) {
-        _bytes = Encoding.UTF8.GetBytes(toString);
+    public WideByteString(string str) {
+        _bytes = Encoding.Unicode.GetBytes(str);
     }
 
-    public static implicit operator string(ByteString byteString) {
+    public static implicit operator string(WideByteString byteString) {
         return byteString._bytes is null
             ? string.Empty
-            : Encoding.UTF8.GetString(byteString._bytes);
+            : Encoding.Unicode.GetString(byteString._bytes);
     }
 
-    public static implicit operator ByteString(string str) {
+    public static implicit operator WideByteString(string str) {
         if (str is null) {
-            return new ByteString();
+            return new WideByteString();
         }
 
-        return new ByteString(Encoding.UTF8.GetBytes(str));
+        return new WideByteString(Encoding.Unicode.GetBytes(str));
     }
 
-    public static implicit operator byte[](ByteString byteString) {
+    public static implicit operator byte[](WideByteString byteString) {
         return byteString._bytes;
     }
 
-    public static implicit operator ByteString(byte[] buffer) {
-        return new ByteString(buffer);
+    public static implicit operator WideByteString(byte[] buffer) {
+        return new WideByteString(buffer);
     }
 
-    public override readonly string? ToString() {
-        return _bytes is null ? null : Encoding.UTF8.GetString(_bytes);
+    public override string? ToString() {
+        return _bytes is null ? null : Encoding.Unicode.GetString(_bytes);
     }
 
-    public readonly int Length {
-        get {
-            if (_bytes is null) {
-                return 0;
-            }
-
-            return _bytes.Length;
-        }
-    }
+    public int Length => _bytes?.Length ?? 0;
 
 }

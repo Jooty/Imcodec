@@ -19,7 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.Mathematics;
-using Imcodec.ObjectProperty.Strings;
+using Imcodec.Strings;
 using System.Text;
 
 namespace Imcodec.IO;
