@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.IO;
+using Imcodec.ObjectProperty.CodeGen;
 using System.Collections;
 
 namespace Imcodec.ObjectProperty;
@@ -130,10 +131,9 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
 
     private bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
-            val = Activator.CreateInstance(InnerType) 
-                ?? throw new InvalidOperationException($"Failed to create instance of type {InnerType.Name}");
-
-            return DecodeNestedPropertyClass(reader, (PropertyClass) val, serializer);
+            var decodeSuccess = DecodeNestedPropertyClass(reader, serializer, out var propertyClass);
+            val = propertyClass;
+            return decodeSuccess;
         }
         else if (IsEnum) {
             val = (T?) Enum.ToObject(InnerType, reader.ReadUInt32());
@@ -158,11 +158,19 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
         return propertyClass.Encode(writer, serializer);
     }
 
-    private static bool DecodeNestedPropertyClass(BitReader reader, PropertyClass propertyClass, ObjectSerializer serializer) {
+    private static bool DecodeNestedPropertyClass(BitReader reader, ObjectSerializer serializer, out PropertyClass? propertyClass) {
+        propertyClass = null;
+
         var hash = reader.ReadUInt32();
         if (hash == 0) {
             // Nothing to read.
             return true;
+        }
+
+        // Dispatch this hash and see what property class we need to create.
+        propertyClass = Generation.Dispatch(hash);
+        if (propertyClass == null) {
+            return false;
         }
 
         return propertyClass.Decode(reader, serializer);
