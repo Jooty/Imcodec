@@ -81,20 +81,24 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
     }
 
     bool IProperty.Encode(BitWriter writer, ObjectSerializer serializer) {
-        var val = Getter();
+        // If the val is a list, encode the list elements.
+        if (IsVector) {
+            var list = (IList) Getter() ?? new List<T>();
+            WriteVectorSize(writer, list.Count, serializer);
 
-        // If val is of type PropertyClass, encode the object properties.
-        if (val is PropertyClass propertyClass) {
-            return Property<T>.EncodeNestedPropertyClass(writer, propertyClass, serializer);
-        }
-
-        if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {
-            codec.Invoke(writer, val!);
-            return true;
+            foreach (var val in list) {
+                if (!EncodeElement(writer, serializer, val)) {
+                    return false;
+                }
+            }
         }
         else {
-            throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");
+            if (!EncodeElement(writer, serializer, Getter())) {
+                return false;
+            }
         }
+
+        return true;
     }
 
     bool IProperty.Decode(BitReader reader, ObjectSerializer serializer) {
@@ -129,6 +133,23 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
         return true;
     }
 
+    private bool EncodeElement(BitWriter writer, ObjectSerializer serializer, object? val) {
+        if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
+            return Property<T>.EncodeNestedPropertyClass(writer, (PropertyClass) val!, serializer);
+        }
+        else if (IsEnum) {
+            writer.WriteUInt32((uint) val!);
+            return true;
+        }
+        else if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {
+            codec.Invoke(writer, (T) val!);
+            return true;
+        }
+        else {
+            throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");
+        }
+    }
+    
     private bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
             var decodeSuccess = DecodeNestedPropertyClass(reader, serializer, out var propertyClass);
@@ -182,5 +203,16 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
         => serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)
             ? reader.ReadBits<uint>(reader.ReadBit() ? 31 : 7)
             : reader.ReadUInt32();
+
+    private static void WriteVectorSize(BitWriter writer, int size, ObjectSerializer serializer) {
+        // Write the vector size. The size is encoded as a compact length if the flag is set.
+        // Otherwise, the size is encoded as a 32-bit unsigned integer.
+        if (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {
+            writer.WriteBits((uint) size, size < byte.MaxValue ? 7 : 31);
+        }
+        else {
+            writer.WriteUInt32((uint) size);
+        }
+    }
 
 }

@@ -124,7 +124,10 @@ public abstract class PropertyClass {
             var propertySize = reader.ReadUInt32();
             var propertyHash = reader.ReadUInt32();
 
+            // Ensure that the property exists.
             if (!propMap.TryGetValue(propertyHash, out var property)) {
+                // We didn't find this property hash in the map. Something totally failed,
+                // and we have no choice but to return false.
                 return false;
             }
 
@@ -138,7 +141,7 @@ public abstract class PropertyClass {
                 return false;
             }
 
-            // Seek bit to the end of this object.
+            // Seek bit to the end of this property. This isn't strictly necessary, but it's good practice.
             reader.SeekBit((int) (propertyStart + propertySize));
         }
 
