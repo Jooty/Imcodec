@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.ObjectProperty;
+using Imcodec.Strings;
 
 namespace Imcodec.ObjectProperty.CodeGen;
 
@@ -28,6 +29,7 @@ public static class Generation {
             1214710570 => new LootInfoList(),
             461650270 => new GoldLootInfo(),
             1119240234 => new LootInfo(),
+            1701545865 => new MagicXPLootInfo(),
             1246183594 => new LootInfoBase(),
             _ => null,
         };
@@ -37,12 +39,12 @@ public partial class LootInfoList : PropertyClass {
 
     public override uint GetHash() => 1214710570;
 
-    public GoldLootInfo m_goldInfo { get; set; }
     public List<LootInfo> m_loot { get; set; }
+    public GoldLootInfo m_goldInfo { get; set; }
 
     public LootInfoList() {
-        base.Properties.Add(new Property<GoldLootInfo>(461650270, PropertyFlags.Prop_Public, () => m_goldInfo, (val) => m_goldInfo = val));
         base.Properties.Add(new Property<List<LootInfo>>(1119240234, PropertyFlags.Prop_Public, () => m_loot, (val) => m_loot = val));
+        base.Properties.Add(new Property<GoldLootInfo>(461650270, PropertyFlags.Prop_Public, () => m_goldInfo, (val) => m_goldInfo = val));
     }
 
 }
@@ -56,6 +58,20 @@ public partial class GoldLootInfo : LootInfo {
     public GoldLootInfo() {
         base.Properties.Add(new Property<int>(0, PropertyFlags.Prop_Public, () => m_goldAmount, (val) => m_goldAmount = val));
     }
+
+}
+
+public class MagicXPLootInfo : LootInfo {
+
+    public override uint GetHash() => 1701545865;
+    
+    public ByteString m_magicSchool;
+    public Int32 m_experience;
+
+    public MagicXPLootInfo() {
+        base.Properties.Add(new Property<ByteString>(1597012900, PropertyFlags.Prop_Public, () => m_magicSchool, (val) => m_magicSchool = val));
+        base.Properties.Add(new Property<Int32>(759357570, PropertyFlags.Prop_Public, () => m_experience, (val) => m_experience = val));
+    }    
 
 }
 

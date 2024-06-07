@@ -22,6 +22,8 @@ namespace Imcodec.Identification;
 
 public struct GID : IConvertible {
 
+   // todo: go back and redo this. this is a union type in C++. How can we do that in C#?
+
     private ulong _value;
 
     public ulong Value { readonly get => _value; set => _value = value; }

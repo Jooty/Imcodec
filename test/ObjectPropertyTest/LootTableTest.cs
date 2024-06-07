@@ -41,6 +41,8 @@ public class LootTableTest {
 
         Assert.NotNull(lootTable.m_loot);
         Assert.True(lootTable.m_loot.Count == 1);
+        Assert.True(lootTable.m_loot[0] is MagicXPLootInfo);
+        Assert.True(lootTable.m_loot[0].m_lootType == LootInfo.LOOT_TYPE.LOOT_TYPE_MAGIC_XP);
     }
 
 }

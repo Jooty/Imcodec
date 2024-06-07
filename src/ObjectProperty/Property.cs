@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.IO;
+using System.Collections;
 
 namespace Imcodec.ObjectProperty;
 
@@ -68,13 +69,15 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
     private Action<T> Setter { get; } = setter ?? throw new ArgumentNullException(nameof(setter));
     private bool IsVector => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
     private bool IsEnum => typeof(T).IsEnum;
-    private Type InnerType { get {
-        if (IsVector) {
-            return typeof(T).GetGenericArguments()[0];
-        }
+    private Type InnerType {
+        get {
+            if (IsVector) {
+                return typeof(T).GetGenericArguments()[0];
+            }
 
-        return typeof(T);
-    }}
+            return typeof(T);
+        }
+    }
 
     bool IProperty.Encode(BitWriter writer, ObjectSerializer serializer) {
         var val = Getter();
@@ -87,7 +90,8 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
         if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {
             codec.Invoke(writer, val!);
             return true;
-        } else {
+        }
+        else {
             throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");
         }
     }
@@ -95,38 +99,48 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
     bool IProperty.Decode(BitReader reader, ObjectSerializer serializer) {
         // If the val is a list, decode the list elements.
         if (IsVector) {
-            var len = serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)
-                ? reader.ReadUInt8()
-                : reader.ReadUInt32();
-
+            var len = ReadVectorSize(reader, serializer);
+            var listType = typeof(List<>).MakeGenericType(InnerType);
+            var list = (IList) Activator.CreateInstance(listType) 
+                ?? throw new InvalidOperationException($"Failed to create instance of type {listType.Name}");
+    
             for (int i = 0; i < len; i++) {
-                if (!DecodeElement(reader, serializer)) {
+                var decodeSuccess = DecodeElement(reader, serializer, out var val);
+                if (!decodeSuccess) {
                     return false;
                 }
+    
+                list.Add(val!);
             }
+
+            // Cast the list to the appropriate type and set the value.
+            Setter((T) list);
         }
         else {
-            return DecodeElement(reader, serializer);
-        }
+            if (!DecodeElement(reader, serializer, out var val)) {
+                return false;
+            }
 
+            Setter((T) val!);
+            return true;
+        }
+    
         return true;
     }
 
-    private bool DecodeElement(BitReader reader, ObjectSerializer serializer) {
-        var val = Getter();
-
+    private bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
-            var innerPropClassInstance = (PropertyClass) Activator.CreateInstance(InnerType);
-            return DecodeNestedPropertyClass(reader, innerPropClassInstance, serializer);
+            val = Activator.CreateInstance(InnerType) 
+                ?? throw new InvalidOperationException($"Failed to create instance of type {InnerType.Name}");
+
+            return DecodeNestedPropertyClass(reader, (PropertyClass) val, serializer);
         }
         else if (IsEnum) {
-            val = (T?) Enum.ToObject(InnerType, reader.ReadInt32());
-            Setter(val!);
+            val = (T?) Enum.ToObject(InnerType, reader.ReadUInt32());
             return true;
         }
         else if (StreamPropertyCodec.TryGetReader<T>(out var codec)) {
             val = (T?) codec.Invoke(reader);
-            Setter(val!);
             return true;
         }
         else {
@@ -153,5 +167,12 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
 
         return propertyClass.Decode(reader, serializer);
     }
+
+    private static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer) 
+        // Read the vector size. The size is encoded as a compact length if the flag is set.
+        // Otherwise, the size is encoded as a 32-bit unsigned integer.
+        => serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)
+            ? reader.ReadBits<uint>(reader.ReadBit() ? 31 : 7)
+            : reader.ReadUInt32();
 
 }
