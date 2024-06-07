@@ -45,4 +45,29 @@ public class LootTableTest {
         Assert.True(lootTable.m_loot[0].m_lootType == LootInfo.LOOT_TYPE.LOOT_TYPE_MAGIC_XP);
     }
 
+    [Fact]
+    public void TrySerializeLootTable() {
+        // Serialize a loot info list and see if it matches the expected blob.
+        var serializer = new ObjectSerializer(false);
+        var lootTable = new LootInfoList {
+            m_goldInfo = new GoldLootInfo {
+                m_goldAmount = 2,
+                m_lootType = LootInfo.LOOT_TYPE.LOOT_TYPE_GOLD
+            },
+            m_loot = [
+                new MagicXPLootInfo {
+                    m_lootType = LootInfo.LOOT_TYPE.LOOT_TYPE_MAGIC_XP,
+                    m_experience = 5
+                }
+            ]
+        };
+
+        var serializeSuccess = serializer.Serialize(lootTable, PropertyFlags.Prop_Public, out var byteBlob);
+        Assert.True(serializeSuccess);
+        Assert.True(byteBlob is not null);
+
+        var hexBlob = BitConverter.ToString(byteBlob).Replace("-", "");;
+        Assert.Equal(LOOT_TABLE_BLOB, hexBlob);
+    }
+
 }
