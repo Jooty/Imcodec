@@ -61,15 +61,36 @@ public class ObjectSerializer(bool Versionable = true,
     public PropertyFlags PropertyMask { get; set; } = PropertyFlags.Prop_Transmit | PropertyFlags.Prop_AuthorityTransmit;
 
     /// <summary>
-    /// Deserializes the input buffer into an instance of type T. The property mask is set to <see cref="PropertyMask"/>,
-    /// which is the default or the last set property mask.
+    /// Serializes the specified <see cref="PropertyClass"/> object using the provided <see cref="PropertyFlags"/> mask.
     /// </summary>
-    /// <typeparam name="T">The type of the object to deserialize.</typeparam>
-    /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
-    /// <param name="output">The deserialized object of type T.</param>
-    /// <returns>True if deserialization is successful; otherwise, false.</returns>
-    public bool Deserialize<T>(byte[] inputBuffer, out T output) where T : PropertyClass
-        => Deserialize(inputBuffer, PropertyMask, out output);
+    /// <param name="input">The <see cref="PropertyClass"/> object to serialize.</param>
+    /// <param name="propertyMask">The <see cref="PropertyFlags"/> mask to apply during serialization.</param>
+    /// <param name="output">The serialized byte array output.</param>
+    public bool Serialize(PropertyClass input, PropertyFlags propertyMask, out byte[]? output) {
+        output = default;
+        this.PropertyMask = propertyMask;
+        var writer = new BitWriter();
+
+        // Write the property class hash.
+        writer.WriteUInt32(input.GetHash());
+
+        // Tell the property class to encode its properties.
+        input.OnPreEncode();
+        var encodeSuccess = input.Encode(writer, this);
+        input.OnPostEncode();
+
+        if (!encodeSuccess) {
+            return false;
+        }
+
+        // If the behaviors flag is set to use compression, compress the output buffer.
+        if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
+            writer = Compress(writer);
+        }
+
+        output = writer.GetData();
+        return true;
+    }
 
     /// <summary>
     /// Deserializes the input buffer into an instance of the specified type.
@@ -79,7 +100,7 @@ public class ObjectSerializer(bool Versionable = true,
     /// <param name=""propertyMask"">The property flags to use for serialization.</param>
     /// <param name="output">When this method returns, contains the deserialized object of type <typeparamref name="T"/>.</param>
     /// <returns><c>true</c> if the deserialization is successful; otherwise, <c>false</c>.</returns>
-    public bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) where T : PropertyClass {
+    public bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T? output) where T : PropertyClass {
         output = default;
         this.PropertyMask = propertyMask;
         var reader = new BitReader(inputBuffer);
@@ -92,10 +113,13 @@ public class ObjectSerializer(bool Versionable = true,
             }
         }
 
-        var propertyClass = DeserializeInternal(reader);
-        if (propertyClass == null) {
+        if (!PreloadObject(reader, out var propertyClass)) {
             return false;
         }
+
+        propertyClass?.OnPreDecode();
+        propertyClass?.Decode(reader, this);
+        propertyClass?.OnPostDecode();
 
         output = (T)propertyClass;
         return true;
@@ -125,7 +149,7 @@ public class ObjectSerializer(bool Versionable = true,
     /// <summary>
     /// Decompresses the data using the specified <see cref="BitReader"/>.
     /// </summary>
-    /// <param name="inputBuffer">Th    /// ee cref="BitReader"/> containing the compressed data.</param>
+    /// <param name="inputBuffer">The cref="BitReader"/> containing the compressed data.</param>
     /// <returns>A <see cref="BitReader"/> containing the decompressed data.</returns>
     protected virtual BitReader? Decompress(BitReader inputBuffer) {
         var uncompressedLength = inputBuffer.ReadInt32();
@@ -156,16 +180,12 @@ public class ObjectSerializer(bool Versionable = true,
         return propertyClass != null;
     }
 
-    private PropertyClass? DeserializeInternal(BitReader inputBuffer) {
-        if (!PreloadObject(inputBuffer, out var propertyClass)) {
-            return null;
-        }
-
-        propertyClass?.OnPreDecode();
-        propertyClass?.Decode(inputBuffer, this);
-        propertyClass?.OnPostDecode();
-
-        return propertyClass;
-    }
+    /// <summary>
+    /// Writes the prewrite object to the specified <see cref="BitWriter"/>.
+    /// </summary>
+    /// <param name="writer">The <see cref="BitWriter"/> to write the object to.</param>
+    /// <param name="propertyClass">The <see cref="PropertyClass"/> to prewrite.</param>
+    protected virtual void PrewriteObject(BitWriter writer, PropertyClass propertyClass) 
+        => writer.WriteUInt32(propertyClass.GetHash());
 
 }

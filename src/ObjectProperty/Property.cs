@@ -138,7 +138,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
             return Property<T>.EncodeNestedPropertyClass(writer, (PropertyClass) val!, serializer);
         }
         else if (IsEnum) {
-            writer.WriteUInt32((uint) val!);
+            writer.WriteUInt32((uint) (int) val!);
             return true;
         }
         else if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {

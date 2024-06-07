@@ -60,8 +60,6 @@ public abstract class PropertyClass {
     internal bool Encode(BitWriter writer, ObjectSerializer serializer) {
         OnPreEncode();
 
-        writer.WriteUInt32(GetHash());
-
         if (serializer.Versionable) {
             return EncodeVersionable(writer, serializer);
         }
@@ -89,9 +87,6 @@ public abstract class PropertyClass {
     /// <returns><c>true</c> if the decoding is successful for all properties; otherwise, <c>false</c>.</returns>
     internal bool Decode(BitReader reader, ObjectSerializer serializer) {
         OnPreDecode();
-
-        // We don't want to read the hash here, since the caller should have already read it.
-        // Otherwise, we wouldn't be here in the first place.
 
         if (serializer.Versionable) {
             return DecodeVersionable(reader, serializer);
