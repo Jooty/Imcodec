@@ -25,6 +25,11 @@ namespace Imcodec.Test.ObjectPropertyTest;
 
 public class LootTableTest {
 
+    /*
+    Loot reward lists contain a little of everything we ne need to test. They contain a list of types which derive PropertyClass,
+    basic struct types, and a ByteString. We will test the serialization and deserialization of a loot table.
+    */
+
     private const string LOOT_TABLE_BLOB = "2A0367480100000089876B65050000000000050000005E39841B0100000002000000";
 
     [Fact]
