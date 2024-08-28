@@ -94,7 +94,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
     bool IProperty.Encode(BitWriter writer, ObjectSerializer serializer) {
         // If the val is a list, encode the list elements.
         if (IsVector) {
-            var list = (IList) (Getter?.Invoke(this, null) ?? new List<T>());
+            var list = (IList) (Getter?.Invoke(TargetObject, null) ?? new List<T>());
             WriteVectorSize(writer, list.Count, serializer);
 
             foreach (var val in list) {
@@ -104,7 +104,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
             }
         }
         else {
-            if (!EncodeElement(writer, serializer, Getter?.Invoke(this, null))) {
+            if (!EncodeElement(writer, serializer, Getter?.Invoke(TargetObject, null))) {
                 return false;
             }
         }
