@@ -24,23 +24,19 @@ using System.Text;
 namespace Imcodec.Strings;
 
 [DebuggerDisplay("{ToString()}")]
-public struct ByteString {
+public readonly struct ByteString {
 
     private readonly byte[] _bytes;
 
-    public ByteString(byte[] bytes) {
-        _bytes = bytes;
-    }
+    public ByteString(byte[] bytes)
+        => _bytes = bytes;
 
-    public ByteString(string toString) {
-        _bytes = Encoding.UTF8.GetBytes(toString);
-    }
+    public ByteString(string toString)
+        => _bytes = Encoding.UTF8.GetBytes(toString);
 
-    public static implicit operator string(ByteString byteString) {
-        return byteString._bytes is null
+    public static implicit operator string(ByteString byteString) => byteString._bytes is null
             ? string.Empty
             : Encoding.UTF8.GetString(byteString._bytes);
-    }
 
     public static implicit operator ByteString(string str) {
         if (str is null) {
@@ -50,17 +46,11 @@ public struct ByteString {
         return new ByteString(Encoding.UTF8.GetBytes(str));
     }
 
-    public static implicit operator byte[](ByteString byteString) {
-        return byteString._bytes;
-    }
+    public static implicit operator byte[](ByteString byteString) => byteString._bytes;
 
-    public static implicit operator ByteString(byte[] buffer) {
-        return new ByteString(buffer);
-    }
+    public static implicit operator ByteString(byte[] buffer) => new ByteString(buffer);
 
-    public override readonly string? ToString() {
-        return _bytes is null ? null : Encoding.UTF8.GetString(_bytes);
-    }
+    public override readonly string? ToString() => _bytes is null ? null : Encoding.UTF8.GetString(_bytes);
 
     public readonly int Length {
         get {

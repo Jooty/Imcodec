@@ -25,7 +25,7 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON;
 internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
 
     internal override string Compile(string externCode) {
-
+        return null;
     }
 
 }

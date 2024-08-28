@@ -21,12 +21,22 @@ modification, are permitted provided that the following conditions are met:
 using Imcodec.IO;
 using Imcodec.ObjectProperty.CodeGen;
 using System.Collections;
+using System.Reflection;
 
 namespace Imcodec.ObjectProperty;
 
+[AttributeUsage(AttributeTargets.Property)]
+public class AutoPropertyAttribute(uint hash, int flags) : Attribute {
+
+    public uint Hash = hash;
+    public int Flags = flags;
+
+}
+
 /// <summary>
 /// Represents a property with its associated flags, transferability, and a pointer to the data.
-/// This inferface hack is used to allow the <see cref="Property{T}"/> class to be stored in a dictionary.
+/// This inferface hack is used to allow the <see cref="Property{T}"/> class to be stored in an enumerable,
+/// without explicitly specifying the generic type.
 /// </summary>
 public interface IProperty {
 
@@ -61,13 +71,14 @@ public interface IProperty {
 /// <summary>
 /// Represents a property with its associated flags, transferability, and a pointer to the data.
 /// </summary>
-public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, Action<T> setter) : IProperty {
+public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? getter, MethodInfo? setter, object targetObject) : IProperty {
 
     uint IProperty.Hash { get; } = hash;
     PropertyFlags IProperty.Flags { get; } = flags;
 
-    private Func<T> Getter { get; } = getter ?? throw new ArgumentNullException(nameof(getter));
-    private Action<T> Setter { get; } = setter ?? throw new ArgumentNullException(nameof(setter));
+    private MethodInfo? Getter { get; } = getter ?? throw new ArgumentNullException(nameof(getter));
+    private MethodInfo? Setter { get; } = setter ?? throw new ArgumentNullException(nameof(setter));
+    private object TargetObject { get; } = targetObject ?? throw new ArgumentNullException(nameof(targetObject));
     private bool IsVector => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
     private bool IsEnum => typeof(T).IsEnum;
     private Type InnerType {
@@ -83,7 +94,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
     bool IProperty.Encode(BitWriter writer, ObjectSerializer serializer) {
         // If the val is a list, encode the list elements.
         if (IsVector) {
-            var list = (IList) Getter() ?? new List<T>();
+            var list = (IList) (Getter?.Invoke(this, null) ?? new List<T>());
             WriteVectorSize(writer, list.Count, serializer);
 
             foreach (var val in list) {
@@ -93,7 +104,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
             }
         }
         else {
-            if (!EncodeElement(writer, serializer, Getter())) {
+            if (!EncodeElement(writer, serializer, Getter?.Invoke(this, null))) {
                 return false;
             }
         }
@@ -106,30 +117,37 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
         if (IsVector) {
             var len = ReadVectorSize(reader, serializer);
             var listType = typeof(List<>).MakeGenericType(InnerType);
-            var list = (IList) Activator.CreateInstance(listType) 
-                ?? throw new InvalidOperationException($"Failed to create instance of type {listType.Name}");
-    
+            var list = (IList) (Activator.CreateInstance(listType)
+                ?? throw new InvalidOperationException($"Failed to create instance of type {listType.Name}"));
+
             for (int i = 0; i < len; i++) {
                 var decodeSuccess = DecodeElement(reader, serializer, out var val);
                 if (!decodeSuccess) {
                     return false;
                 }
-    
-                list.Add(val!);
+
+                var index = list.Add(val!);
+
+                // If the index is less than 0, the element was not added to the list.
+                if (index < 0) {
+                    return false;
+                }
             }
 
             // Cast the list to the appropriate type and set the value.
-            Setter((T) list);
+            _ = Setter?.Invoke(TargetObject, [(T) list!]);
         }
         else {
             if (!DecodeElement(reader, serializer, out var val)) {
                 return false;
             }
 
-            Setter((T) val!);
+            // Cast the list to the appropriate type and set the value.
+            _ = Setter?.Invoke(TargetObject, [(T) val!]);
+
             return true;
         }
-    
+
         return true;
     }
 
@@ -149,7 +167,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
             throw new InvalidOperationException($"No codec found for type {typeof(T).Name}");
         }
     }
-    
+
     private bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
             var decodeSuccess = DecodeNestedPropertyClass(reader, serializer, out var propertyClass);
@@ -197,7 +215,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, Func<T> getter, 
         return propertyClass.Decode(reader, serializer);
     }
 
-    private static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer) 
+    private static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer)
         // Read the vector size. The size is encoded as a compact length if the flag is set.
         // Otherwise, the size is encoded as a 32-bit unsigned integer.
         => serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)

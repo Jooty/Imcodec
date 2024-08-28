@@ -19,8 +19,20 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.IO;
+using System.Reflection;
 
 namespace Imcodec.ObjectProperty;
+
+public class PropertyComparer : IComparer<PropertyInfo?> {
+
+    public int Compare(PropertyInfo? x, PropertyInfo? y) {
+        if (x?.DeclaringType != y?.DeclaringType) {
+            return x?.DeclaringType?.IsAssignableFrom(y?.DeclaringType) ?? false ? -1 : 1;
+        }
+        return x?.MetadataToken.CompareTo(y?.MetadataToken) ?? 0;
+    }
+
+}
 
 /// <summary>
 /// Defines class capable of undergoing binary serialization.
@@ -30,6 +42,44 @@ public abstract class PropertyClass {
     public abstract uint GetHash();
 
     protected List<IProperty> Properties { get; } = [];
+
+    // ctor
+    public PropertyClass() {
+        var properties = this.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
+            .Where(prop => Attribute.IsDefined(prop, typeof(AutoPropertyAttribute)))
+            .OrderBy(x => x, new PropertyComparer());
+
+        foreach (var prop in properties) {
+            var attribute = prop.GetCustomAttribute<AutoPropertyAttribute>();
+
+            if (attribute is null) {
+                continue;
+            }
+
+            var propertyHash = attribute.Hash;
+            var propertyFlags = (PropertyFlags) attribute.Flags;
+            var propertyType = prop.PropertyType;
+            var propertyGetter = prop.GetGetMethod();
+            var propertySetter = prop.GetSetMethod();
+
+            var propertyContainer = (IProperty) Activator.CreateInstance(
+                typeof(Property<>).MakeGenericType(propertyType),
+                propertyHash,
+                propertyFlags,
+                propertyGetter,
+                propertySetter,
+                this
+            );
+
+            if (propertyContainer is not null) {
+                Properties.Add(propertyContainer);
+            }
+            else {
+                throw new Exception($"Failed to create property container for property {prop.Name}");
+            }
+        }
+    }
 
     /// <summary>
     /// Called before encoding the object to the binary stream.
@@ -190,7 +240,7 @@ public abstract class PropertyClass {
             && property.Flags.HasFlag(PropertyFlags.Prop_Encode);
 
         // Check if the property mask is met and if the property is deprecated.
-        var propertyMaskMet = (property.Flags & serializer.PropertyMask) == property.Flags;
+        var propertyMaskMet = (property.Flags & serializer.PropertyMask) == serializer.PropertyMask;
         var deprecated = property.Flags.HasFlag(PropertyFlags.Prop_Deprecated);
 
         // Skip properties that are not marked for serialization, or are deprecated and not dirty encoded.

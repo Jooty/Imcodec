@@ -39,13 +39,8 @@ public partial class LootInfoList : PropertyClass {
 
     public override uint GetHash() => 1214710570;
 
-    public List<LootInfo> m_loot { get; set; }
-    public GoldLootInfo m_goldInfo { get; set; }
-
-    public LootInfoList() {
-        base.Properties.Add(new Property<List<LootInfo>>(1119240234, PropertyFlags.Prop_Public, () => m_loot, (val) => m_loot = val));
-        base.Properties.Add(new Property<GoldLootInfo>(461650270, PropertyFlags.Prop_Public, () => m_goldInfo, (val) => m_goldInfo = val));
-    }
+    [AutoProperty(1119240234, 31)] public List<LootInfo> m_loot { get; set; }
+    [AutoProperty(461650270, 31)] public GoldLootInfo m_goldInfo { get; set; }
 
 }
 
@@ -53,25 +48,16 @@ public partial class GoldLootInfo : LootInfo {
 
     public override uint GetHash() => 461650270;
 
-    public int m_goldAmount { get; set; }
-
-    public GoldLootInfo() {
-        base.Properties.Add(new Property<int>(0, PropertyFlags.Prop_Public, () => m_goldAmount, (val) => m_goldAmount = val));
-    }
+    [AutoProperty(0, 31)] public int m_goldAmount { get; set; }
 
 }
 
 public class MagicXPLootInfo : LootInfo {
 
     public override uint GetHash() => 1701545865;
-    
-    public ByteString m_magicSchool;
-    public Int32 m_experience;
 
-    public MagicXPLootInfo() {
-        base.Properties.Add(new Property<ByteString>(1597012900, PropertyFlags.Prop_Public, () => m_magicSchool, (val) => m_magicSchool = val));
-        base.Properties.Add(new Property<Int32>(759357570, PropertyFlags.Prop_Public, () => m_experience, (val) => m_experience = val));
-    }    
+    [AutoProperty(1597012900, 31)] public ByteString m_magicSchool { get; set; }
+    [AutoProperty(759357570, 31)] public int m_experience { get; set; }
 
 }
 
@@ -79,11 +65,7 @@ public partial class LootInfo : LootInfoBase {
 
     public override uint GetHash() => 1119240234;
 
-    public LOOT_TYPE m_lootType { get; set; }
-
-    public LootInfo() {
-        base.Properties.Add(new Property<LOOT_TYPE>(0, PropertyFlags.Prop_Public, () => m_lootType, (val) => m_lootType = val));
-    }
+    [AutoProperty(0, 31)] public LOOT_TYPE m_lootType { get; set; }
 
     public enum LOOT_TYPE {
 

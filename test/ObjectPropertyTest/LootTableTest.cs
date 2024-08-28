@@ -36,7 +36,7 @@ public class LootTableTest {
     public void TryDeserializeLootTableBlob() {
         var serializer = new ObjectSerializer(false);
         var byteBlob = Convert.FromHexString(LOOT_TABLE_BLOB);
-        var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, PropertyFlags.Prop_Public, out var lootTable);
+        var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
 
         Assert.True(deserializeSuccess);
         Assert.NotNull(lootTable);
@@ -67,7 +67,7 @@ public class LootTableTest {
             ]
         };
 
-        var serializeSuccess = serializer.Serialize(lootTable, PropertyFlags.Prop_Public, out var byteBlob);
+        var serializeSuccess = serializer.Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
         Assert.True(serializeSuccess);
         Assert.True(byteBlob is not null);
 
