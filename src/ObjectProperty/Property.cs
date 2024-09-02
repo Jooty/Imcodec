@@ -36,7 +36,7 @@ public class AutoPropertyAttribute(uint hash, int flags) : Attribute {
 /// <summary>
 /// Represents a property with its associated flags, transferability, and a pointer to the data.
 /// This inferface hack is used to allow the <see cref="Property{T}"/> class to be stored in an enumerable,
-/// without explicitly specifying the generic type.
+/// without specifying the generic type.
 /// </summary>
 public interface IProperty {
 
@@ -71,25 +71,18 @@ public interface IProperty {
 /// <summary>
 /// Represents a property with its associated flags, transferability, and a pointer to the data.
 /// </summary>
-public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? getter, MethodInfo? setter, object targetObject) : IProperty {
+public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? getter, MethodInfo? setter, object propertyClass) : IProperty {
 
     uint IProperty.Hash { get; } = hash;
     PropertyFlags IProperty.Flags { get; } = flags;
 
+    private static bool IsVector => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
+    private static bool IsEnum => typeof(T).IsEnum;
+    private static Type InnerType => IsVector ? typeof(T).GetGenericArguments()[0] : typeof(T);
+
     private MethodInfo? Getter { get; } = getter ?? throw new ArgumentNullException(nameof(getter));
     private MethodInfo? Setter { get; } = setter ?? throw new ArgumentNullException(nameof(setter));
-    private object TargetObject { get; } = targetObject ?? throw new ArgumentNullException(nameof(targetObject));
-    private bool IsVector => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
-    private bool IsEnum => typeof(T).IsEnum;
-    private Type InnerType {
-        get {
-            if (IsVector) {
-                return typeof(T).GetGenericArguments()[0];
-            }
-
-            return typeof(T);
-        }
-    }
+    private object TargetObject { get; } = propertyClass ?? throw new ArgumentNullException(nameof(propertyClass));
 
     bool IProperty.Encode(BitWriter writer, ObjectSerializer serializer) {
         // If the val is a list, encode the list elements.
@@ -98,13 +91,13 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
             WriteVectorSize(writer, list.Count, serializer);
 
             foreach (var val in list) {
-                if (!EncodeElement(writer, serializer, val)) {
+                if (!Property<T>.EncodeElement(writer, serializer, val)) {
                     return false;
                 }
             }
         }
         else {
-            if (!EncodeElement(writer, serializer, Getter?.Invoke(TargetObject, null))) {
+            if (!Property<T>.EncodeElement(writer, serializer, Getter?.Invoke(TargetObject, null))) {
                 return false;
             }
         }
@@ -121,7 +114,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
                 ?? throw new InvalidOperationException($"Failed to create instance of type {listType.Name}"));
 
             for (int i = 0; i < len; i++) {
-                var decodeSuccess = DecodeElement(reader, serializer, out var val);
+                var decodeSuccess = Property<T>.DecodeElement(reader, serializer, out var val);
                 if (!decodeSuccess) {
                     return false;
                 }
@@ -138,7 +131,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
             _ = Setter?.Invoke(TargetObject, [(T) list!]);
         }
         else {
-            if (!DecodeElement(reader, serializer, out var val)) {
+            if (!Property<T>.DecodeElement(reader, serializer, out var val)) {
                 return false;
             }
 
@@ -151,7 +144,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         return true;
     }
 
-    private bool EncodeElement(BitWriter writer, ObjectSerializer serializer, object? val) {
+    private static bool EncodeElement(BitWriter writer, ObjectSerializer serializer, object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
             return Property<T>.EncodeNestedPropertyClass(writer, (PropertyClass) val!, serializer);
         }
@@ -168,7 +161,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         }
     }
 
-    private bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
+    private static bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
             var decodeSuccess = DecodeNestedPropertyClass(reader, serializer, out var propertyClass);
             val = propertyClass;

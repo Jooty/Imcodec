@@ -45,40 +45,7 @@ public abstract class PropertyClass {
 
     // ctor
     public PropertyClass() {
-        var properties = this.GetType()
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
-            .Where(prop => Attribute.IsDefined(prop, typeof(AutoPropertyAttribute)))
-            .OrderBy(x => x, new PropertyComparer());
-
-        foreach (var prop in properties) {
-            var attribute = prop.GetCustomAttribute<AutoPropertyAttribute>();
-
-            if (attribute is null) {
-                continue;
-            }
-
-            var propertyHash = attribute.Hash;
-            var propertyFlags = (PropertyFlags) attribute.Flags;
-            var propertyType = prop.PropertyType;
-            var propertyGetter = prop.GetGetMethod();
-            var propertySetter = prop.GetSetMethod();
-
-            var propertyContainer = (IProperty) Activator.CreateInstance(
-                typeof(Property<>).MakeGenericType(propertyType),
-                propertyHash,
-                propertyFlags,
-                propertyGetter,
-                propertySetter,
-                this
-            );
-
-            if (propertyContainer is not null) {
-                Properties.Add(propertyContainer);
-            }
-            else {
-                throw new Exception($"Failed to create property container for property {prop.Name}");
-            }
-        }
+        RegisterProperties();
     }
 
     /// <summary>
@@ -232,6 +199,40 @@ public abstract class PropertyClass {
         writer.WriteUInt32((uint)objectSize);
         writer.SeekBit(objectSize);
         return true;
+    }
+
+    private void RegisterProperties() {
+        var properties = this.GetType()
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
+                    .Where(prop => Attribute.IsDefined(prop, typeof(AutoPropertyAttribute)))
+                    .OrderBy(x => x, new PropertyComparer());
+
+        foreach (var prop in properties) {
+            var attribute = prop.GetCustomAttribute<AutoPropertyAttribute>()
+                ?? throw new Exception($"Failed to get attribute for property {prop.Name}");
+
+            var propertyHash = attribute.Hash;
+            var propertyFlags = (PropertyFlags) attribute.Flags;
+            var propertyType = prop.PropertyType;
+            var propertyGetter = prop.GetGetMethod();
+            var propertySetter = prop.GetSetMethod();
+
+            var propertyContainer = Activator.CreateInstance(
+                typeof(Property<>).MakeGenericType(propertyType),
+                propertyHash,
+                propertyFlags,
+                propertyGetter,
+                propertySetter,
+                this
+            );
+
+            if (propertyContainer is not null and IProperty propContainer) {
+                Properties.Add(propContainer);
+            }
+            else {
+                throw new Exception($"Failed to create property container for property {prop.Name}");
+            }
+        }
     }
 
     private static bool IsPropertyEligibleForProcessing(IProperty property, ObjectSerializer serializer) {
