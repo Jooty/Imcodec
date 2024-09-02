@@ -33,8 +33,8 @@ internal record PropertyDefinition {
         { "unsigned int",     typeof(uint)           },
         { "short",            typeof(short)          },
         { "unsigned short",   typeof(ushort)         },
-        { "std::string",      typeof(ByteString)     },
-        { "std::wstring",     typeof(WideByteString) },
+        { "std.string",       typeof(ByteString)     },
+        { "std.wstring",      typeof(WideByteString) },
         { "long",             typeof(long)           },
         { "unsigned long",    typeof(ulong)          },
         { "float",            typeof(float)          },
@@ -76,7 +76,7 @@ internal record PropertyDefinition {
     internal uint Hash { get; }
 
     // ctor
-    internal PropertyDefinition(string name, string cppType, int flags, string container, uint hash) {
+    internal PropertyDefinition(string name, string cppType, uint flags, string container, uint hash) {
         this.Name = name;
         this.Flags = (PropertyFlags) flags;
         this.Hash = hash;
@@ -94,6 +94,25 @@ internal record PropertyDefinition {
     }
 
     private static string GetCsharpType(string cppType, bool isVector) {
+        // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
+        // We'll want to remove that part and just leave the actual type.
+        var sharedPointerIndex = cppType.IndexOf("SharedPointer<");
+        if (sharedPointerIndex != -1) {
+            cppType = cppType[(sharedPointerIndex + "SharedPointer<".Length)..];
+            cppType = cppType[..^1];
+        }
+
+        // Remove any pointers.
+        cppType = cppType.Replace("*", "");
+
+        // Replace C++'s '::' with dot notation.
+        cppType = cppType.Replace("::", ".");
+
+        // If the type begins with "class" or "struct," just set that.
+        if (cppType.StartsWith("class") || cppType.StartsWith("struct")) {
+            return cppType.Replace("class ", "").Replace("struct ", "");
+        }
+
         if (s_internalTypeTranslationDict.TryGetValue(cppType, out var type)) {
             if (isVector) {
                 return $"List<{type.Name}>";

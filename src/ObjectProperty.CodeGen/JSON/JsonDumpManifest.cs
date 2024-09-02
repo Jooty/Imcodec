@@ -18,10 +18,16 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-namespace Imcodec.ObjectProperty.CodeGen;
+using System.Text.Json.Serialization;
 
-internal abstract class ExternToCsharpCompiler {
+namespace Imcodec.ObjectProperty.CodeGen.JSON;
 
-    internal abstract string? Compile(string externCode);
+public class JsonDumpManifest {
+
+    [JsonPropertyName("version")]
+    public int Version { get; set; }
+
+    [JsonPropertyName("classes")]
+    public Dictionary<string, JsonDumpClass> Classes { get; set; }
 
 }

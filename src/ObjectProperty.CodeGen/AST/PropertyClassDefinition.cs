@@ -27,16 +27,36 @@ namespace Imcodec.ObjectProperty.CodeGen.AST;
 
 internal record PropertyClassDefinition {
 
-    internal string ClassName { get; }
-    internal string BaseClassName { get; }
-    internal uint Hash { get; }
-    internal List<PropertyDefinition> Properties { get; }
+    internal string ClassName { get; set; }
+    internal uint Hash { get; set; }
+    internal List<string> BaseClassNames{ get; set; } = [];
+    internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
+    internal List<PropertyDefinition> Properties { get; set; } = [];
 
-    internal PropertyClassDefinition(string className, string baseClassName, uint hash, List<PropertyDefinition> properties) {
-        this.ClassName = className;
-        this.BaseClassName = baseClassName;
-        this.Hash = hash;
-        this.Properties = properties;
+    // ctor
+    internal PropertyClassDefinition(string className, uint hash) {
+        ClassName = CleanupClassName(className);
+        Hash = hash;
+    }
+
+    private static string CleanupClassName(string className) {
+        // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
+        // We'll want to remove that part and just leave the actual type.
+        var sharedPointerIndex = className.IndexOf("SharedPointer<");
+        if (sharedPointerIndex != -1) {
+            className = className[(sharedPointerIndex + "SharedPointer<".Length)..];
+            className = className[..^1];
+        }
+
+        // If the type begins with "class," trim that off.
+        if (className.StartsWith("class")) {
+            return className.Replace("class ", "");
+        }
+
+        // Remove any pointers.
+        className = className.Replace("*", "");
+
+        return className;
     }
 
 }

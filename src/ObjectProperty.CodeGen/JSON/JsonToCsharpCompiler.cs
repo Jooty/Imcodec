@@ -18,14 +18,55 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Imcodec.ObjectProperty.CodeGen.AST;
 using System.Text.Json;
 
 namespace Imcodec.ObjectProperty.CodeGen.JSON;
 
 internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
 
-    internal override string Compile(string externCode) {
+    internal override string? Compile(string externCode) {
+        var jsonDumpManifest = GetJsonDumpManifest(externCode);
+        if (jsonDumpManifest is null) {
+            return null;
+        }
+
+        var classDefinitions = new List<PropertyClassDefinition>();
+        foreach (var dumpedClass in jsonDumpManifest.Classes) {
+            var classDefinition = GetPropertyClassDefinition(dumpedClass.Value);
+            if (classDefinition is not null) {
+                classDefinitions.Add(classDefinition);
+            }
+        }
+
         return null;
     }
+
+    private static PropertyClassDefinition? GetPropertyClassDefinition(JsonDumpClass dumpedClass) {
+        var classDefinition = new PropertyClassDefinition(dumpedClass.Name, dumpedClass.Hash) {
+            BaseClassNames = [.. dumpedClass.BaseClasses]
+        };
+
+        foreach (var dumpedProperty in dumpedClass.Properties) {
+            var propertyDefinition = GetPropertyDefinition(dumpedProperty.Key, dumpedProperty.Value);
+            if (propertyDefinition is not null) {
+                classDefinition.Properties.Add(propertyDefinition);
+            }
+        }
+
+        return classDefinition;
+    }
+
+    private static PropertyDefinition? GetPropertyDefinition(string propertyName, JsonDumpProperty dumpedProperty) {
+        // If the type begins with "enum," skip.
+        if (dumpedProperty.Type.StartsWith("enum")) {
+            return null;
+        }
+
+        return new PropertyDefinition(propertyName, dumpedProperty.Type, dumpedProperty.Flags, dumpedProperty.Container, dumpedProperty.Hash);
+    }
+
+    private static JsonDumpManifest GetJsonDumpManifest(string json)
+        => JsonSerializer.Deserialize<JsonDumpManifest>(json)!;
 
 }
