@@ -1,7 +1,7 @@
 /*
 BSD 3-Clause License
 
-Copyright (c) 2024, Revive101
+Copyright (c) 2024, Jooty
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -185,7 +185,7 @@ public class ObjectSerializer(bool Versionable = true,
     /// </summary>
     /// <param name="writer">The <see cref="BitWriter"/> to write the object to.</param>
     /// <param name="propertyClass">The <see cref="PropertyClass"/> to prewrite.</param>
-    protected virtual void PrewriteObject(BitWriter writer, PropertyClass propertyClass) 
+    protected virtual void PrewriteObject(BitWriter writer, PropertyClass propertyClass)
         => writer.WriteUInt32(propertyClass.GetHash());
 
 }
