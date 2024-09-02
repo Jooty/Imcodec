@@ -26,4 +26,10 @@
     <ProjectReference Include="..\src\Imcodec.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="CodeGen/Inputs/r756936_WizardDev.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
