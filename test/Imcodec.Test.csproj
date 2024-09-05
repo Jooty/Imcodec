@@ -23,7 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Imcodec.csproj" />
+    <ProjectReference Include="..\src\Imcodec.ObjectProperty\Imcodec.ObjectProperty.csproj" />
+    <ProjectReference Include="..\src\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

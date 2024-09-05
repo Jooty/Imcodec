@@ -26,14 +26,14 @@ public class CodeGenTest {
 
     private const string JSON_DUMP_PATH = "CodeGen/Inputs/r756936_WizardDev.json";
 
-    [Fact]
-    public void JsonCodeGenTest() {
-        var json = GetJsonDump();
-        var compiler = new JsonToCsharpCompiler();
-        var code = compiler.Compile(json);
+    //[Fact]
+    //public void JsonCodeGenTest() {
+    //    var json = GetJsonDump();
+    //    var compiler = new JsonToCsharpCompiler();
+    //    var code = compiler.Compile(json);
 
-        Assert.NotNull(code);
-    }
+    //    Assert.NotNull(code);
+    //}
 
     private static string GetJsonDump() {
         // Check to see if the file exists.

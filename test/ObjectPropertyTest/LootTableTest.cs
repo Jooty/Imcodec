@@ -19,7 +19,6 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.ObjectProperty;
-using Imcodec.ObjectProperty.CodeGen;
 
 namespace Imcodec.Test.ObjectPropertyTest;
 
