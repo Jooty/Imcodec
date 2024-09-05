@@ -58,17 +58,17 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <summary>
     /// A <see cref="Quaternion"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Quaternion Zero = new Quaternion();
+    public static readonly Quaternion Zero = new();
 
     /// <summary>
     /// A <see cref="Quaternion"/> with all of its components set to one.
     /// </summary>
-    public static readonly Quaternion One = new Quaternion(1.0f, 1.0f, 1.0f, 1.0f);
+    public static readonly Quaternion One = new(1.0f, 1.0f, 1.0f, 1.0f);
 
     /// <summary>
     /// The identity <see cref="Quaternion"/> (0, 0, 0, 1).
     /// </summary>
-    public static readonly Quaternion Identity = new Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    public static readonly Quaternion Identity = new(0.0f, 0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// The X component of the quaternion.
@@ -158,10 +158,13 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="values"/> contains more or less than four elements.</exception>
     public Quaternion(float[] values) {
-        if (values == null)
-            throw new ArgumentNullException("values");
-        if (values.Length != 4)
-            throw new ArgumentOutOfRangeException("values", "There must be four and only four input values for Quaternion.");
+        if (values == null) {
+            throw new ArgumentNullException(nameof(values));
+        }
+
+        if (values.Length != 4) {
+            throw new ArgumentOutOfRangeException(nameof(values), "There must be four and only four input values for Quaternion.");
+        }
 
         X = values[0];
         Y = values[1];
@@ -175,26 +178,23 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <value>
     /// <c>true</c> if this instance is an identity quaternion; otherwise, <c>false</c>.
     /// </value>
-    public bool IsIdentity {
-        get { return this.Equals(Identity); }
-    }
+    public readonly bool IsIdentity => this.Equals(Identity);
 
     /// <summary>
     /// Gets a value indicting whether this instance is normalized.
     /// </summary>
-    public bool IsNormalized {
-        get { return MathUtil.IsOne((X * X) + (Y * Y) + (Z * Z) + (W * W)); }
-    }
+    public readonly bool IsNormalized => MathUtil.IsOne((X * X) + (Y * Y) + (Z * Z) + (W * W));
 
     /// <summary>
     /// Gets the angle of the quaternion.
     /// </summary>
     /// <value>The quaternion's angle.</value>
-    public float Angle {
+    public readonly float Angle {
         get {
             float length = (X * X) + (Y * Y) + (Z * Z);
-            if (MathUtil.IsZero(length))
+            if (MathUtil.IsZero(length)) {
                 return 0.0f;
+            }
 
             return (float) (2.0 * System.Math.Acos(MathUtil.Clamp(W, -1f, 1f)));
         }
@@ -204,11 +204,12 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// Gets the axis components of the quaternion.
     /// </summary>
     /// <value>The axis components of the quaternion.</value>
-    public Vector3 Axis {
+    public readonly Vector3 Axis {
         get {
             float length = (X * X) + (Y * Y) + (Z * Z);
-            if (MathUtil.IsZero(length))
+            if (MathUtil.IsZero(length)) {
                 return Vector3.UnitX;
+            }
 
             float inv = 1.0f / (float) System.Math.Sqrt(length);
             return new Vector3(X * inv, Y * inv, Z * inv);
@@ -223,16 +224,13 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <returns>The value of the component at the specified index.</returns>
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown when the <paramref name="index"/> is out of the range [0, 3].</exception>
     public float this[int index] {
-        get {
-            switch (index) {
-                case 0: return X;
-                case 1: return Y;
-                case 2: return Z;
-                case 3: return W;
-            }
-
-            throw new ArgumentOutOfRangeException("index", "Indices for Quaternion run from 0 to 3, inclusive.");
-        }
+        readonly get => index switch {
+            0 => X,
+            1 => Y,
+            2 => Z,
+            3 => W,
+            _ => throw new ArgumentOutOfRangeException(nameof(index), "Indices for Quaternion run from 0 to 3, inclusive."),
+        };
 
         set {
             switch (index) {
@@ -240,7 +238,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
                 case 1: Y = value; break;
                 case 2: Z = value; break;
                 case 3: W = value; break;
-                default: throw new ArgumentOutOfRangeException("index", "Indices for Quaternion run from 0 to 3, inclusive.");
+                default: throw new ArgumentOutOfRangeException(nameof(index), "Indices for Quaternion run from 0 to 3, inclusive.");
             }
         }
     }
@@ -265,7 +263,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
             X = -X * lengthSq;
             Y = -Y * lengthSq;
             Z = -Z * lengthSq;
-            W = W * lengthSq;
+            W *= lengthSq;
         }
     }
 
@@ -277,9 +275,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <see cref="Quaternion.LengthSquared"/> may be preferred when only the relative length is needed
     /// and speed is of the essence.
     /// </remarks>
-    public float Length() {
-        return (float) System.Math.Sqrt((X * X) + (Y * Y) + (Z * Z) + (W * W));
-    }
+    public readonly float Length() => (float) System.Math.Sqrt((X * X) + (Y * Y) + (Z * Z) + (W * W));
 
     /// <summary>
     /// Calculates the squared length of the quaternion.
@@ -289,9 +285,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// This method may be preferred to <see cref="Quaternion.Length"/> when only a relative length is needed
     /// and speed is of the essence.
     /// </remarks>
-    public float LengthSquared() {
-        return (X * X) + (Y * Y) + (Z * Z) + (W * W);
-    }
+    public readonly float LengthSquared() => (X * X) + (Y * Y) + (Z * Z) + (W * W);
 
     /// <summary>
     /// Converts the quaternion into a unit quaternion.
@@ -311,9 +305,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// Creates an array containing the elements of the quaternion.
     /// </summary>
     /// <returns>A four-element array containing the components of the quaternion.</returns>
-    public float[] ToArray() {
-        return new float[] { X, Y, Z, W };
-    }
+    public readonly float[] ToArray() => [X, Y, Z, W];
 
     /// <summary>
     /// Adds two quaternions.
@@ -335,8 +327,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second quaternion to add.</param>
     /// <returns>The sum of the two quaternions.</returns>
     public static Quaternion Add(Quaternion left, Quaternion right) {
-        Quaternion result;
-        Add(ref left, ref right, out result);
+        Add(ref left, ref right, out var result);
         return result;
     }
 
@@ -360,8 +351,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second quaternion to subtract.</param>
     /// <returns>The difference of the two quaternions.</returns>
     public static Quaternion Subtract(Quaternion left, Quaternion right) {
-        Quaternion result;
-        Subtract(ref left, ref right, out result);
+        Subtract(ref left, ref right, out var result);
         return result;
     }
 
@@ -385,8 +375,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="scale">The amount by which to scale the quaternion.</param>
     /// <returns>The scaled quaternion.</returns>
     public static Quaternion Multiply(Quaternion value, float scale) {
-        Quaternion result;
-        Multiply(ref value, scale, out result);
+        Multiply(ref value, scale, out var result);
         return result;
     }
 
@@ -422,8 +411,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second quaternion to multiply.</param>
     /// <returns>The multiplied quaternion.</returns>
     public static Quaternion Multiply(Quaternion left, Quaternion right) {
-        Quaternion result;
-        Multiply(ref left, ref right, out result);
+        Multiply(ref left, ref right, out var result);
         return result;
     }
 
@@ -445,8 +433,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="value">The quaternion to negate.</param>
     /// <returns>A quaternion facing in the opposite direction.</returns>
     public static Quaternion Negate(Quaternion value) {
-        Quaternion result;
-        Negate(ref value, out result);
+        Negate(ref value, out var result);
         return result;
     }
 
@@ -460,9 +447,8 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="amount2">Barycentric coordinate b3, which expresses the weighting factor toward vertex 3 (specified in <paramref name="value3"/>).</param>
     /// <param name="result">When the method completes, contains a new <see cref="Quaternion"/> containing the 4D Cartesian coordinates of the specified point.</param>
     public static void Barycentric(ref Quaternion value1, ref Quaternion value2, ref Quaternion value3, float amount1, float amount2, out Quaternion result) {
-        Quaternion start, end;
-        Slerp(ref value1, ref value2, amount1 + amount2, out start);
-        Slerp(ref value1, ref value3, amount1 + amount2, out end);
+        Slerp(ref value1, ref value2, amount1 + amount2, out var start);
+        Slerp(ref value1, ref value3, amount1 + amount2, out var end);
         Slerp(ref start, ref end, amount2 / (amount1 + amount2), out result);
     }
 
@@ -476,8 +462,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="amount2">Barycentric coordinate b3, which expresses the weighting factor toward vertex 3 (specified in <paramref name="value3"/>).</param>
     /// <returns>A new <see cref="Quaternion"/> containing the 4D Cartesian coordinates of the specified point.</returns>
     public static Quaternion Barycentric(Quaternion value1, Quaternion value2, Quaternion value3, float amount1, float amount2) {
-        Quaternion result;
-        Barycentric(ref value1, ref value2, ref value3, amount1, amount2, out result);
+        Barycentric(ref value1, ref value2, ref value3, amount1, amount2, out var result);
         return result;
     }
 
@@ -499,8 +484,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="value">The quaternion to conjugate.</param>
     /// <returns>The conjugated quaternion.</returns>
     public static Quaternion Conjugate(Quaternion value) {
-        Quaternion result;
-        Conjugate(ref value, out result);
+        Conjugate(ref value, out var result);
         return result;
     }
 
@@ -510,9 +494,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="left">First source quaternion.</param>
     /// <param name="right">Second source quaternion.</param>
     /// <param name="result">When the method completes, contains the dot product of the two quaternions.</param>
-    public static void Dot(ref Quaternion left, ref Quaternion right, out float result) {
-        result = (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z) + (left.W * right.W);
-    }
+    public static void Dot(ref Quaternion left, ref Quaternion right, out float result) => result = (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z) + (left.W * right.W);
 
     /// <summary>
     /// Calculates the dot product of two quaternions.
@@ -520,9 +502,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="left">First source quaternion.</param>
     /// <param name="right">Second source quaternion.</param>
     /// <returns>The dot product of the two quaternions.</returns>
-    public static float Dot(Quaternion left, Quaternion right) {
-        return (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z) + (left.W * right.W);
-    }
+    public static float Dot(Quaternion left, Quaternion right) => (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z) + (left.W * right.W);
 
     /// <summary>
     /// Exponentiates a quaternion.
@@ -552,8 +532,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="value">The quaternion to exponentiate.</param>
     /// <returns>The exponentiated quaternion.</returns>
     public static Quaternion Exponential(Quaternion value) {
-        Quaternion result;
-        Exponential(ref value, out result);
+        Exponential(ref value, out var result);
         return result;
     }
 
@@ -573,8 +552,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="value">The quaternion to conjugate and renormalize.</param>
     /// <returns>The conjugated and renormalized quaternion.</returns>
     public static Quaternion Invert(Quaternion value) {
-        Quaternion result;
-        Invert(ref value, out result);
+        Invert(ref value, out var result);
         return result;
     }
 
@@ -622,8 +600,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// Passing <paramref name="amount"/> a value of 0 will cause <paramref name="start"/> to be returned; a value of 1 will cause <paramref name="end"/> to be returned.
     /// </remarks>
     public static Quaternion Lerp(Quaternion start, Quaternion end, float amount) {
-        Quaternion result;
-        Lerp(ref start, ref end, amount, out result);
+        Lerp(ref start, ref end, amount, out var result);
         return result;
     }
 
@@ -660,8 +637,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="value">The quaternion whose logarithm will be calculated.</param>
     /// <returns>The natural logarithm of the quaternion.</returns>
     public static Quaternion Logarithm(Quaternion value) {
-        Quaternion result;
-        Logarithm(ref value, out result);
+        Logarithm(ref value, out var result);
         return result;
     }
 
@@ -693,8 +669,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="angle">The angle of rotation.</param>
     /// <param name="result">When the method completes, contains the newly created quaternion.</param>
     public static void RotationAxis(ref Vector3 axis, float angle, out Quaternion result) {
-        Vector3 normalized;
-        Vector3.Normalize(ref axis, out normalized);
+        Vector3.Normalize(ref axis, out var normalized);
 
         float half = angle * 0.5f;
         float sin = (float) System.Math.Sin(half);
@@ -713,8 +688,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="angle">The angle of rotation.</param>
     /// <returns>The newly created quaternion.</returns>
     public static Quaternion RotationAxis(Vector3 axis, float angle) {
-        Quaternion result;
-        RotationAxis(ref axis, angle, out result);
+        RotationAxis(ref axis, angle, out var result);
         return result;
     }
 
@@ -822,8 +796,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <param name="result">When the method completes, contains the created look-at quaternion.</param>
     public static void LookAtLH(ref Vector3 eye, ref Vector3 target, ref Vector3 up, out Quaternion result) {
-        Matrix3x3 matrix;
-        Matrix3x3.LookAtLH(ref eye, ref target, ref up, out matrix);
+        Matrix3x3.LookAtLH(ref eye, ref target, ref up, out var matrix);
         RotationMatrix(ref matrix, out result);
     }
 
@@ -835,8 +808,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <returns>The created look-at quaternion.</returns>
     public static Quaternion LookAtLH(Vector3 eye, Vector3 target, Vector3 up) {
-        Quaternion result;
-        LookAtLH(ref eye, ref target, ref up, out result);
+        LookAtLH(ref eye, ref target, ref up, out var result);
         return result;
     }
 
@@ -858,8 +830,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <returns>The created look-at quaternion.</returns>
     public static Quaternion RotationLookAtLH(Vector3 forward, Vector3 up) {
-        Quaternion result;
-        RotationLookAtLH(ref forward, ref up, out result);
+        RotationLookAtLH(ref forward, ref up, out var result);
         return result;
     }
 
@@ -871,8 +842,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <param name="result">When the method completes, contains the created look-at quaternion.</param>
     public static void LookAtRH(ref Vector3 eye, ref Vector3 target, ref Vector3 up, out Quaternion result) {
-        Matrix3x3 matrix;
-        Matrix3x3.LookAtRH(ref eye, ref target, ref up, out matrix);
+        Matrix3x3.LookAtRH(ref eye, ref target, ref up, out var matrix);
         RotationMatrix(ref matrix, out result);
     }
 
@@ -884,8 +854,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <returns>The created look-at quaternion.</returns>
     public static Quaternion LookAtRH(Vector3 eye, Vector3 target, Vector3 up) {
-        Quaternion result;
-        LookAtRH(ref eye, ref target, ref up, out result);
+        LookAtRH(ref eye, ref target, ref up, out var result);
         return result;
     }
 
@@ -907,8 +876,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <returns>The created look-at quaternion.</returns>
     public static Quaternion RotationLookAtRH(Vector3 forward, Vector3 up) {
-        Quaternion result;
-        RotationLookAtRH(ref forward, ref up, out result);
+        RotationLookAtRH(ref forward, ref up, out var result);
         return result;
     }
 
@@ -921,8 +889,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <param name="result">When the method completes, contains the created billboard quaternion.</param>
     public static void BillboardLH(ref Vector3 objectPosition, ref Vector3 cameraPosition, ref Vector3 cameraUpVector, ref Vector3 cameraForwardVector, out Quaternion result) {
-        Matrix3x3 matrix;
-        Matrix3x3.BillboardLH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out matrix);
+        Matrix3x3.BillboardLH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out var matrix);
         RotationMatrix(ref matrix, out result);
     }
 
@@ -935,8 +902,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <returns>The created billboard quaternion.</returns>
     public static Quaternion BillboardLH(Vector3 objectPosition, Vector3 cameraPosition, Vector3 cameraUpVector, Vector3 cameraForwardVector) {
-        Quaternion result;
-        BillboardLH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out result);
+        BillboardLH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out var result);
         return result;
     }
 
@@ -949,8 +915,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <param name="result">When the method completes, contains the created billboard quaternion.</param>
     public static void BillboardRH(ref Vector3 objectPosition, ref Vector3 cameraPosition, ref Vector3 cameraUpVector, ref Vector3 cameraForwardVector, out Quaternion result) {
-        Matrix3x3 matrix;
-        Matrix3x3.BillboardRH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out matrix);
+        Matrix3x3.BillboardRH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out var matrix);
         RotationMatrix(ref matrix, out result);
     }
 
@@ -963,8 +928,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <returns>The created billboard quaternion.</returns>
     public static Quaternion BillboardRH(Vector3 objectPosition, Vector3 cameraPosition, Vector3 cameraUpVector, Vector3 cameraForwardVector) {
-        Quaternion result;
-        BillboardRH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out result);
+        BillboardRH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out var result);
         return result;
     }
 
@@ -974,8 +938,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="matrix">The rotation matrix.</param>
     /// <returns>The newly created quaternion.</returns>
     public static Quaternion RotationMatrix(Matrix matrix) {
-        Quaternion result;
-        RotationMatrix(ref matrix, out result);
+        RotationMatrix(ref matrix, out var result);
         return result;
     }
 
@@ -1012,8 +975,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="roll">The roll of rotation.</param>
     /// <returns>The newly created quaternion.</returns>
     public static Quaternion RotationYawPitchRoll(float yaw, float pitch, float roll) {
-        Quaternion result;
-        RotationYawPitchRoll(yaw, pitch, roll, out result);
+        RotationYawPitchRoll(yaw, pitch, roll, out var result);
         return result;
     }
 
@@ -1055,8 +1017,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="amount">Value between 0 and 1 indicating the weight of <paramref name="end"/>.</param>
     /// <returns>The spherical linear interpolation of the two quaternions.</returns>
     public static Quaternion Slerp(Quaternion start, Quaternion end, float amount) {
-        Quaternion result;
-        Slerp(ref start, ref end, amount, out result);
+        Slerp(ref start, ref end, amount, out var result);
         return result;
     }
 
@@ -1070,9 +1031,8 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="amount">Value between 0 and 1 indicating the weight of interpolation.</param>
     /// <param name="result">When the method completes, contains the spherical quadrangle interpolation of the quaternions.</param>
     public static void Squad(ref Quaternion value1, ref Quaternion value2, ref Quaternion value3, ref Quaternion value4, float amount, out Quaternion result) {
-        Quaternion start, end;
-        Slerp(ref value1, ref value4, amount, out start);
-        Slerp(ref value2, ref value3, amount, out end);
+        Slerp(ref value1, ref value4, amount, out var start);
+        Slerp(ref value2, ref value3, amount, out var end);
         Slerp(ref start, ref end, 2.0f * amount * (1.0f - amount), out result);
     }
 
@@ -1086,8 +1046,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="amount">Value between 0 and 1 indicating the weight of interpolation.</param>
     /// <returns>The spherical quadrangle interpolation of the quaternions.</returns>
     public static Quaternion Squad(Quaternion value1, Quaternion value2, Quaternion value3, Quaternion value4, float amount) {
-        Quaternion result;
-        Squad(ref value1, ref value2, ref value3, ref value4, amount, out result);
+        Squad(ref value1, ref value2, ref value3, ref value4, amount, out var result);
         return result;
     }
 
@@ -1105,15 +1064,15 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
         Quaternion q3 = (value3 + value4).LengthSquared() < (value3 - value4).LengthSquared() ? -value4 : value4;
         Quaternion q1 = value2;
 
-        Quaternion q1Exp, q2Exp;
-        Exponential(ref q1, out q1Exp);
-        Exponential(ref q2, out q2Exp);
+        Exponential(ref q1, out var q1Exp);
+        Exponential(ref q2, out var q2Exp);
 
-        Quaternion[] results = new Quaternion[3];
-        results[0] = q1 * Exponential(-0.25f * (Logarithm(q1Exp * q2) + Logarithm(q1Exp * q0)));
-        results[1] = q2 * Exponential(-0.25f * (Logarithm(q2Exp * q3) + Logarithm(q2Exp * q1)));
-        results[2] = q2;
-
+        Quaternion[] results =
+        [
+            q1 * Exponential(-0.25f * (Logarithm(q1Exp * q2) + Logarithm(q1Exp * q0))),
+            q2 * Exponential(-0.25f * (Logarithm(q2Exp * q3) + Logarithm(q2Exp * q1))),
+            q2,
+        ];
         return results;
     }
 
@@ -1124,8 +1083,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second quaternion to add.</param>
     /// <returns>The sum of the two quaternions.</returns>
     public static Quaternion operator +(Quaternion left, Quaternion right) {
-        Quaternion result;
-        Add(ref left, ref right, out result);
+        Add(ref left, ref right, out var result);
         return result;
     }
 
@@ -1136,8 +1094,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second quaternion to subtract.</param>
     /// <returns>The difference of the two quaternions.</returns>
     public static Quaternion operator -(Quaternion left, Quaternion right) {
-        Quaternion result;
-        Subtract(ref left, ref right, out result);
+        Subtract(ref left, ref right, out var result);
         return result;
     }
 
@@ -1147,8 +1104,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="value">The quaternion to negate.</param>
     /// <returns>A quaternion facing in the opposite direction.</returns>
     public static Quaternion operator -(Quaternion value) {
-        Quaternion result;
-        Negate(ref value, out result);
+        Negate(ref value, out var result);
         return result;
     }
 
@@ -1159,8 +1115,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="scale">The amount by which to scale the quaternion.</param>
     /// <returns>The scaled quaternion.</returns>
     public static Quaternion operator *(float scale, Quaternion value) {
-        Quaternion result;
-        Multiply(ref value, scale, out result);
+        Multiply(ref value, scale, out var result);
         return result;
     }
 
@@ -1171,8 +1126,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="scale">The amount by which to scale the quaternion.</param>
     /// <returns>The scaled quaternion.</returns>
     public static Quaternion operator *(Quaternion value, float scale) {
-        Quaternion result;
-        Multiply(ref value, scale, out result);
+        Multiply(ref value, scale, out var result);
         return result;
     }
 
@@ -1183,8 +1137,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second quaternion to multiply.</param>
     /// <returns>The multiplied quaternion.</returns>
     public static Quaternion operator *(Quaternion left, Quaternion right) {
-        Quaternion result;
-        Multiply(ref left, ref right, out result);
+        Multiply(ref left, ref right, out var result);
         return result;
     }
 
@@ -1195,9 +1148,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has the same value as <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator ==(Quaternion left, Quaternion right) {
-        return left.Equals(ref right);
-    }
+    public static bool operator ==(Quaternion left, Quaternion right) => left.Equals(ref right);
 
     /// <summary>
     /// Tests for inequality between two objects.
@@ -1206,9 +1157,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has a different value than <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator !=(Quaternion left, Quaternion right) {
-        return !left.Equals(ref right);
-    }
+    public static bool operator !=(Quaternion left, Quaternion right) => !left.Equals(ref right);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -1216,9 +1165,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public override string ToString() {
-        return string.Format(CultureInfo.CurrentCulture, "X:{0} Y:{1} Z:{2} W:{3}", X, Y, Z, W);
-    }
+    public override readonly string ToString() => string.Format(CultureInfo.CurrentCulture, "X:{0} Y:{1} Z:{2} W:{3}", X, Y, Z, W);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -1227,9 +1174,10 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format) {
-        if (format == null)
+    public readonly string ToString(string format) {
+        if (format == null) {
             return ToString();
+        }
 
         return string.Format(CultureInfo.CurrentCulture, "X:{0} Y:{1} Z:{2} W:{3}", X.ToString(format, CultureInfo.CurrentCulture),
             Y.ToString(format, CultureInfo.CurrentCulture), Z.ToString(format, CultureInfo.CurrentCulture), W.ToString(format, CultureInfo.CurrentCulture));
@@ -1242,9 +1190,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(IFormatProvider formatProvider) {
-        return string.Format(formatProvider, "X:{0} Y:{1} Z:{2} W:{3}", X, Y, Z, W);
-    }
+    public readonly string ToString(IFormatProvider? formatProvider) => string.Format(formatProvider, "X:{0} Y:{1} Z:{2} W:{3}", X, Y, Z, W);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -1254,9 +1200,10 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format, IFormatProvider formatProvider) {
-        if (format == null)
+    public readonly string ToString(string? format, IFormatProvider? formatProvider) {
+        if (format == null) {
             return ToString(formatProvider);
+        }
 
         return string.Format(formatProvider, "X:{0} Y:{1} Z:{2} W:{3}", X.ToString(format, formatProvider),
             Y.ToString(format, formatProvider), Z.ToString(format, formatProvider), W.ToString(format, formatProvider));
@@ -1268,7 +1215,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <returns>
     /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
     /// </returns>
-    public override int GetHashCode() {
+    public override readonly int GetHashCode() {
         unchecked {
             var hashCode = X.GetHashCode();
             hashCode = (hashCode * 397) ^ Y.GetHashCode();
@@ -1286,9 +1233,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <c>true</c> if the specified <see cref="Quaternion"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(ref Quaternion other) {
-        return MathUtil.NearEqual(other.X, X) && MathUtil.NearEqual(other.Y, Y) && MathUtil.NearEqual(other.Z, Z) && MathUtil.NearEqual(other.W, W);
-    }
+    public readonly bool Equals(ref Quaternion other) => MathUtil.NearEqual(other.X, X) && MathUtil.NearEqual(other.Y, Y) && MathUtil.NearEqual(other.Z, Z) && MathUtil.NearEqual(other.W, W);
 
     /// <summary>
     /// Determines whether the specified <see cref="Quaternion"/> is equal to this instance.
@@ -1298,9 +1243,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <c>true</c> if the specified <see cref="Quaternion"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(Quaternion other) {
-        return Equals(ref other);
-    }
+    public readonly bool Equals(Quaternion other) => Equals(ref other);
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -1309,9 +1252,10 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable {
     /// <returns>
     /// <c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
-    public override bool Equals(object value) {
-        if (!(value is Quaternion))
+    public override readonly bool Equals(object? value) {
+        if (value is not Quaternion) {
             return false;
+        }
 
         var strongValue = (Quaternion) value;
         return Equals(ref strongValue);

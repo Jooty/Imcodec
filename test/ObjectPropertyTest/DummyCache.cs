@@ -25,7 +25,7 @@ using Imcodec.IO;
 namespace Imcodec.Test.ObjectPropertyTest;
 
 public static class Generation {
-    public static PropertyClass Dispatch(uint hash) =>
+    public static PropertyClass? Dispatch(uint hash) =>
         hash switch {
             1214710570 => new LootInfoList(),
             461650270 => new GoldLootInfo(),
@@ -40,8 +40,8 @@ public partial class LootInfoList : PropertyClass {
 
     public override uint GetHash() => 1214710570;
 
-    [AutoProperty(1119240234, 31)] public List<LootInfo> m_loot { get; set; }
-    [AutoProperty(461650270, 31)] public GoldLootInfo m_goldInfo { get; set; }
+    [AutoProperty(1119240234, 31)] public List<LootInfo>? m_loot { get; set; }
+    [AutoProperty(461650270, 31)] public GoldLootInfo? m_goldInfo { get; set; }
 
 }
 

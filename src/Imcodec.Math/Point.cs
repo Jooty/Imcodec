@@ -26,33 +26,28 @@ namespace Imcodec.Math;
 /// <summary>
 /// Structure using the same layout than <see cref="System.Drawing.Point"/>.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="Point"/> struct.
+/// </remarks>
+/// <param name="x">The x.</param>
+/// <param name="y">The y.</param>
 [StructLayout(LayoutKind.Sequential)]
-public struct Point : IEquatable<Point> {
+public struct Point(int x, int y) : IEquatable<Point> {
 
     /// <summary>
     /// A point with (0,0) coordinates.
     /// </summary>
-    public static readonly Point Zero = new Point(0, 0);
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Point"/> struct.
-    /// </summary>
-    /// <param name="x">The x.</param>
-    /// <param name="y">The y.</param>
-    public Point(int x, int y) {
-        X = x;
-        Y = y;
-    }
+    public static readonly Point Zero = new(0, 0);
 
     /// <summary>
     /// Left coordinate.
     /// </summary>
-    public int X;
+    public int X = x;
 
     /// <summary>
     /// Top coordinate.
     /// </summary>
-    public int Y;
+    public int Y = y;
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -62,9 +57,7 @@ public struct Point : IEquatable<Point> {
     ///   <c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(ref Point other) {
-        return other.X == X && other.Y == Y;
-    }
+    public readonly bool Equals(ref Point other) => other.X == X && other.Y == Y;
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -74,21 +67,20 @@ public struct Point : IEquatable<Point> {
     ///   <c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(Point other) {
-        return Equals(ref other);
-    }
+    public readonly bool Equals(Point other) => Equals(ref other);
 
     /// <inheritdoc/>
-    public override bool Equals(object obj) {
-        if (!(obj is Point))
+    public override readonly bool Equals(object? obj) {
+        if (obj is not Point) {
             return false;
+        }
 
         var strongValue = (Point) obj;
         return Equals(ref strongValue);
     }
 
     /// <inheritdoc/>
-    public override int GetHashCode() {
+    public override readonly int GetHashCode() {
         unchecked {
             return (X * 397) ^ Y;
         }
@@ -103,9 +95,7 @@ public struct Point : IEquatable<Point> {
     /// The result of the operator.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator ==(Point left, Point right) {
-        return left.Equals(ref right);
-    }
+    public static bool operator ==(Point left, Point right) => left.Equals(ref right);
 
     /// <summary>
     /// Implements the operator !=.
@@ -116,30 +106,22 @@ public struct Point : IEquatable<Point> {
     /// The result of the operator.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator !=(Point left, Point right) {
-        return !left.Equals(ref right);
-    }
+    public static bool operator !=(Point left, Point right) => !left.Equals(ref right);
 
-    public override string ToString() {
-        return string.Format("({0},{1})", X, Y);
-    }
+    public override readonly string ToString() => string.Format("({0},{1})", X, Y);
 
     /// <summary>
     /// Performs an explicit conversion from <see cref="Vector2"/> to <see cref="Point"/>.
     /// </summary>
     /// <param name="value">The value.</param>
     /// <returns>The result of the conversion.</returns>
-    public static explicit operator Point(Vector2 value) {
-        return new Point((int) value.X, (int) value.Y);
-    }
+    public static explicit operator Point(Vector2 value) => new((int) value.X, (int) value.Y);
 
     /// <summary>
     /// Performs an implicit conversion from <see cref="Point"/> to <see cref="Vector2"/>.
     /// </summary>
     /// <param name="value">The value.</param>
     /// <returns>The result of the conversion.</returns>
-    public static implicit operator Vector2(Point value) {
-        return new Vector2(value.X, value.Y);
-    }
+    public static implicit operator Vector2(Point value) => new(value.X, value.Y);
 
 }

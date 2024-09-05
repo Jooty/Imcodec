@@ -64,12 +64,12 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <summary>
     /// A <see cref="Matrix"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Matrix Zero = new Matrix();
+    public static readonly Matrix Zero = new();
 
     /// <summary>
     /// The identity <see cref="Matrix"/>.
     /// </summary>
-    public static readonly Matrix Identity = new Matrix() { M11 = 1.0f, M22 = 1.0f, M33 = 1.0f, M44 = 1.0f };
+    public static readonly Matrix Identity = new() { M11 = 1.0f, M22 = 1.0f, M33 = 1.0f, M44 = 1.0f };
 
     /// <summary>
     /// Value at row 1 column 1 of the matrix.
@@ -155,7 +155,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the up <see cref="Vector3"/> of the matrix; that is M21, M22, and M23.
     /// </summary>
     public Vector3 Up {
-        get {
+        readonly get {
             Vector3 vector3;
             vector3.X = this.M21;
             vector3.Y = this.M22;
@@ -173,7 +173,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the down <see cref="Vector3"/> of the matrix; that is -M21, -M22, and -M23.
     /// </summary>
     public Vector3 Down {
-        get {
+        readonly get {
             Vector3 vector3;
             vector3.X = -this.M21;
             vector3.Y = -this.M22;
@@ -191,7 +191,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the right <see cref="Vector3"/> of the matrix; that is M11, M12, and M13.
     /// </summary>
     public Vector3 Right {
-        get {
+        readonly get {
             Vector3 vector3;
             vector3.X = this.M11;
             vector3.Y = this.M12;
@@ -209,7 +209,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the left <see cref="Vector3"/> of the matrix; that is -M11, -M12, and -M13.
     /// </summary>
     public Vector3 Left {
-        get {
+        readonly get {
             Vector3 vector3;
             vector3.X = -this.M11;
             vector3.Y = -this.M12;
@@ -227,7 +227,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the forward <see cref="Vector3"/> of the matrix; that is -M31, -M32, and -M33.
     /// </summary>
     public Vector3 Forward {
-        get {
+        readonly get {
             Vector3 vector3;
             vector3.X = -this.M31;
             vector3.Y = -this.M32;
@@ -245,7 +245,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the backward <see cref="Vector3"/> of the matrix; that is M31, M32, and M33.
     /// </summary>
     public Vector3 Backward {
-        get {
+        readonly get {
             Vector3 vector3;
             vector3.X = this.M31;
             vector3.Y = this.M32;
@@ -263,12 +263,10 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Initializes a new instance of the <see cref="Matrix"/> struct.
     /// </summary>
     /// <param name="value">The value that will be assigned to all components.</param>
-    public Matrix(float value) {
-        M11 = M12 = M13 = M14 =
+    public Matrix(float value) => M11 = M12 = M13 = M14 =
         M21 = M22 = M23 = M24 =
         M31 = M32 = M33 = M34 =
         M41 = M42 = M43 = M44 = value;
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Matrix"/> struct.
@@ -306,37 +304,41 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="values"/> contains more or less than sixteen elements.</exception>
     public Matrix(float[] values) {
-        if (values == null)
-            throw new ArgumentNullException("values");
-        if (values.Length != 16)
-            throw new ArgumentOutOfRangeException("values", "There must be sixteen and only sixteen input values for Matrix.");
+        if (values != null) {
+            if (values.Length != 16) {
+                throw new ArgumentOutOfRangeException(nameof(values), "There must be sixteen and only sixteen input values for Matrix.");
+            }
 
-        M11 = values[0];
-        M12 = values[1];
-        M13 = values[2];
-        M14 = values[3];
+            M11 = values[0];
+            M12 = values[1];
+            M13 = values[2];
+            M14 = values[3];
 
-        M21 = values[4];
-        M22 = values[5];
-        M23 = values[6];
-        M24 = values[7];
+            M21 = values[4];
+            M22 = values[5];
+            M23 = values[6];
+            M24 = values[7];
 
-        M31 = values[8];
-        M32 = values[9];
-        M33 = values[10];
-        M34 = values[11];
+            M31 = values[8];
+            M32 = values[9];
+            M33 = values[10];
+            M34 = values[11];
 
-        M41 = values[12];
-        M42 = values[13];
-        M43 = values[14];
-        M44 = values[15];
+            M41 = values[12];
+            M42 = values[13];
+            M43 = values[14];
+            M44 = values[15];
+        }
+        else {
+            throw new ArgumentNullException(nameof(values));
+        }
     }
 
     /// <summary>
     /// Gets or sets the first row in the matrix; that is M11, M12, M13, and M14.
     /// </summary>
     public Vector4 Row1 {
-        get { return new Vector4(M11, M12, M13, M14); }
+        readonly get => new(M11, M12, M13, M14);
         set { M11 = value.X; M12 = value.Y; M13 = value.Z; M14 = value.W; }
     }
 
@@ -344,7 +346,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the second row in the matrix; that is M21, M22, M23, and M24.
     /// </summary>
     public Vector4 Row2 {
-        get { return new Vector4(M21, M22, M23, M24); }
+        readonly get => new(M21, M22, M23, M24);
         set { M21 = value.X; M22 = value.Y; M23 = value.Z; M24 = value.W; }
     }
 
@@ -352,7 +354,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the third row in the matrix; that is M31, M32, M33, and M34.
     /// </summary>
     public Vector4 Row3 {
-        get { return new Vector4(M31, M32, M33, M34); }
+        readonly get => new(M31, M32, M33, M34);
         set { M31 = value.X; M32 = value.Y; M33 = value.Z; M34 = value.W; }
     }
 
@@ -360,7 +362,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the fourth row in the matrix; that is M41, M42, M43, and M44.
     /// </summary>
     public Vector4 Row4 {
-        get { return new Vector4(M41, M42, M43, M44); }
+        readonly get => new(M41, M42, M43, M44);
         set { M41 = value.X; M42 = value.Y; M43 = value.Z; M44 = value.W; }
     }
 
@@ -368,7 +370,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the first column in the matrix; that is M11, M21, M31, and M41.
     /// </summary>
     public Vector4 Column1 {
-        get { return new Vector4(M11, M21, M31, M41); }
+        readonly get => new(M11, M21, M31, M41);
         set { M11 = value.X; M21 = value.Y; M31 = value.Z; M41 = value.W; }
     }
 
@@ -376,7 +378,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the second column in the matrix; that is M12, M22, M32, and M42.
     /// </summary>
     public Vector4 Column2 {
-        get { return new Vector4(M12, M22, M32, M42); }
+        readonly get => new(M12, M22, M32, M42);
         set { M12 = value.X; M22 = value.Y; M32 = value.Z; M42 = value.W; }
     }
 
@@ -384,7 +386,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the third column in the matrix; that is M13, M23, M33, and M43.
     /// </summary>
     public Vector4 Column3 {
-        get { return new Vector4(M13, M23, M33, M43); }
+        readonly get => new(M13, M23, M33, M43);
         set { M13 = value.X; M23 = value.Y; M33 = value.Z; M43 = value.W; }
     }
 
@@ -392,7 +394,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the fourth column in the matrix; that is M14, M24, M34, and M44.
     /// </summary>
     public Vector4 Column4 {
-        get { return new Vector4(M14, M24, M34, M44); }
+        readonly get => new(M14, M24, M34, M44);
         set { M14 = value.X; M24 = value.Y; M34 = value.Z; M44 = value.W; }
     }
 
@@ -400,7 +402,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the translation of the matrix; that is M41, M42, and M43.
     /// </summary>
     public Vector3 TranslationVector {
-        get { return new Vector3(M41, M42, M43); }
+        readonly get => new(M41, M42, M43);
         set { M41 = value.X; M42 = value.Y; M43 = value.Z; }
     }
 
@@ -408,7 +410,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Gets or sets the scale of the matrix; that is M11, M22, and M33.
     /// </summary>
     public Vector3 ScaleVector {
-        get { return new Vector3(M11, M22, M33); }
+        readonly get => new(M11, M22, M33);
         set { M11 = value.X; M22 = value.Y; M33 = value.Z; }
     }
 
@@ -418,9 +420,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <value>
     /// <c>true</c> if this instance is an identity matrix; otherwise, <c>false</c>.
     /// </value>
-    public bool IsIdentity {
-        get { return this.Equals(Identity); }
-    }
+    public readonly bool IsIdentity => this.Equals(Identity);
 
     /// <summary>
     /// Gets or sets the component at the specified index.
@@ -430,28 +430,25 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>The value of the component at the specified index.</returns>
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown when the <paramref name="index"/> is out of the range [0, 15].</exception>
     public float this[int index] {
-        get {
-            switch (index) {
-                case 0: return M11;
-                case 1: return M12;
-                case 2: return M13;
-                case 3: return M14;
-                case 4: return M21;
-                case 5: return M22;
-                case 6: return M23;
-                case 7: return M24;
-                case 8: return M31;
-                case 9: return M32;
-                case 10: return M33;
-                case 11: return M34;
-                case 12: return M41;
-                case 13: return M42;
-                case 14: return M43;
-                case 15: return M44;
-            }
-
-            throw new ArgumentOutOfRangeException("index", "Indices for Matrix run from 0 to 15, inclusive.");
-        }
+        readonly get => index switch {
+            0 => M11,
+            1 => M12,
+            2 => M13,
+            3 => M14,
+            4 => M21,
+            5 => M22,
+            6 => M23,
+            7 => M24,
+            8 => M31,
+            9 => M32,
+            10 => M33,
+            11 => M34,
+            12 => M41,
+            13 => M42,
+            14 => M43,
+            15 => M44,
+            _ => throw new ArgumentOutOfRangeException(nameof(index), "Indices for Matrix run from 0 to 15, inclusive."),
+        };
 
         set {
             switch (index) {
@@ -471,7 +468,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
                 case 13: M42 = value; break;
                 case 14: M43 = value; break;
                 case 15: M44 = value; break;
-                default: throw new ArgumentOutOfRangeException("index", "Indices for Matrix run from 0 to 15, inclusive.");
+                default: throw new ArgumentOutOfRangeException(nameof(index), "Indices for Matrix run from 0 to 15, inclusive.");
             }
         }
     }
@@ -485,20 +482,26 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>The value of the component at the specified index.</returns>
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown when the <paramref name="row"/> or <paramref name="column"/>is out of the range [0, 3].</exception>
     public float this[int row, int column] {
-        get {
-            if (row < 0 || row > 3)
-                throw new ArgumentOutOfRangeException("row", "Rows and columns for matrices run from 0 to 3, inclusive.");
-            if (column < 0 || column > 3)
-                throw new ArgumentOutOfRangeException("column", "Rows and columns for matrices run from 0 to 3, inclusive.");
+        readonly get {
+            if (row is < 0 or > 3) {
+                throw new ArgumentOutOfRangeException(nameof(row), "Rows and columns for matrices run from 0 to 3, inclusive.");
+            }
+
+            if (column is < 0 or > 3) {
+                throw new ArgumentOutOfRangeException(nameof(column), "Rows and columns for matrices run from 0 to 3, inclusive.");
+            }
 
             return this[(row * 4) + column];
         }
 
         set {
-            if (row < 0 || row > 3)
-                throw new ArgumentOutOfRangeException("row", "Rows and columns for matrices run from 0 to 3, inclusive.");
-            if (column < 0 || column > 3)
-                throw new ArgumentOutOfRangeException("column", "Rows and columns for matrices run from 0 to 3, inclusive.");
+            if (row is < 0 or > 3) {
+                throw new ArgumentOutOfRangeException(nameof(row), "Rows and columns for matrices run from 0 to 3, inclusive.");
+            }
+
+            if (column is < 0 or > 3) {
+                throw new ArgumentOutOfRangeException(nameof(column), "Rows and columns for matrices run from 0 to 3, inclusive.");
+            }
 
             this[(row * 4) + column] = value;
         }
@@ -508,7 +511,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Calculates the determinant of the matrix.
     /// </summary>
     /// <returns>The determinant of the matrix.</returns>
-    public float Determinant() {
+    public readonly float Determinant() {
         float temp1 = (M33 * M44) - (M34 * M43);
         float temp2 = (M32 * M44) - (M34 * M42);
         float temp3 = (M32 * M43) - (M33 * M42);
@@ -524,16 +527,12 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <summary>
     /// Inverts the matrix.
     /// </summary>
-    public void Invert() {
-        Invert(ref this, out this);
-    }
+    public void Invert() => Invert(ref this, out this);
 
     /// <summary>
     /// Transposes the matrix.
     /// </summary>
-    public void Transpose() {
-        Transpose(ref this, out this);
-    }
+    public void Transpose() => Transpose(ref this, out this);
 
     /// <summary>
     /// Orthogonalizes the specified matrix.
@@ -549,9 +548,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// If you wish for this operation to be performed on the columns, first transpose the
     /// input and than transpose the output.</para>
     /// </remarks>
-    public void Orthogonalize() {
-        Orthogonalize(ref this, out this);
-    }
+    public void Orthogonalize() => Orthogonalize(ref this, out this);
 
     /// <summary>
     /// Orthonormalizes the specified matrix.
@@ -569,35 +566,34 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// If you wish for this operation to be performed on the columns, first transpose the
     /// input and than transpose the output.</para>
     /// </remarks>
-    public void Orthonormalize() {
-        Orthonormalize(ref this, out this);
-    }
+    public void Orthonormalize() => Orthonormalize(ref this, out this);
 
     /// <summary>
     /// Decomposes a matrix into an orthonormalized matrix Q and a right triangular matrix R.
     /// </summary>
     /// <param name="Q">When the method completes, contains the orthonormalized matrix of the decomposition.</param>
     /// <param name="R">When the method completes, contains the right triangular matrix of the decomposition.</param>
-    public void DecomposeQR(out Matrix Q, out Matrix R) {
+    public readonly void DecomposeQR(out Matrix Q, out Matrix R) {
         Matrix temp = this;
         temp.Transpose();
         Orthonormalize(ref temp, out Q);
         Q.Transpose();
 
-        R = new Matrix();
-        R.M11 = Vector4.Dot(Q.Column1, Column1);
-        R.M12 = Vector4.Dot(Q.Column1, Column2);
-        R.M13 = Vector4.Dot(Q.Column1, Column3);
-        R.M14 = Vector4.Dot(Q.Column1, Column4);
+        R = new Matrix {
+            M11 = Vector4.Dot(Q.Column1, Column1),
+            M12 = Vector4.Dot(Q.Column1, Column2),
+            M13 = Vector4.Dot(Q.Column1, Column3),
+            M14 = Vector4.Dot(Q.Column1, Column4),
 
-        R.M22 = Vector4.Dot(Q.Column2, Column2);
-        R.M23 = Vector4.Dot(Q.Column2, Column3);
-        R.M24 = Vector4.Dot(Q.Column2, Column4);
+            M22 = Vector4.Dot(Q.Column2, Column2),
+            M23 = Vector4.Dot(Q.Column2, Column3),
+            M24 = Vector4.Dot(Q.Column2, Column4),
 
-        R.M33 = Vector4.Dot(Q.Column3, Column3);
-        R.M34 = Vector4.Dot(Q.Column3, Column4);
+            M33 = Vector4.Dot(Q.Column3, Column3),
+            M34 = Vector4.Dot(Q.Column3, Column4),
 
-        R.M44 = Vector4.Dot(Q.Column4, Column4);
+            M44 = Vector4.Dot(Q.Column4, Column4)
+        };
     }
 
     /// <summary>
@@ -608,20 +604,21 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     public void DecomposeLQ(out Matrix L, out Matrix Q) {
         Orthonormalize(ref this, out Q);
 
-        L = new Matrix();
-        L.M11 = Vector4.Dot(Q.Row1, Row1);
+        L = new Matrix {
+            M11 = Vector4.Dot(Q.Row1, Row1),
 
-        L.M21 = Vector4.Dot(Q.Row1, Row2);
-        L.M22 = Vector4.Dot(Q.Row2, Row2);
+            M21 = Vector4.Dot(Q.Row1, Row2),
+            M22 = Vector4.Dot(Q.Row2, Row2),
 
-        L.M31 = Vector4.Dot(Q.Row1, Row3);
-        L.M32 = Vector4.Dot(Q.Row2, Row3);
-        L.M33 = Vector4.Dot(Q.Row3, Row3);
+            M31 = Vector4.Dot(Q.Row1, Row3),
+            M32 = Vector4.Dot(Q.Row2, Row3),
+            M33 = Vector4.Dot(Q.Row3, Row3),
 
-        L.M41 = Vector4.Dot(Q.Row1, Row4);
-        L.M42 = Vector4.Dot(Q.Row2, Row4);
-        L.M43 = Vector4.Dot(Q.Row3, Row4);
-        L.M44 = Vector4.Dot(Q.Row4, Row4);
+            M41 = Vector4.Dot(Q.Row1, Row4),
+            M42 = Vector4.Dot(Q.Row2, Row4),
+            M43 = Vector4.Dot(Q.Row3, Row4),
+            M44 = Vector4.Dot(Q.Row4, Row4)
+        };
     }
 
     /// <summary>
@@ -633,7 +630,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <remarks>
     /// This method is designed to decompose an SRT transformation matrix only.
     /// </remarks>
-    public bool Decompose(out Vector3 scale, out Quaternion rotation, out Vector3 translation) {
+    public readonly bool Decompose(out Vector3 scale, out Quaternion rotation, out Vector3 translation) {
         //Source: Unknown
         //References: http://www.gamedev.net/community/forums/topic.asp?topic_id=441695
 
@@ -656,20 +653,21 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         }
 
         //The rotation is the left over matrix after dividing out the scaling.
-        Matrix rotationmatrix = new Matrix();
-        rotationmatrix.M11 = M11 / scale.X;
-        rotationmatrix.M12 = M12 / scale.X;
-        rotationmatrix.M13 = M13 / scale.X;
+        Matrix rotationmatrix = new Matrix {
+            M11 = M11 / scale.X,
+            M12 = M12 / scale.X,
+            M13 = M13 / scale.X,
 
-        rotationmatrix.M21 = M21 / scale.Y;
-        rotationmatrix.M22 = M22 / scale.Y;
-        rotationmatrix.M23 = M23 / scale.Y;
+            M21 = M21 / scale.Y,
+            M22 = M22 / scale.Y,
+            M23 = M23 / scale.Y,
 
-        rotationmatrix.M31 = M31 / scale.Z;
-        rotationmatrix.M32 = M32 / scale.Z;
-        rotationmatrix.M33 = M33 / scale.Z;
+            M31 = M31 / scale.Z,
+            M32 = M32 / scale.Z,
+            M33 = M33 / scale.Z,
 
-        rotationmatrix.M44 = 1f;
+            M44 = 1f
+        };
 
         Quaternion.RotationMatrix(ref rotationmatrix, out rotation);
         return true;
@@ -685,7 +683,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <remarks>
     /// This method is designed to decompose only an SRT transformation matrix that has the same scale in every axis.
     /// </remarks>
-    public bool DecomposeUniformScale(out float scale, out Quaternion rotation, out Vector3 translation) {
+    public readonly bool DecomposeUniformScale(out float scale, out Quaternion rotation, out Vector3 translation) {
         //Get the translation.
         translation.X = this.M41;
         translation.Y = this.M42;
@@ -702,20 +700,21 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         }
 
         //The rotation is the left over matrix after dividing out the scaling.
-        Matrix rotationmatrix = new Matrix();
-        rotationmatrix.M11 = M11 * inv_scale;
-        rotationmatrix.M12 = M12 * inv_scale;
-        rotationmatrix.M13 = M13 * inv_scale;
+        Matrix rotationmatrix = new Matrix {
+            M11 = M11 * inv_scale,
+            M12 = M12 * inv_scale,
+            M13 = M13 * inv_scale,
 
-        rotationmatrix.M21 = M21 * inv_scale;
-        rotationmatrix.M22 = M22 * inv_scale;
-        rotationmatrix.M23 = M23 * inv_scale;
+            M21 = M21 * inv_scale,
+            M22 = M22 * inv_scale,
+            M23 = M23 * inv_scale,
 
-        rotationmatrix.M31 = M31 * inv_scale;
-        rotationmatrix.M32 = M32 * inv_scale;
-        rotationmatrix.M33 = M33 * inv_scale;
+            M31 = M31 * inv_scale,
+            M32 = M32 * inv_scale,
+            M33 = M33 * inv_scale,
 
-        rotationmatrix.M44 = 1f;
+            M44 = 1f
+        };
 
         Quaternion.RotationMatrix(ref rotationmatrix, out rotation);
         return true;
@@ -727,17 +726,25 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="firstRow">The first row to exchange. This is an index of the row starting at zero.</param>
     /// <param name="secondRow">The second row to exchange. This is an index of the row starting at zero.</param>
     public void ExchangeRows(int firstRow, int secondRow) {
-        if (firstRow < 0)
-            throw new ArgumentOutOfRangeException("firstRow", "The parameter firstRow must be greater than or equal to zero.");
-        if (firstRow > 3)
-            throw new ArgumentOutOfRangeException("firstRow", "The parameter firstRow must be less than or equal to three.");
-        if (secondRow < 0)
-            throw new ArgumentOutOfRangeException("secondRow", "The parameter secondRow must be greater than or equal to zero.");
-        if (secondRow > 3)
-            throw new ArgumentOutOfRangeException("secondRow", "The parameter secondRow must be less than or equal to three.");
+        if (firstRow < 0) {
+            throw new ArgumentOutOfRangeException(nameof(firstRow), "The parameter firstRow must be greater than or equal to zero.");
+        }
 
-        if (firstRow == secondRow)
+        if (firstRow > 3) {
+            throw new ArgumentOutOfRangeException(nameof(firstRow), "The parameter firstRow must be less than or equal to three.");
+        }
+
+        if (secondRow < 0) {
+            throw new ArgumentOutOfRangeException(nameof(secondRow), "The parameter secondRow must be greater than or equal to zero.");
+        }
+
+        if (secondRow > 3) {
+            throw new ArgumentOutOfRangeException(nameof(secondRow), "The parameter secondRow must be less than or equal to three.");
+        }
+
+        if (firstRow == secondRow) {
             return;
+        }
 
         float temp0 = this[secondRow, 0];
         float temp1 = this[secondRow, 1];
@@ -761,17 +768,25 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="firstColumn">The first column to exchange. This is an index of the column starting at zero.</param>
     /// <param name="secondColumn">The second column to exchange. This is an index of the column starting at zero.</param>
     public void ExchangeColumns(int firstColumn, int secondColumn) {
-        if (firstColumn < 0)
-            throw new ArgumentOutOfRangeException("firstColumn", "The parameter firstColumn must be greater than or equal to zero.");
-        if (firstColumn > 3)
-            throw new ArgumentOutOfRangeException("firstColumn", "The parameter firstColumn must be less than or equal to three.");
-        if (secondColumn < 0)
-            throw new ArgumentOutOfRangeException("secondColumn", "The parameter secondColumn must be greater than or equal to zero.");
-        if (secondColumn > 3)
-            throw new ArgumentOutOfRangeException("secondColumn", "The parameter secondColumn must be less than or equal to three.");
+        if (firstColumn < 0) {
+            throw new ArgumentOutOfRangeException(nameof(firstColumn), "The parameter firstColumn must be greater than or equal to zero.");
+        }
 
-        if (firstColumn == secondColumn)
+        if (firstColumn > 3) {
+            throw new ArgumentOutOfRangeException(nameof(firstColumn), "The parameter firstColumn must be less than or equal to three.");
+        }
+
+        if (secondColumn < 0) {
+            throw new ArgumentOutOfRangeException(nameof(secondColumn), "The parameter secondColumn must be greater than or equal to zero.");
+        }
+
+        if (secondColumn > 3) {
+            throw new ArgumentOutOfRangeException(nameof(secondColumn), "The parameter secondColumn must be less than or equal to three.");
+        }
+
+        if (firstColumn == secondColumn) {
             return;
+        }
 
         float temp0 = this[0, secondColumn];
         float temp1 = this[1, secondColumn];
@@ -793,9 +808,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Creates an array containing the elements of the matrix.
     /// </summary>
     /// <returns>A sixteen-element array containing the components of the matrix.</returns>
-    public float[] ToArray() {
-        return new[] { M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44 };
-    }
+    public readonly float[] ToArray() => [M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44];
 
     /// <summary>
     /// Determines the sum of two matrices.
@@ -829,8 +842,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to add.</param>
     /// <returns>The sum of the two matrices.</returns>
     public static Matrix Add(Matrix left, Matrix right) {
-        Matrix result;
-        Add(ref left, ref right, out result);
+        Add(ref left, ref right, out var result);
         return result;
     }
 
@@ -866,8 +878,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to subtract.</param>
     /// <returns>The difference between the two matrices.</returns>
     public static Matrix Subtract(Matrix left, Matrix right) {
-        Matrix result;
-        Subtract(ref left, ref right, out result);
+        Subtract(ref left, ref right, out var result);
         return result;
     }
 
@@ -903,8 +914,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The amount by which to scale.</param>
     /// <returns>The scaled matrix.</returns>
     public static Matrix Multiply(Matrix left, float right) {
-        Matrix result;
-        Multiply(ref left, right, out result);
+        Multiply(ref left, right, out var result);
         return result;
     }
 
@@ -915,23 +925,24 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to multiply.</param>
     /// <param name="result">The product of the two matrices.</param>
     public static void Multiply(ref Matrix left, ref Matrix right, out Matrix result) {
-        Matrix temp = new Matrix();
-        temp.M11 = (left.M11 * right.M11) + (left.M12 * right.M21) + (left.M13 * right.M31) + (left.M14 * right.M41);
-        temp.M12 = (left.M11 * right.M12) + (left.M12 * right.M22) + (left.M13 * right.M32) + (left.M14 * right.M42);
-        temp.M13 = (left.M11 * right.M13) + (left.M12 * right.M23) + (left.M13 * right.M33) + (left.M14 * right.M43);
-        temp.M14 = (left.M11 * right.M14) + (left.M12 * right.M24) + (left.M13 * right.M34) + (left.M14 * right.M44);
-        temp.M21 = (left.M21 * right.M11) + (left.M22 * right.M21) + (left.M23 * right.M31) + (left.M24 * right.M41);
-        temp.M22 = (left.M21 * right.M12) + (left.M22 * right.M22) + (left.M23 * right.M32) + (left.M24 * right.M42);
-        temp.M23 = (left.M21 * right.M13) + (left.M22 * right.M23) + (left.M23 * right.M33) + (left.M24 * right.M43);
-        temp.M24 = (left.M21 * right.M14) + (left.M22 * right.M24) + (left.M23 * right.M34) + (left.M24 * right.M44);
-        temp.M31 = (left.M31 * right.M11) + (left.M32 * right.M21) + (left.M33 * right.M31) + (left.M34 * right.M41);
-        temp.M32 = (left.M31 * right.M12) + (left.M32 * right.M22) + (left.M33 * right.M32) + (left.M34 * right.M42);
-        temp.M33 = (left.M31 * right.M13) + (left.M32 * right.M23) + (left.M33 * right.M33) + (left.M34 * right.M43);
-        temp.M34 = (left.M31 * right.M14) + (left.M32 * right.M24) + (left.M33 * right.M34) + (left.M34 * right.M44);
-        temp.M41 = (left.M41 * right.M11) + (left.M42 * right.M21) + (left.M43 * right.M31) + (left.M44 * right.M41);
-        temp.M42 = (left.M41 * right.M12) + (left.M42 * right.M22) + (left.M43 * right.M32) + (left.M44 * right.M42);
-        temp.M43 = (left.M41 * right.M13) + (left.M42 * right.M23) + (left.M43 * right.M33) + (left.M44 * right.M43);
-        temp.M44 = (left.M41 * right.M14) + (left.M42 * right.M24) + (left.M43 * right.M34) + (left.M44 * right.M44);
+        Matrix temp = new Matrix {
+            M11 = (left.M11 * right.M11) + (left.M12 * right.M21) + (left.M13 * right.M31) + (left.M14 * right.M41),
+            M12 = (left.M11 * right.M12) + (left.M12 * right.M22) + (left.M13 * right.M32) + (left.M14 * right.M42),
+            M13 = (left.M11 * right.M13) + (left.M12 * right.M23) + (left.M13 * right.M33) + (left.M14 * right.M43),
+            M14 = (left.M11 * right.M14) + (left.M12 * right.M24) + (left.M13 * right.M34) + (left.M14 * right.M44),
+            M21 = (left.M21 * right.M11) + (left.M22 * right.M21) + (left.M23 * right.M31) + (left.M24 * right.M41),
+            M22 = (left.M21 * right.M12) + (left.M22 * right.M22) + (left.M23 * right.M32) + (left.M24 * right.M42),
+            M23 = (left.M21 * right.M13) + (left.M22 * right.M23) + (left.M23 * right.M33) + (left.M24 * right.M43),
+            M24 = (left.M21 * right.M14) + (left.M22 * right.M24) + (left.M23 * right.M34) + (left.M24 * right.M44),
+            M31 = (left.M31 * right.M11) + (left.M32 * right.M21) + (left.M33 * right.M31) + (left.M34 * right.M41),
+            M32 = (left.M31 * right.M12) + (left.M32 * right.M22) + (left.M33 * right.M32) + (left.M34 * right.M42),
+            M33 = (left.M31 * right.M13) + (left.M32 * right.M23) + (left.M33 * right.M33) + (left.M34 * right.M43),
+            M34 = (left.M31 * right.M14) + (left.M32 * right.M24) + (left.M33 * right.M34) + (left.M34 * right.M44),
+            M41 = (left.M41 * right.M11) + (left.M42 * right.M21) + (left.M43 * right.M31) + (left.M44 * right.M41),
+            M42 = (left.M41 * right.M12) + (left.M42 * right.M22) + (left.M43 * right.M32) + (left.M44 * right.M42),
+            M43 = (left.M41 * right.M13) + (left.M42 * right.M23) + (left.M43 * right.M33) + (left.M44 * right.M43),
+            M44 = (left.M41 * right.M14) + (left.M42 * right.M24) + (left.M43 * right.M34) + (left.M44 * right.M44)
+        };
         result = temp;
     }
 
@@ -942,8 +953,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to multiply.</param>
     /// <returns>The product of the two matrices.</returns>
     public static Matrix Multiply(Matrix left, Matrix right) {
-        Matrix result;
-        Multiply(ref left, ref right, out result);
+        Multiply(ref left, ref right, out var result);
         return result;
     }
 
@@ -981,8 +991,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The amount by which to scale.</param>
     /// <returns>The scaled matrix.</returns>
     public static Matrix Divide(Matrix left, float right) {
-        Matrix result;
-        Divide(ref left, right, out result);
+        Divide(ref left, right, out var result);
         return result;
     }
 
@@ -1018,8 +1027,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to divide.</param>
     /// <returns>The quotient of the two matrices.</returns>
     public static Matrix Divide(Matrix left, Matrix right) {
-        Matrix result;
-        Divide(ref left, ref right, out result);
+        Divide(ref left, ref right, out var result);
         return result;
     }
 
@@ -1034,8 +1042,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         //Source: http://rosettacode.org
         //Reference: http://rosettacode.org/wiki/Matrix-exponentiation_operator
 
-        if (exponent < 0)
-            throw new ArgumentOutOfRangeException("exponent", "The exponent can not be negative.");
+        if (exponent < 0) {
+            throw new ArgumentOutOfRangeException(nameof(exponent), "The exponent can not be negative.");
+        }
 
         if (exponent == 0) {
             result = Matrix.Identity;
@@ -1051,15 +1060,18 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         Matrix temp = value;
 
         while (true) {
-            if ((exponent & 1) != 0)
-                identity = identity * temp;
+            if ((exponent & 1) != 0) {
+                identity *= temp;
+            }
 
             exponent /= 2;
 
-            if (exponent > 0)
+            if (exponent > 0) {
                 temp *= temp;
-            else
+            }
+            else {
                 break;
+            }
         }
 
         result = identity;
@@ -1073,8 +1085,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>The exponential matrix.</returns>
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown when the <paramref name="exponent"/> is negative.</exception>
     public static Matrix Exponent(Matrix value, int exponent) {
-        Matrix result;
-        Exponent(ref value, exponent, out result);
+        Exponent(ref value, exponent, out var result);
         return result;
     }
 
@@ -1108,8 +1119,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="value">The matrix to be negated.</param>
     /// <returns>The negated matrix.</returns>
     public static Matrix Negate(Matrix value) {
-        Matrix result;
-        Negate(ref value, out result);
+        Negate(ref value, out var result);
         return result;
     }
 
@@ -1153,8 +1163,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// Passing <paramref name="amount"/> a value of 0 will cause <paramref name="start"/> to be returned; a value of 1 will cause <paramref name="end"/> to be returned.
     /// </remarks>
     public static Matrix Lerp(Matrix start, Matrix end, float amount) {
-        Matrix result;
-        Lerp(ref start, ref end, amount, out result);
+        Lerp(ref start, ref end, amount, out var result);
         return result;
     }
 
@@ -1178,8 +1187,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="amount">Value between 0 and 1 indicating the weight of <paramref name="end"/>.</param>
     /// <returns>The cubic interpolation of the two matrices.</returns>
     public static Matrix SmoothStep(Matrix start, Matrix end, float amount) {
-        Matrix result;
-        SmoothStep(ref start, ref end, amount, out result);
+        SmoothStep(ref start, ref end, amount, out var result);
         return result;
     }
 
@@ -1189,23 +1197,24 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="value">The matrix whose transpose is to be calculated.</param>
     /// <param name="result">When the method completes, contains the transpose of the specified matrix.</param>
     public static void Transpose(ref Matrix value, out Matrix result) {
-        Matrix temp = new Matrix();
-        temp.M11 = value.M11;
-        temp.M12 = value.M21;
-        temp.M13 = value.M31;
-        temp.M14 = value.M41;
-        temp.M21 = value.M12;
-        temp.M22 = value.M22;
-        temp.M23 = value.M32;
-        temp.M24 = value.M42;
-        temp.M31 = value.M13;
-        temp.M32 = value.M23;
-        temp.M33 = value.M33;
-        temp.M34 = value.M43;
-        temp.M41 = value.M14;
-        temp.M42 = value.M24;
-        temp.M43 = value.M34;
-        temp.M44 = value.M44;
+        Matrix temp = new Matrix {
+            M11 = value.M11,
+            M12 = value.M21,
+            M13 = value.M31,
+            M14 = value.M41,
+            M21 = value.M12,
+            M22 = value.M22,
+            M23 = value.M32,
+            M24 = value.M42,
+            M31 = value.M13,
+            M32 = value.M23,
+            M33 = value.M33,
+            M34 = value.M43,
+            M41 = value.M14,
+            M42 = value.M24,
+            M43 = value.M34,
+            M44 = value.M44
+        };
 
         result = temp;
     }
@@ -1240,8 +1249,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="value">The matrix whose transpose is to be calculated.</param>
     /// <returns>The transpose of the specified matrix.</returns>
     public static Matrix Transpose(Matrix value) {
-        Matrix result;
-        Transpose(ref value, out result);
+        Transpose(ref value, out var result);
         return result;
     }
 
@@ -1335,14 +1343,14 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         //By separating the above algorithm into multiple lines, we actually increase accuracy.
         result = value;
 
-        result.Row2 = result.Row2 - (Vector4.Dot(result.Row1, result.Row2) / Vector4.Dot(result.Row1, result.Row1)) * result.Row1;
+        result.Row2 -= (Vector4.Dot(result.Row1, result.Row2) / Vector4.Dot(result.Row1, result.Row1)) * result.Row1;
 
-        result.Row3 = result.Row3 - (Vector4.Dot(result.Row1, result.Row3) / Vector4.Dot(result.Row1, result.Row1)) * result.Row1;
-        result.Row3 = result.Row3 - (Vector4.Dot(result.Row2, result.Row3) / Vector4.Dot(result.Row2, result.Row2)) * result.Row2;
+        result.Row3 -= (Vector4.Dot(result.Row1, result.Row3) / Vector4.Dot(result.Row1, result.Row1)) * result.Row1;
+        result.Row3 -= (Vector4.Dot(result.Row2, result.Row3) / Vector4.Dot(result.Row2, result.Row2)) * result.Row2;
 
-        result.Row4 = result.Row4 - (Vector4.Dot(result.Row1, result.Row4) / Vector4.Dot(result.Row1, result.Row1)) * result.Row1;
-        result.Row4 = result.Row4 - (Vector4.Dot(result.Row2, result.Row4) / Vector4.Dot(result.Row2, result.Row2)) * result.Row2;
-        result.Row4 = result.Row4 - (Vector4.Dot(result.Row3, result.Row4) / Vector4.Dot(result.Row3, result.Row3)) * result.Row3;
+        result.Row4 -= (Vector4.Dot(result.Row1, result.Row4) / Vector4.Dot(result.Row1, result.Row1)) * result.Row1;
+        result.Row4 -= (Vector4.Dot(result.Row2, result.Row4) / Vector4.Dot(result.Row2, result.Row2)) * result.Row2;
+        result.Row4 -= (Vector4.Dot(result.Row3, result.Row4) / Vector4.Dot(result.Row3, result.Row3)) * result.Row3;
     }
 
     /// <summary>
@@ -1362,8 +1370,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// input and than transpose the output.</para>
     /// </remarks>
     public static Matrix Orthogonalize(Matrix value) {
-        Matrix result;
-        Orthogonalize(ref value, out result);
+        Orthogonalize(ref value, out var result);
         return result;
     }
 
@@ -1399,16 +1406,16 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
 
         result.Row1 = Vector4.Normalize(result.Row1);
 
-        result.Row2 = result.Row2 - Vector4.Dot(result.Row1, result.Row2) * result.Row1;
+        result.Row2 -= Vector4.Dot(result.Row1, result.Row2) * result.Row1;
         result.Row2 = Vector4.Normalize(result.Row2);
 
-        result.Row3 = result.Row3 - Vector4.Dot(result.Row1, result.Row3) * result.Row1;
-        result.Row3 = result.Row3 - Vector4.Dot(result.Row2, result.Row3) * result.Row2;
+        result.Row3 -= Vector4.Dot(result.Row1, result.Row3) * result.Row1;
+        result.Row3 -= Vector4.Dot(result.Row2, result.Row3) * result.Row2;
         result.Row3 = Vector4.Normalize(result.Row3);
 
-        result.Row4 = result.Row4 - Vector4.Dot(result.Row1, result.Row4) * result.Row1;
-        result.Row4 = result.Row4 - Vector4.Dot(result.Row2, result.Row4) * result.Row2;
-        result.Row4 = result.Row4 - Vector4.Dot(result.Row3, result.Row4) * result.Row3;
+        result.Row4 -= Vector4.Dot(result.Row1, result.Row4) * result.Row1;
+        result.Row4 -= Vector4.Dot(result.Row2, result.Row4) * result.Row2;
+        result.Row4 -= Vector4.Dot(result.Row3, result.Row4) * result.Row3;
         result.Row4 = Vector4.Normalize(result.Row4);
     }
 
@@ -1431,8 +1438,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// input and than transpose the output.</para>
     /// </remarks>
     public static Matrix Orthonormalize(Matrix value) {
-        Matrix result;
-        Orthonormalize(ref value, out result);
+        Orthonormalize(ref value, out var result);
         return result;
     }
 
@@ -1455,8 +1461,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         int columncount = 4;
 
         for (int r = 0; r < rowcount; ++r) {
-            if (columncount <= lead)
+            if (columncount <= lead) {
                 return;
+            }
 
             int i = r;
 
@@ -1467,8 +1474,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
                     i = r;
                     lead++;
 
-                    if (lead == columncount)
+                    if (lead == columncount) {
                         return;
+                    }
                 }
             }
 
@@ -1503,8 +1511,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// number of solutions exist.
     /// </remarks>
     public static Matrix UpperTriangularForm(Matrix value) {
-        Matrix result;
-        UpperTriangularForm(ref value, out result);
+        UpperTriangularForm(ref value, out var result);
         return result;
     }
 
@@ -1529,8 +1536,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         int columncount = 4;
 
         for (int r = 0; r < rowcount; ++r) {
-            if (columncount <= lead)
+            if (columncount <= lead) {
                 return;
+            }
 
             int i = r;
 
@@ -1541,8 +1549,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
                     i = r;
                     lead++;
 
-                    if (lead == columncount)
+                    if (lead == columncount) {
                         return;
+                    }
                 }
             }
 
@@ -1579,8 +1588,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// number of solutions exist.
     /// </remarks>
     public static Matrix LowerTriangularForm(Matrix value) {
-        Matrix result;
-        LowerTriangularForm(ref value, out result);
+        LowerTriangularForm(ref value, out var result);
         return result;
     }
 
@@ -1599,8 +1607,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         int columncount = 4;
 
         for (int r = 0; r < rowcount; ++r) {
-            if (columncount <= lead)
+            if (columncount <= lead) {
                 return;
+            }
 
             int i = r;
 
@@ -1611,8 +1620,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
                     i = r;
                     lead++;
 
-                    if (lead == columncount)
+                    if (lead == columncount) {
                         return;
+                    }
                 }
             }
 
@@ -1645,8 +1655,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="value">The matrix to put into row echelon form.</param>
     /// <returns>When the method completes, contains the row echelon form of the matrix.</returns>
     public static Matrix RowEchelonForm(Matrix value) {
-        Matrix result;
-        RowEchelonForm(ref value, out result);
+        RowEchelonForm(ref value, out var result);
         return result;
     }
 
@@ -1702,8 +1711,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         int columncount = 5;
 
         for (int r = 0; r < rowcount; r++) {
-            if (columncount <= lead)
+            if (columncount <= lead) {
                 break;
+            }
 
             int i = r;
 
@@ -1714,8 +1724,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
                     i = r;
                     lead++;
 
-                    if (columncount == lead)
+                    if (columncount == lead) {
                         break;
+                    }
                 }
             }
 
@@ -1734,7 +1745,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
             for (int j = 0; j < rowcount; j++) {
                 if (j != r) {
                     float sub = matrix[j, lead];
-                    for (int k = 0; k < columncount; k++) matrix[j, k] -= (sub * matrix[r, k]);
+                    for (int k = 0; k < columncount; k++) {
+                        matrix[j, k] -= (sub * matrix[r, k]);
+                    }
                 }
             }
 
@@ -1776,19 +1789,19 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <param name="result">When the method completes, contains the created billboard matrix.</param>
     public static void BillboardLH(ref Vector3 objectPosition, ref Vector3 cameraPosition, ref Vector3 cameraUpVector, ref Vector3 cameraForwardVector, out Matrix result) {
-        Vector3 crossed;
-        Vector3 final;
         Vector3 difference = cameraPosition - objectPosition;
 
         float lengthSq = difference.LengthSquared();
-        if (MathUtil.IsZero(lengthSq))
+        if (MathUtil.IsZero(lengthSq)) {
             difference = -cameraForwardVector;
-        else
+        }
+        else {
             difference *= (float) (1.0 / System.Math.Sqrt(lengthSq));
+        }
 
-        Vector3.Cross(ref cameraUpVector, ref difference, out crossed);
+        Vector3.Cross(ref cameraUpVector, ref difference, out var crossed);
         crossed.Normalize();
-        Vector3.Cross(ref difference, ref crossed, out final);
+        Vector3.Cross(ref difference, ref crossed, out var final);
 
         result.M11 = crossed.X;
         result.M12 = crossed.Y;
@@ -1817,8 +1830,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <returns>The created billboard matrix.</returns>
     public static Matrix BillboardLH(Vector3 objectPosition, Vector3 cameraPosition, Vector3 cameraUpVector, Vector3 cameraForwardVector) {
-        Matrix result;
-        BillboardLH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out result);
+        BillboardLH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out var result);
         return result;
     }
 
@@ -1831,19 +1843,19 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <param name="result">When the method completes, contains the created billboard matrix.</param>
     public static void BillboardRH(ref Vector3 objectPosition, ref Vector3 cameraPosition, ref Vector3 cameraUpVector, ref Vector3 cameraForwardVector, out Matrix result) {
-        Vector3 crossed;
-        Vector3 final;
         Vector3 difference = objectPosition - cameraPosition;
 
         float lengthSq = difference.LengthSquared();
-        if (MathUtil.IsZero(lengthSq))
+        if (MathUtil.IsZero(lengthSq)) {
             difference = -cameraForwardVector;
-        else
+        }
+        else {
             difference *= (float) (1.0 / System.Math.Sqrt(lengthSq));
+        }
 
-        Vector3.Cross(ref cameraUpVector, ref difference, out crossed);
+        Vector3.Cross(ref cameraUpVector, ref difference, out var crossed);
         crossed.Normalize();
-        Vector3.Cross(ref difference, ref crossed, out final);
+        Vector3.Cross(ref difference, ref crossed, out var final);
 
         result.M11 = crossed.X;
         result.M12 = crossed.Y;
@@ -1872,8 +1884,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="cameraForwardVector">The forward vector of the camera.</param>
     /// <returns>The created billboard matrix.</returns>
     public static Matrix BillboardRH(Vector3 objectPosition, Vector3 cameraPosition, Vector3 cameraUpVector, Vector3 cameraForwardVector) {
-        Matrix result;
-        BillboardRH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out result);
+        BillboardRH(ref objectPosition, ref cameraPosition, ref cameraUpVector, ref cameraForwardVector, out var result);
         return result;
     }
 
@@ -1885,10 +1896,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <param name="result">When the method completes, contains the created look-at matrix.</param>
     public static void LookAtLH(ref Vector3 eye, ref Vector3 target, ref Vector3 up, out Matrix result) {
-        Vector3 xaxis, yaxis, zaxis;
-        Vector3.Subtract(ref target, ref eye, out zaxis); zaxis.Normalize();
-        Vector3.Cross(ref up, ref zaxis, out xaxis); xaxis.Normalize();
-        Vector3.Cross(ref zaxis, ref xaxis, out yaxis);
+        Vector3.Subtract(ref target, ref eye, out var zaxis); zaxis.Normalize();
+        Vector3.Cross(ref up, ref zaxis, out var xaxis); xaxis.Normalize();
+        Vector3.Cross(ref zaxis, ref xaxis, out var yaxis);
 
         result = Matrix.Identity;
         result.M11 = xaxis.X; result.M21 = xaxis.Y; result.M31 = xaxis.Z;
@@ -1912,8 +1922,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <returns>The created look-at matrix.</returns>
     public static Matrix LookAtLH(Vector3 eye, Vector3 target, Vector3 up) {
-        Matrix result;
-        LookAtLH(ref eye, ref target, ref up, out result);
+        LookAtLH(ref eye, ref target, ref up, out var result);
         return result;
     }
 
@@ -1925,10 +1934,9 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <param name="result">When the method completes, contains the created look-at matrix.</param>
     public static void LookAtRH(ref Vector3 eye, ref Vector3 target, ref Vector3 up, out Matrix result) {
-        Vector3 xaxis, yaxis, zaxis;
-        Vector3.Subtract(ref eye, ref target, out zaxis); zaxis.Normalize();
-        Vector3.Cross(ref up, ref zaxis, out xaxis); xaxis.Normalize();
-        Vector3.Cross(ref zaxis, ref xaxis, out yaxis);
+        Vector3.Subtract(ref eye, ref target, out var zaxis); zaxis.Normalize();
+        Vector3.Cross(ref up, ref zaxis, out var xaxis); xaxis.Normalize();
+        Vector3.Cross(ref zaxis, ref xaxis, out var yaxis);
 
         result = Matrix.Identity;
         result.M11 = xaxis.X; result.M21 = xaxis.Y; result.M31 = xaxis.Z;
@@ -1952,8 +1960,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="up">The camera's up vector.</param>
     /// <returns>The created look-at matrix.</returns>
     public static Matrix LookAtRH(Vector3 eye, Vector3 target, Vector3 up) {
-        Matrix result;
-        LookAtRH(ref eye, ref target, ref up, out result);
+        LookAtRH(ref eye, ref target, ref up, out var result);
         return result;
     }
 
@@ -1981,8 +1988,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix OrthoLH(float width, float height, float znear, float zfar) {
-        Matrix result;
-        OrthoLH(width, height, znear, zfar, out result);
+        OrthoLH(width, height, znear, zfar, out var result);
         return result;
     }
 
@@ -2010,8 +2016,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix OrthoRH(float width, float height, float znear, float zfar) {
-        Matrix result;
-        OrthoRH(width, height, znear, zfar, out result);
+        OrthoRH(width, height, znear, zfar, out var result);
         return result;
     }
 
@@ -2048,8 +2053,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix OrthoOffCenterLH(float left, float right, float bottom, float top, float znear, float zfar) {
-        Matrix result;
-        OrthoOffCenterLH(left, right, bottom, top, znear, zfar, out result);
+        OrthoOffCenterLH(left, right, bottom, top, znear, zfar, out var result);
         return result;
     }
 
@@ -2079,8 +2083,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix OrthoOffCenterRH(float left, float right, float bottom, float top, float znear, float zfar) {
-        Matrix result;
-        OrthoOffCenterRH(left, right, bottom, top, znear, zfar, out result);
+        OrthoOffCenterRH(left, right, bottom, top, znear, zfar, out var result);
         return result;
     }
 
@@ -2108,8 +2111,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix PerspectiveLH(float width, float height, float znear, float zfar) {
-        Matrix result;
-        PerspectiveLH(width, height, znear, zfar, out result);
+        PerspectiveLH(width, height, znear, zfar, out var result);
         return result;
     }
 
@@ -2137,8 +2139,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix PerspectiveRH(float width, float height, float znear, float zfar) {
-        Matrix result;
-        PerspectiveRH(width, height, znear, zfar, out result);
+        PerspectiveRH(width, height, znear, zfar, out var result);
         return result;
     }
 
@@ -2154,12 +2155,13 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         float yScale = (float) (1.0f / System.Math.Tan(fov * 0.5f));
         float q = zfar / (zfar - znear);
 
-        result = new Matrix();
-        result.M11 = yScale / aspect;
-        result.M22 = yScale;
-        result.M33 = q;
-        result.M34 = 1.0f;
-        result.M43 = -q * znear;
+        result = new Matrix {
+            M11 = yScale / aspect,
+            M22 = yScale,
+            M33 = q,
+            M34 = 1.0f,
+            M43 = -q * znear
+        };
     }
 
     /// <summary>
@@ -2171,8 +2173,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix PerspectiveFovLH(float fov, float aspect, float znear, float zfar) {
-        Matrix result;
-        PerspectiveFovLH(fov, aspect, znear, zfar, out result);
+        PerspectiveFovLH(fov, aspect, znear, zfar, out var result);
         return result;
     }
 
@@ -2188,12 +2189,13 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         float yScale = (float) (1.0f / System.Math.Tan(fov * 0.5f));
         float q = zfar / (znear - zfar);
 
-        result = new Matrix();
-        result.M11 = yScale / aspect;
-        result.M22 = yScale;
-        result.M33 = q;
-        result.M34 = -1.0f;
-        result.M43 = q * znear;
+        result = new Matrix {
+            M11 = yScale / aspect,
+            M22 = yScale,
+            M33 = q,
+            M34 = -1.0f,
+            M43 = q * znear
+        };
     }
 
     /// <summary>
@@ -2205,8 +2207,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix PerspectiveFovRH(float fov, float aspect, float znear, float zfar) {
-        Matrix result;
-        PerspectiveFovRH(fov, aspect, znear, zfar, out result);
+        PerspectiveFovRH(fov, aspect, znear, zfar, out var result);
         return result;
     }
 
@@ -2223,14 +2224,15 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     public static void PerspectiveOffCenterLH(float left, float right, float bottom, float top, float znear, float zfar, out Matrix result) {
         float zRange = zfar / (zfar - znear);
 
-        result = new Matrix();
-        result.M11 = 2.0f * znear / (right - left);
-        result.M22 = 2.0f * znear / (top - bottom);
-        result.M31 = (left + right) / (left - right);
-        result.M32 = (top + bottom) / (bottom - top);
-        result.M33 = zRange;
-        result.M34 = 1.0f;
-        result.M43 = -znear * zRange;
+        result = new Matrix {
+            M11 = 2.0f * znear / (right - left),
+            M22 = 2.0f * znear / (top - bottom),
+            M31 = (left + right) / (left - right),
+            M32 = (top + bottom) / (bottom - top),
+            M33 = zRange,
+            M34 = 1.0f,
+            M43 = -znear * zRange
+        };
     }
 
     /// <summary>
@@ -2244,8 +2246,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix PerspectiveOffCenterLH(float left, float right, float bottom, float top, float znear, float zfar) {
-        Matrix result;
-        PerspectiveOffCenterLH(left, right, bottom, top, znear, zfar, out result);
+        PerspectiveOffCenterLH(left, right, bottom, top, znear, zfar, out var result);
         return result;
     }
 
@@ -2278,8 +2279,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="zfar">Maximum z-value of the viewing volume.</param>
     /// <returns>The created projection matrix.</returns>
     public static Matrix PerspectiveOffCenterRH(float left, float right, float bottom, float top, float znear, float zfar) {
-        Matrix result;
-        PerspectiveOffCenterRH(left, right, bottom, top, znear, zfar, out result);
+        PerspectiveOffCenterRH(left, right, bottom, top, znear, zfar, out var result);
         return result;
     }
 
@@ -2289,9 +2289,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// </summary>
     /// <param name="scale">Scaling factor for all three axes.</param>
     /// <param name="result">When the method completes, contains the created scaling matrix.</param>
-    public static void Scaling(ref Vector3 scale, out Matrix result) {
-        Scaling(scale.X, scale.Y, scale.Z, out result);
-    }
+    public static void Scaling(ref Vector3 scale, out Matrix result) => Scaling(scale.X, scale.Y, scale.Z, out result);
 
     /// <summary>
     /// Creates a matrix that scales along the x-axis, y-axis, and y-axis.
@@ -2299,8 +2297,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="scale">Scaling factor for all three axes.</param>
     /// <returns>The created scaling matrix.</returns>
     public static Matrix Scaling(Vector3 scale) {
-        Matrix result;
-        Scaling(ref scale, out result);
+        Scaling(ref scale, out var result);
         return result;
     }
 
@@ -2326,8 +2323,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="z">Scaling factor that is applied along the z-axis.</param>
     /// <returns>The created scaling matrix.</returns>
     public static Matrix Scaling(float x, float y, float z) {
-        Matrix result;
-        Scaling(x, y, z, out result);
+        Scaling(x, y, z, out var result);
         return result;
     }
 
@@ -2347,8 +2343,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="scale">The uniform scale that is applied along all axis.</param>
     /// <returns>The created scaling matrix.</returns>
     public static Matrix Scaling(float scale) {
-        Matrix result;
-        Scaling(scale, out result);
+        Scaling(scale, out var result);
         return result;
     }
 
@@ -2374,8 +2369,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="angle">Angle of rotation in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.</param>
     /// <returns>The created rotation matrix.</returns>
     public static Matrix RotationX(float angle) {
-        Matrix result;
-        RotationX(angle, out result);
+        RotationX(angle, out var result);
         return result;
     }
 
@@ -2401,8 +2395,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="angle">Angle of rotation in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.</param>
     /// <returns>The created rotation matrix.</returns>
     public static Matrix RotationY(float angle) {
-        Matrix result;
-        RotationY(angle, out result);
+        RotationY(angle, out var result);
         return result;
     }
 
@@ -2428,8 +2421,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="angle">Angle of rotation in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.</param>
     /// <returns>The created rotation matrix.</returns>
     public static Matrix RotationZ(float angle) {
-        Matrix result;
-        RotationZ(angle, out result);
+        RotationZ(angle, out var result);
         return result;
     }
 
@@ -2471,8 +2463,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="angle">Angle of rotation in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.</param>
     /// <returns>The created rotation matrix.</returns>
     public static Matrix RotationAxis(Vector3 axis, float angle) {
-        Matrix result;
-        RotationAxis(ref axis, angle, out result);
+        RotationAxis(ref axis, angle, out var result);
         return result;
     }
 
@@ -2510,8 +2501,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="rotation">The quaternion to use to build the matrix.</param>
     /// <returns>The created rotation matrix.</returns>
     public static Matrix RotationQuaternion(Quaternion rotation) {
-        Matrix result;
-        RotationQuaternion(ref rotation, out result);
+        RotationQuaternion(ref rotation, out var result);
         return result;
     }
 
@@ -2536,8 +2526,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="roll">Roll around the z-axis, in radians.</param>
     /// <returns>The created rotation matrix.</returns>
     public static Matrix RotationYawPitchRoll(float yaw, float pitch, float roll) {
-        Matrix result;
-        RotationYawPitchRoll(yaw, pitch, roll, out result);
+        RotationYawPitchRoll(yaw, pitch, roll, out var result);
         return result;
     }
 
@@ -2546,9 +2535,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// </summary>
     /// <param name="value">The offset for all three coordinate planes.</param>
     /// <param name="result">When the method completes, contains the created translation matrix.</param>
-    public static void Translation(ref Vector3 value, out Matrix result) {
-        Translation(value.X, value.Y, value.Z, out result);
-    }
+    public static void Translation(ref Vector3 value, out Matrix result) => Translation(value.X, value.Y, value.Z, out result);
 
     /// <summary>
     /// Creates a translation matrix using the specified offsets.
@@ -2556,8 +2543,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="value">The offset for all three coordinate planes.</param>
     /// <returns>The created translation matrix.</returns>
     public static Matrix Translation(Vector3 value) {
-        Matrix result;
-        Translation(ref value, out result);
+        Translation(ref value, out var result);
         return result;
     }
 
@@ -2583,8 +2569,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="z">Z-coordinate offset.</param>
     /// <returns>The created translation matrix.</returns>
     public static Matrix Translation(float x, float y, float z) {
-        Matrix result;
-        Translation(x, y, z, out result);
+        Translation(x, y, z, out var result);
         return result;
     }
 
@@ -2604,18 +2589,17 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
         Vector3 e0 = rotationVec;
         Vector3 e1 = Vector3.Normalize(transVec);
 
-        float rv1;
-        Vector3.Dot(ref rotationVec, ref e1, out rv1);
+        Vector3.Dot(ref rotationVec, ref e1, out var rv1);
         e0 += rv1 * e1;
-        float rv0;
-        Vector3.Dot(ref rotationVec, ref e0, out rv0);
+        Vector3.Dot(ref rotationVec, ref e0, out var rv0);
         float cosa = (float) System.Math.Cos(angle);
         float sina = (float) System.Math.Sin(angle);
         float rr0 = rv0 * cosa - rv1 * sina;
         float rr1 = rv0 * sina + rv1 * cosa;
 
-        if (rr0 < MINIMAL_SKEW_ANGLE)
+        if (rr0 < MINIMAL_SKEW_ANGLE) {
             throw new ArgumentException("illegal skew angle");
+        }
 
         float d = (rr1 / rr0) - (rv1 / rv0);
 
@@ -2638,9 +2622,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="rotation">The rotation of the transformation.</param>
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <param name="result">When the method completes, contains the created affine transformation matrix.</param>
-    public static void AffineTransformation(float scaling, ref Quaternion rotation, ref Vector3 translation, out Matrix result) {
-        result = Scaling(scaling) * RotationQuaternion(rotation) * Translation(translation);
-    }
+    public static void AffineTransformation(float scaling, ref Quaternion rotation, ref Vector3 translation, out Matrix result) => result = Scaling(scaling) * RotationQuaternion(rotation) * Translation(translation);
 
     /// <summary>
     /// Creates a 3D affine transformation matrix.
@@ -2650,8 +2632,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <returns>The created affine transformation matrix.</returns>
     public static Matrix AffineTransformation(float scaling, Quaternion rotation, Vector3 translation) {
-        Matrix result;
-        AffineTransformation(scaling, ref rotation, ref translation, out result);
+        AffineTransformation(scaling, ref rotation, ref translation, out var result);
         return result;
     }
 
@@ -2663,10 +2644,8 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="rotation">The rotation of the transformation.</param>
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <param name="result">When the method completes, contains the created affine transformation matrix.</param>
-    public static void AffineTransformation(float scaling, ref Vector3 rotationCenter, ref Quaternion rotation, ref Vector3 translation, out Matrix result) {
-        result = Scaling(scaling) * Translation(-rotationCenter) * RotationQuaternion(rotation) *
+    public static void AffineTransformation(float scaling, ref Vector3 rotationCenter, ref Quaternion rotation, ref Vector3 translation, out Matrix result) => result = Scaling(scaling) * Translation(-rotationCenter) * RotationQuaternion(rotation) *
             Translation(rotationCenter) * Translation(translation);
-    }
 
     /// <summary>
     /// Creates a 3D affine transformation matrix.
@@ -2677,8 +2656,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <returns>The created affine transformation matrix.</returns>
     public static Matrix AffineTransformation(float scaling, Vector3 rotationCenter, Quaternion rotation, Vector3 translation) {
-        Matrix result;
-        AffineTransformation(scaling, ref rotationCenter, ref rotation, ref translation, out result);
+        AffineTransformation(scaling, ref rotationCenter, ref rotation, ref translation, out var result);
         return result;
     }
 
@@ -2689,9 +2667,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="rotation">The rotation of the transformation.</param>
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <param name="result">When the method completes, contains the created affine transformation matrix.</param>
-    public static void AffineTransformation2D(float scaling, float rotation, ref Vector2 translation, out Matrix result) {
-        result = Scaling(scaling, scaling, 1.0f) * RotationZ(rotation) * Translation((Vector3) translation);
-    }
+    public static void AffineTransformation2D(float scaling, float rotation, ref Vector2 translation, out Matrix result) => result = Scaling(scaling, scaling, 1.0f) * RotationZ(rotation) * Translation((Vector3) translation);
 
     /// <summary>
     /// Creates a 2D affine transformation matrix.
@@ -2701,8 +2677,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <returns>The created affine transformation matrix.</returns>
     public static Matrix AffineTransformation2D(float scaling, float rotation, Vector2 translation) {
-        Matrix result;
-        AffineTransformation2D(scaling, rotation, ref translation, out result);
+        AffineTransformation2D(scaling, rotation, ref translation, out var result);
         return result;
     }
 
@@ -2714,10 +2689,8 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="rotation">The rotation of the transformation.</param>
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <param name="result">When the method completes, contains the created affine transformation matrix.</param>
-    public static void AffineTransformation2D(float scaling, ref Vector2 rotationCenter, float rotation, ref Vector2 translation, out Matrix result) {
-        result = Scaling(scaling, scaling, 1.0f) * Translation((Vector3) (-rotationCenter)) * RotationZ(rotation) *
+    public static void AffineTransformation2D(float scaling, ref Vector2 rotationCenter, float rotation, ref Vector2 translation, out Matrix result) => result = Scaling(scaling, scaling, 1.0f) * Translation((Vector3) (-rotationCenter)) * RotationZ(rotation) *
             Translation((Vector3) rotationCenter) * Translation((Vector3) translation);
-    }
 
     /// <summary>
     /// Creates a 2D affine transformation matrix.
@@ -2728,8 +2701,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <returns>The created affine transformation matrix.</returns>
     public static Matrix AffineTransformation2D(float scaling, Vector2 rotationCenter, float rotation, Vector2 translation) {
-        Matrix result;
-        AffineTransformation2D(scaling, ref rotationCenter, rotation, ref translation, out result);
+        AffineTransformation2D(scaling, ref rotationCenter, rotation, ref translation, out var result);
         return result;
     }
 
@@ -2761,8 +2733,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <returns>The created transformation matrix.</returns>
     public static Matrix Transformation(Vector3 scalingCenter, Quaternion scalingRotation, Vector3 scaling, Vector3 rotationCenter, Quaternion rotation, Vector3 translation) {
-        Matrix result;
-        Transformation(ref scalingCenter, ref scalingRotation, ref scaling, ref rotationCenter, ref rotation, ref translation, out result);
+        Transformation(ref scalingCenter, ref scalingRotation, ref scaling, ref rotationCenter, ref rotation, ref translation, out var result);
         return result;
     }
 
@@ -2795,8 +2766,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="translation">The translation factor of the transformation.</param>
     /// <returns>The created transformation matrix.</returns>
     public static Matrix Transformation2D(Vector2 scalingCenter, float scalingRotation, Vector2 scaling, Vector2 rotationCenter, float rotation, Vector2 translation) {
-        Matrix result;
-        Transformation2D(ref scalingCenter, scalingRotation, ref scaling, ref rotationCenter, rotation, ref translation, out result);
+        Transformation2D(ref scalingCenter, scalingRotation, ref scaling, ref rotationCenter, rotation, ref translation, out var result);
         return result;
     }
 
@@ -2807,8 +2777,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to add.</param>
     /// <returns>The sum of the two matrices.</returns>
     public static Matrix operator +(Matrix left, Matrix right) {
-        Matrix result;
-        Add(ref left, ref right, out result);
+        Add(ref left, ref right, out var result);
         return result;
     }
 
@@ -2817,9 +2786,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// </summary>
     /// <param name="value">The matrix to assert (unchanged).</param>
     /// <returns>The asserted (unchanged) matrix.</returns>
-    public static Matrix operator +(Matrix value) {
-        return value;
-    }
+    public static Matrix operator +(Matrix value) => value;
 
     /// <summary>
     /// Subtracts two matrices.
@@ -2828,8 +2795,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to subtract.</param>
     /// <returns>The difference between the two matrices.</returns>
     public static Matrix operator -(Matrix left, Matrix right) {
-        Matrix result;
-        Subtract(ref left, ref right, out result);
+        Subtract(ref left, ref right, out var result);
         return result;
     }
 
@@ -2839,8 +2805,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="value">The matrix to negate.</param>
     /// <returns>The negated matrix.</returns>
     public static Matrix operator -(Matrix value) {
-        Matrix result;
-        Negate(ref value, out result);
+        Negate(ref value, out var result);
         return result;
     }
 
@@ -2851,8 +2816,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="left">The amount by which to scale.</param>
     /// <returns>The scaled matrix.</returns>
     public static Matrix operator *(float left, Matrix right) {
-        Matrix result;
-        Multiply(ref right, left, out result);
+        Multiply(ref right, left, out var result);
         return result;
     }
 
@@ -2863,8 +2827,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The amount by which to scale.</param>
     /// <returns>The scaled matrix.</returns>
     public static Matrix operator *(Matrix left, float right) {
-        Matrix result;
-        Multiply(ref left, right, out result);
+        Multiply(ref left, right, out var result);
         return result;
     }
 
@@ -2875,8 +2838,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to multiply.</param>
     /// <returns>The product of the two matrices.</returns>
     public static Matrix operator *(Matrix left, Matrix right) {
-        Matrix result;
-        Multiply(ref left, ref right, out result);
+        Multiply(ref left, ref right, out var result);
         return result;
     }
 
@@ -2887,8 +2849,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The amount by which to scale.</param>
     /// <returns>The scaled matrix.</returns>
     public static Matrix operator /(Matrix left, float right) {
-        Matrix result;
-        Divide(ref left, right, out result);
+        Divide(ref left, right, out var result);
         return result;
     }
 
@@ -2899,8 +2860,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second matrix to divide.</param>
     /// <returns>The quotient of the two matrices.</returns>
     public static Matrix operator /(Matrix left, Matrix right) {
-        Matrix result;
-        Divide(ref left, ref right, out result);
+        Divide(ref left, ref right, out var result);
         return result;
     }
 
@@ -2911,9 +2871,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has the same value as <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator ==(Matrix left, Matrix right) {
-        return left.Equals(ref right);
-    }
+    public static bool operator ==(Matrix left, Matrix right) => left.Equals(ref right);
 
     /// <summary>
     /// Tests for inequality between two objects.
@@ -2922,9 +2880,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has a different value than <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator !=(Matrix left, Matrix right) {
-        return !left.Equals(ref right);
-    }
+    public static bool operator !=(Matrix left, Matrix right) => !left.Equals(ref right);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -2932,10 +2888,8 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public override string ToString() {
-        return string.Format(CultureInfo.CurrentCulture, "[M11:{0} M12:{1} M13:{2} M14:{3}] [M21:{4} M22:{5} M23:{6} M24:{7}] [M31:{8} M32:{9} M33:{10} M34:{11}] [M41:{12} M42:{13} M43:{14} M44:{15}]",
+    public override readonly string ToString() => string.Format(CultureInfo.CurrentCulture, "[M11:{0} M12:{1} M13:{2} M14:{3}] [M21:{4} M22:{5} M23:{6} M24:{7}] [M31:{8} M32:{9} M33:{10} M34:{11}] [M41:{12} M42:{13} M43:{14} M44:{15}]",
             M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44);
-    }
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -2944,9 +2898,10 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format) {
-        if (format == null)
+    public readonly string ToString(string format) {
+        if (format == null) {
             return ToString();
+        }
 
         return string.Format(format, CultureInfo.CurrentCulture, "[M11:{0} M12:{1} M13:{2} M14:{3}] [M21:{4} M22:{5} M23:{6} M24:{7}] [M31:{8} M32:{9} M33:{10} M34:{11}] [M41:{12} M42:{13} M43:{14} M44:{15}]",
             M11.ToString(format, CultureInfo.CurrentCulture), M12.ToString(format, CultureInfo.CurrentCulture), M13.ToString(format, CultureInfo.CurrentCulture), M14.ToString(format, CultureInfo.CurrentCulture),
@@ -2962,13 +2917,11 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(IFormatProvider formatProvider) {
-        return string.Format(formatProvider, "[M11:{0} M12:{1} M13:{2} M14:{3}] [M21:{4} M22:{5} M23:{6} M24:{7}] [M31:{8} M32:{9} M33:{10} M34:{11}] [M41:{12} M42:{13} M43:{14} M44:{15}]",
+    public readonly string ToString(IFormatProvider? formatProvider) => string.Format(formatProvider, "[M11:{0} M12:{1} M13:{2} M14:{3}] [M21:{4} M22:{5} M23:{6} M24:{7}] [M31:{8} M32:{9} M33:{10} M34:{11}] [M41:{12} M42:{13} M43:{14} M44:{15}]",
             M11.ToString(formatProvider), M12.ToString(formatProvider), M13.ToString(formatProvider), M14.ToString(formatProvider),
             M21.ToString(formatProvider), M22.ToString(formatProvider), M23.ToString(formatProvider), M24.ToString(formatProvider),
             M31.ToString(formatProvider), M32.ToString(formatProvider), M33.ToString(formatProvider), M34.ToString(formatProvider),
             M41.ToString(formatProvider), M42.ToString(formatProvider), M43.ToString(formatProvider), M44.ToString(formatProvider));
-    }
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -2978,9 +2931,10 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format, IFormatProvider formatProvider) {
-        if (format == null)
+    public readonly string ToString(string? format, IFormatProvider? formatProvider) {
+        if (format == null) {
             return ToString(formatProvider);
+        }
 
         return string.Format(formatProvider, "[M11:{0} M12:{1} M13:{2} M14:{3}] [M21:{4} M22:{5} M23:{6} M24:{7}] [M31:{8} M32:{9} M33:{10} M34:{11}] [M41:{12} M42:{13} M43:{14} M44:{15}]",
             M11.ToString(format, formatProvider), M12.ToString(format, formatProvider), M13.ToString(format, formatProvider), M14.ToString(format, formatProvider),
@@ -2995,7 +2949,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>
     /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
     /// </returns>
-    public override int GetHashCode() {
+    public override readonly int GetHashCode() {
         unchecked {
             var hashCode = M11.GetHashCode();
             hashCode = (hashCode * 397) ^ M12.GetHashCode();
@@ -3024,8 +2978,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>
     /// <c>true</c> if the specified <see cref="Matrix"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
-    public bool Equals(ref Matrix other) {
-        return (MathUtil.NearEqual(other.M11, M11) &&
+    public readonly bool Equals(ref Matrix other) => (MathUtil.NearEqual(other.M11, M11) &&
             MathUtil.NearEqual(other.M12, M12) &&
             MathUtil.NearEqual(other.M13, M13) &&
             MathUtil.NearEqual(other.M14, M14) &&
@@ -3041,7 +2994,6 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
             MathUtil.NearEqual(other.M42, M42) &&
             MathUtil.NearEqual(other.M43, M43) &&
             MathUtil.NearEqual(other.M44, M44));
-    }
 
     /// <summary>
     /// Determines whether the specified <see cref="Matrix"/> is equal to this instance.
@@ -3051,9 +3003,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <c>true</c> if the specified <see cref="Matrix"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(Matrix other) {
-        return Equals(ref other);
-    }
+    public readonly bool Equals(Matrix other) => Equals(ref other);
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -3062,9 +3012,10 @@ public struct Matrix : IEquatable<Matrix>, IFormattable {
     /// <returns>
     /// <c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
-    public override bool Equals(object value) {
-        if (!(value is Matrix))
+    public override readonly bool Equals(object? value) {
+        if (value is not Matrix) {
             return false;
+        }
 
         var strongValue = (Matrix) value;
         return Equals(ref strongValue);

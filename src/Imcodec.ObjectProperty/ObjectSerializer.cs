@@ -120,7 +120,7 @@ public class ObjectSerializer(bool Versionable = true,
         propertyClass?.Decode(reader, this);
         propertyClass?.OnPostDecode();
 
-        output = (T)propertyClass;
+        output = (T)propertyClass!;
         return true;
     }
 

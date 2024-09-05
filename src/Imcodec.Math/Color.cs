@@ -30,7 +30,7 @@ namespace Imcodec.Math;
 [StructLayout(LayoutKind.Sequential, Size = 4)]
 public partial struct Color : IEquatable<Color>, IFormattable {
 
-    private const string toStringFormat = "A:{0} R:{1} G:{2} B:{3}";
+    private const string ToStringFormat = "A:{0} R:{1} G:{2} B:{3}";
 
     /// <summary>
     /// The red component of the color.
@@ -56,17 +56,13 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// Initializes a new instance of the <see cref="Color"/> struct.
     /// </summary>
     /// <param name="value">The value that will be assigned to all components.</param>
-    public Color(byte value) {
-        A = R = G = B = value;
-    }
+    public Color(byte value) => A = R = G = B = value;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Color"/> struct.
     /// </summary>
     /// <param name="value">The value that will be assigned to all components.</param>
-    public Color(float value) {
-        A = R = G = B = ToByte(value);
-    }
+    public Color(float value) => A = R = G = B = ToByte(value);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Color"/> struct.
@@ -208,15 +204,19 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="values"/> contains more or less than four elements.</exception>
     public Color(float[] values) {
-        if (values == null)
-            throw new ArgumentNullException("values");
-        if (values.Length != 4)
-            throw new ArgumentOutOfRangeException("values", "There must be four and only four input values for Color.");
+        if (values != null) {
+            if (values.Length != 4) {
+                throw new ArgumentOutOfRangeException(nameof(values), "There must be four and only four input values for Color.");
+            }
 
-        R = ToByte(values[0]);
-        G = ToByte(values[1]);
-        B = ToByte(values[2]);
-        A = ToByte(values[3]);
+            R = ToByte(values[0]);
+            G = ToByte(values[1]);
+            B = ToByte(values[2]);
+            A = ToByte(values[3]);
+        }
+        else {
+            throw new ArgumentNullException(nameof(values));
+        }
     }
 
     /// <summary>
@@ -226,15 +226,19 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="values"/> contains more or less than four elements.</exception>
     public Color(byte[] values) {
-        if (values == null)
-            throw new ArgumentNullException("values");
-        if (values.Length != 4)
-            throw new ArgumentOutOfRangeException("values", "There must be four and only four input values for Color.");
+        if (values != null) {
+            if (values.Length != 4) {
+                throw new ArgumentOutOfRangeException(nameof(values), "There must be four and only four input values for Color.");
+            }
 
-        R = values[0];
-        G = values[1];
-        B = values[2];
-        A = values[3];
+            R = values[0];
+            G = values[1];
+            B = values[2];
+            A = values[3];
+        }
+        else {
+            throw new ArgumentNullException(nameof(values));
+        }
     }
 
     /// <summary>
@@ -245,16 +249,13 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>The value of the component at the specified index.</returns>
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown when the <paramref name="index"/> is out of the range [0, 3].</exception>
     public byte this[int index] {
-        get {
-            switch (index) {
-                case 0: return R;
-                case 1: return G;
-                case 2: return B;
-                case 3: return A;
-            }
-
-            throw new ArgumentOutOfRangeException("index", "Indices for Color run from 0 to 3, inclusive.");
-        }
+        readonly get => index switch {
+            0 => R,
+            1 => G,
+            2 => B,
+            3 => A,
+            _ => throw new ArgumentOutOfRangeException(nameof(index), "Indices for Color run from 0 to 3, inclusive."),
+        };
 
         set {
             switch (index) {
@@ -262,7 +263,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
                 case 1: G = value; break;
                 case 2: B = value; break;
                 case 3: A = value; break;
-                default: throw new ArgumentOutOfRangeException("index", "Indices for Color run from 0 to 3, inclusive.");
+                default: throw new ArgumentOutOfRangeException(nameof(index), "Indices for Color run from 0 to 3, inclusive.");
             }
         }
     }
@@ -271,7 +272,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// Converts the color into a packed integer.
     /// </summary>
     /// <returns>A packed integer containing all four color components.</returns>
-    public int ToBgra() {
+    public readonly int ToBgra() {
         int value = B;
         value |= G << 8;
         value |= R << 16;
@@ -284,7 +285,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// Converts the color into a packed integer.
     /// </summary>
     /// <returns>A packed integer containing all four color components.</returns>
-    public int ToRgba() {
+    public readonly int ToRgba() {
         int value = R;
         value |= G << 8;
         value |= B << 16;
@@ -297,7 +298,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// Converts the color into a packed integer.
     /// </summary>
     /// <returns>A packed integer containing all four color components.</returns>
-    public int ToAbgr() {
+    public readonly int ToAbgr() {
         int value = A;
         value |= B << 8;
         value |= G << 16;
@@ -310,15 +311,13 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// Creates an array containing the elements of the color.
     /// </summary>
     /// <returns>A four-element array containing the components of the color in RGBA order.</returns>
-    public byte[] ToArray() {
-        return new[] { R, G, B, A };
-    }
+    public readonly byte[] ToArray() => [R, G, B, A];
 
     /// <summary>
     /// Gets the brightness.
     /// </summary>
     /// <returns>The Hue-Saturation-Brightness (HSB) brightness for this <see cref="Color"/></returns>
-    public float GetBrightness() {
+    public readonly float GetBrightness() {
         float r = (float) R / 255.0f;
         float g = (float) G / 255.0f;
         float b = (float) B / 255.0f;
@@ -327,11 +326,21 @@ public partial struct Color : IEquatable<Color>, IFormattable {
 
         max = r; min = r;
 
-        if (g > max) max = g;
-        if (b > max) max = b;
+        if (g > max) {
+            max = g;
+        }
 
-        if (g < min) min = g;
-        if (b < min) min = b;
+        if (b > max) {
+            max = b;
+        }
+
+        if (g < min) {
+            min = g;
+        }
+
+        if (b < min) {
+            min = b;
+        }
 
         return (max + min) / 2;
     }
@@ -340,9 +349,10 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// Gets the hue.
     /// </summary>
     /// <returns>The Hue-Saturation-Brightness (HSB) hue for this <see cref="Color"/></returns>
-    public float GetHue() {
-        if (R == G && G == B)
+    public readonly float GetHue() {
+        if (R == G && G == B) {
             return 0; // 0 makes as good an UNDEFINED value as any
+        }
 
         float r = (float) R / 255.0f;
         float g = (float) G / 255.0f;
@@ -354,11 +364,21 @@ public partial struct Color : IEquatable<Color>, IFormattable {
 
         max = r; min = r;
 
-        if (g > max) max = g;
-        if (b > max) max = b;
+        if (g > max) {
+            max = g;
+        }
 
-        if (g < min) min = g;
-        if (b < min) min = b;
+        if (b > max) {
+            max = b;
+        }
+
+        if (g < min) {
+            min = g;
+        }
+
+        if (b < min) {
+            min = b;
+        }
 
         delta = max - min;
 
@@ -383,7 +403,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// Gets the saturation.
     /// </summary>
     /// <returns>The Hue-Saturation-Brightness (HSB) saturation for this <see cref="Color"/></returns>
-    public float GetSaturation() {
+    public readonly float GetSaturation() {
         float r = (float) R / 255.0f;
         float g = (float) G / 255.0f;
         float b = (float) B / 255.0f;
@@ -393,11 +413,21 @@ public partial struct Color : IEquatable<Color>, IFormattable {
 
         max = r; min = r;
 
-        if (g > max) max = g;
-        if (b > max) max = b;
+        if (g > max) {
+            max = g;
+        }
 
-        if (g < min) min = g;
-        if (b < min) min = b;
+        if (b > max) {
+            max = b;
+        }
+
+        if (g < min) {
+            min = g;
+        }
+
+        if (b < min) {
+            min = b;
+        }
 
         // if max == min, then there is no color and
         // the saturation is zero.
@@ -434,9 +464,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="left">The first color to add.</param>
     /// <param name="right">The second color to add.</param>
     /// <returns>The sum of the two colors.</returns>
-    public static Color Add(Color left, Color right) {
-        return new Color(left.R + right.R, left.G + right.G, left.B + right.B, left.A + right.A);
-    }
+    public static Color Add(Color left, Color right) => new(left.R + right.R, left.G + right.G, left.B + right.B, left.A + right.A);
 
     /// <summary>
     /// Subtracts two colors.
@@ -457,9 +485,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="left">The first color to subtract.</param>
     /// <param name="right">The second color to subtract</param>
     /// <returns>The difference of the two colors.</returns>
-    public static Color Subtract(Color left, Color right) {
-        return new Color(left.R - right.R, left.G - right.G, left.B - right.B, left.A - right.A);
-    }
+    public static Color Subtract(Color left, Color right) => new(left.R - right.R, left.G - right.G, left.B - right.B, left.A - right.A);
 
     /// <summary>
     /// Modulates two colors.
@@ -480,9 +506,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="left">The first color to modulate.</param>
     /// <param name="right">The second color to modulate.</param>
     /// <returns>The modulated color.</returns>
-    public static Color Modulate(Color left, Color right) {
-        return new Color(left.R * right.R, left.G * right.G, left.B * right.B, left.A * right.A);
-    }
+    public static Color Modulate(Color left, Color right) => new(left.R * right.R, left.G * right.G, left.B * right.B, left.A * right.A);
 
     /// <summary>
     /// Scales a color.
@@ -503,9 +527,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="value">The color to scale.</param>
     /// <param name="scale">The amount by which to scale.</param>
     /// <returns>The scaled color.</returns>
-    public static Color Scale(Color value, float scale) {
-        return new Color((byte) (value.R * scale), (byte) (value.G * scale), (byte) (value.B * scale), (byte) (value.A * scale));
-    }
+    public static Color Scale(Color value, float scale) => new((byte) (value.R * scale), (byte) (value.G * scale), (byte) (value.B * scale), (byte) (value.A * scale));
 
     /// <summary>
     /// Negates a color.
@@ -524,9 +546,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// </summary>
     /// <param name="value">The color to negate.</param>
     /// <returns>The negated color.</returns>
-    public static Color Negate(Color value) {
-        return new Color(255 - value.R, 255 - value.G, 255 - value.B, 255 - value.A);
-    }
+    public static Color Negate(Color value) => new(255 - value.R, 255 - value.G, 255 - value.B, 255 - value.A);
 
     /// <summary>
     /// Restricts a value to be within a specified range.
@@ -574,8 +594,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="value">The non-premultiplied value.</param>
     /// <returns>The premultiplied result.</returns>
     public static Color Premultiply(Color value) {
-        Color result;
-        Premultiply(ref value, out result);
+        Premultiply(ref value, out var result);
         return result;
     }
 
@@ -584,54 +603,42 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// </summary>
     /// <param name="color">A packed integer containing all four color components in BGRA order</param>
     /// <returns>A color.</returns>
-    public static Color FromBgra(int color) {
-        return new Color((byte) ((color >> 16) & 255), (byte) ((color >> 8) & 255), (byte) (color & 255), (byte) ((color >> 24) & 255));
-    }
+    public static Color FromBgra(int color) => new((byte) ((color >> 16) & 255), (byte) ((color >> 8) & 255), (byte) (color & 255), (byte) ((color >> 24) & 255));
 
     /// <summary>
     /// Converts the color from a packed BGRA integer.
     /// </summary>
     /// <param name="color">A packed integer containing all four color components in BGRA order</param>
     /// <returns>A color.</returns>
-    public static Color FromBgra(uint color) {
-        return FromBgra(unchecked((int) color));
-    }
+    public static Color FromBgra(uint color) => FromBgra(unchecked((int) color));
 
     /// <summary>
     /// Converts the color from a packed ABGR integer.
     /// </summary>
     /// <param name="color">A packed integer containing all four color components in ABGR order</param>
     /// <returns>A color.</returns>
-    public static Color FromAbgr(int color) {
-        return new Color((byte) (color >> 24), (byte) (color >> 16), (byte) (color >> 8), (byte) color);
-    }
+    public static Color FromAbgr(int color) => new((byte) (color >> 24), (byte) (color >> 16), (byte) (color >> 8), (byte) color);
 
     /// <summary>
     /// Converts the color from a packed ABGR integer.
     /// </summary>
     /// <param name="color">A packed integer containing all four color components in ABGR order</param>
     /// <returns>A color.</returns>
-    public static Color FromAbgr(uint color) {
-        return FromAbgr(unchecked((int) color));
-    }
+    public static Color FromAbgr(uint color) => FromAbgr(unchecked((int) color));
 
     /// <summary>
     /// Converts the color from a packed BGRA integer.
     /// </summary>
     /// <param name="color">A packed integer containing all four color components in RGBA order</param>
     /// <returns>A color.</returns>
-    public static Color FromRgba(int color) {
-        return new Color(color);
-    }
+    public static Color FromRgba(int color) => new(color);
 
     /// <summary>
     /// Converts the color from a packed BGRA integer.
     /// </summary>
     /// <param name="color">A packed integer containing all four color components in RGBA order</param>
     /// <returns>A color.</returns>
-    public static Color FromRgba(uint color) {
-        return new Color(color);
-    }
+    public static Color FromRgba(uint color) => new(color);
 
     /// <summary>
     /// Restricts a value to be within a specified range.
@@ -641,8 +648,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="max">The maximum value.</param>
     /// <returns>The clamped value.</returns>
     public static Color Clamp(Color value, Color min, Color max) {
-        Color result;
-        Clamp(ref value, ref min, ref max, out result);
+        Clamp(ref value, ref min, ref max, out var result);
         return result;
     }
 
@@ -666,8 +672,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="right">The second source color.</param>
     /// <returns>A color containing the largest components of the source colors.</returns>
     public static Color Max(Color left, Color right) {
-        Color result;
-        Max(ref left, ref right, out result);
+        Max(ref left, ref right, out var result);
         return result;
     }
 
@@ -691,8 +696,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="right">The second source color.</param>
     /// <returns>A color containing the smallest components of the source colors.</returns>
     public static Color Min(Color left, Color right) {
-        Color result;
-        Min(ref left, ref right, out result);
+        Min(ref left, ref right, out var result);
         return result;
     }
 
@@ -715,13 +719,11 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="value">The color whose contrast is to be adjusted.</param>
     /// <param name="contrast">The amount by which to adjust the contrast.</param>
     /// <returns>The adjusted color.</returns>
-    public static Color AdjustContrast(Color value, float contrast) {
-        return new Color(
+    public static Color AdjustContrast(Color value, float contrast) => new(
             ToByte(0.5f + contrast * (value.R / 255.0f - 0.5f)),
             ToByte(0.5f + contrast * (value.G / 255.0f - 0.5f)),
             ToByte(0.5f + contrast * (value.B / 255.0f - 0.5f)),
             value.A);
-    }
 
     /// <summary>
     /// Adjusts the saturation of a color.
@@ -760,18 +762,14 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="left">The first color to add.</param>
     /// <param name="right">The second color to add.</param>
     /// <returns>The sum of the two colors.</returns>
-    public static Color operator +(Color left, Color right) {
-        return new Color(left.R + right.R, left.G + right.G, left.B + right.B, left.A + right.A);
-    }
+    public static Color operator +(Color left, Color right) => new(left.R + right.R, left.G + right.G, left.B + right.B, left.A + right.A);
 
     /// <summary>
     /// Assert a color (return it unchanged).
     /// </summary>
     /// <param name="value">The color to assert (unchanged).</param>
     /// <returns>The asserted (unchanged) color.</returns>
-    public static Color operator +(Color value) {
-        return value;
-    }
+    public static Color operator +(Color value) => value;
 
     /// <summary>
     /// Subtracts two colors.
@@ -779,18 +777,14 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="left">The first color to subtract.</param>
     /// <param name="right">The second color to subtract.</param>
     /// <returns>The difference of the two colors.</returns>
-    public static Color operator -(Color left, Color right) {
-        return new Color(left.R - right.R, left.G - right.G, left.B - right.B, left.A - right.A);
-    }
+    public static Color operator -(Color left, Color right) => new(left.R - right.R, left.G - right.G, left.B - right.B, left.A - right.A);
 
     /// <summary>
     /// Negates a color.
     /// </summary>
     /// <param name="value">The color to negate.</param>
     /// <returns>A negated color.</returns>
-    public static Color operator -(Color value) {
-        return new Color(-value.R, -value.G, -value.B, -value.A);
-    }
+    public static Color operator -(Color value) => new(-value.R, -value.G, -value.B, -value.A);
 
     /// <summary>
     /// Scales a color.
@@ -798,9 +792,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="scale">The factor by which to scale the color.</param>
     /// <param name="value">The color to scale.</param>
     /// <returns>The scaled color.</returns>
-    public static Color operator *(float scale, Color value) {
-        return new Color((byte) (value.R * scale), (byte) (value.G * scale), (byte) (value.B * scale), (byte) (value.A * scale));
-    }
+    public static Color operator *(float scale, Color value) => new((byte) (value.R * scale), (byte) (value.G * scale), (byte) (value.B * scale), (byte) (value.A * scale));
 
     /// <summary>
     /// Scales a color.
@@ -808,9 +800,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="value">The factor by which to scale the color.</param>
     /// <param name="scale">The color to scale.</param>
     /// <returns>The scaled color.</returns>
-    public static Color operator *(Color value, float scale) {
-        return new Color((byte) (value.R * scale), (byte) (value.G * scale), (byte) (value.B * scale), (byte) (value.A * scale));
-    }
+    public static Color operator *(Color value, float scale) => new((byte) (value.R * scale), (byte) (value.G * scale), (byte) (value.B * scale), (byte) (value.A * scale));
 
     /// <summary>
     /// Modulates two colors.
@@ -818,9 +808,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="left">The first color to modulate.</param>
     /// <param name="right">The second color to modulate.</param>
     /// <returns>The modulated color.</returns>
-    public static Color operator *(Color left, Color right) {
-        return new Color((byte) (left.R * right.R / 255.0f), (byte) (left.G * right.G / 255.0f), (byte) (left.B * right.B / 255.0f), (byte) (left.A * right.A / 255.0f));
-    }
+    public static Color operator *(Color left, Color right) => new((byte) (left.R * right.R / 255.0f), (byte) (left.G * right.G / 255.0f), (byte) (left.B * right.B / 255.0f), (byte) (left.A * right.A / 255.0f));
 
     /// <summary>
     /// Tests for equality between two objects.
@@ -829,9 +817,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has the same value as <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator ==(Color left, Color right) {
-        return left.Equals(ref right);
-    }
+    public static bool operator ==(Color left, Color right) => left.Equals(ref right);
 
     /// <summary>
     /// Tests for inequality between two objects.
@@ -840,9 +826,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has a different value than <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator !=(Color left, Color right) {
-        return !left.Equals(ref right);
-    }
+    public static bool operator !=(Color left, Color right) => !left.Equals(ref right);
 
     /// <summary>
     /// Performs an explicit conversion from <see cref="System.Int32"/> to <see cref="Color"/>.
@@ -851,9 +835,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// The result of the conversion.
     /// </returns>
-    public static explicit operator int(Color value) {
-        return value.ToRgba();
-    }
+    public static explicit operator int(Color value) => value.ToRgba();
 
     /// <summary>
     /// Performs an explicit conversion from <see cref="System.Int32"/> to <see cref="Color"/>.
@@ -862,9 +844,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// The result of the conversion.
     /// </returns>
-    public static explicit operator Color(int value) {
-        return new Color(value);
-    }
+    public static explicit operator Color(int value) => new(value);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -872,9 +852,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public override string ToString() {
-        return ToString(CultureInfo.CurrentCulture);
-    }
+    public override readonly string ToString() => ToString(CultureInfo.CurrentCulture);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -883,9 +861,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format) {
-        return ToString(format, CultureInfo.CurrentCulture);
-    }
+    public readonly string ToString(string format) => ToString(format, CultureInfo.CurrentCulture);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -894,9 +870,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(IFormatProvider formatProvider) {
-        return string.Format(formatProvider, toStringFormat, A, R, G, B);
-    }
+    public readonly string ToString(IFormatProvider? formatProvider) => string.Format(formatProvider, ToStringFormat, A, R, G, B);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -906,12 +880,13 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format, IFormatProvider formatProvider) {
-        if (format == null)
+    public readonly string ToString(string? format, IFormatProvider? formatProvider) {
+        if (format == null) {
             return ToString(formatProvider);
+        }
 
         return string.Format(formatProvider,
-                             toStringFormat,
+                             ToStringFormat,
                              A.ToString(format, formatProvider),
                              R.ToString(format, formatProvider),
                              G.ToString(format, formatProvider),
@@ -924,15 +899,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
     /// </returns>
-    public override int GetHashCode() {
-        unchecked {
-            var hashCode = R.GetHashCode();
-            hashCode = (hashCode * 397) ^ G.GetHashCode();
-            hashCode = (hashCode * 397) ^ B.GetHashCode();
-            hashCode = (hashCode * 397) ^ A.GetHashCode();
-            return hashCode;
-        }
-    }
+    public override readonly int GetHashCode() => HashCode.Combine(R, G, B, A);
 
     /// <summary>
     /// Determines whether the specified <see cref="Color"/> is equal to this instance.
@@ -942,9 +909,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <c>true</c> if the specified <see cref="Color"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(ref Color other) {
-        return R == other.R && G == other.G && B == other.B && A == other.A;
-    }
+    public readonly bool Equals(ref Color other) => R == other.R && G == other.G && B == other.B && A == other.A;
 
     /// <summary>
     /// Determines whether the specified <see cref="Color"/> is equal to this instance.
@@ -954,9 +919,7 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <c>true</c> if the specified <see cref="Color"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(Color other) {
-        return Equals(ref other);
-    }
+    public readonly bool Equals(Color other) => Equals(ref other);
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -965,9 +928,10 @@ public partial struct Color : IEquatable<Color>, IFormattable {
     /// <returns>
     /// <c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
-    public override bool Equals(object value) {
-        if (!(value is Color))
+    public override readonly bool Equals(object? value) {
+        if (value is not Color) {
             return false;
+        }
 
         var strongValue = (Color) value;
         return Equals(ref strongValue);
@@ -978,8 +942,6 @@ public partial struct Color : IEquatable<Color>, IFormattable {
         return ToByte(value);
     }
 
-    public static byte ToByte(int value) {
-        return (byte) (value < 0 ? 0 : value > 255 ? 255 : value);
-    }
+    public static byte ToByte(int value) => (byte) (value < 0 ? 0 : value > 255 ? 255 : value);
 
 }

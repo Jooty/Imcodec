@@ -58,67 +58,67 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <summary>
     /// A <see cref="Vector3"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Vector3 Zero = new Vector3();
+    public static readonly Vector3 Zero = new();
 
     /// <summary>
     /// The X unit <see cref="Vector3"/> (1, 0, 0).
     /// </summary>
-    public static readonly Vector3 UnitX = new Vector3(1.0f, 0.0f, 0.0f);
+    public static readonly Vector3 UnitX = new(1.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// The Y unit <see cref="Vector3"/> (0, 1, 0).
     /// </summary>
-    public static readonly Vector3 UnitY = new Vector3(0.0f, 1.0f, 0.0f);
+    public static readonly Vector3 UnitY = new(0.0f, 1.0f, 0.0f);
 
     /// <summary>
     /// The Z unit <see cref="Vector3"/> (0, 0, 1).
     /// </summary>
-    public static readonly Vector3 UnitZ = new Vector3(0.0f, 0.0f, 1.0f);
+    public static readonly Vector3 UnitZ = new(0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// A <see cref="Vector3"/> with all of its components set to one.
     /// </summary>
-    public static readonly Vector3 One = new Vector3(1.0f, 1.0f, 1.0f);
+    public static readonly Vector3 One = new(1.0f, 1.0f, 1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating up (0, 1, 0).
     /// </summary>
-    public static readonly Vector3 Up = new Vector3(0.0f, 1.0f, 0.0f);
+    public static readonly Vector3 Up = new(0.0f, 1.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating down (0, -1, 0).
     /// </summary>
-    public static readonly Vector3 Down = new Vector3(0.0f, -1.0f, 0.0f);
+    public static readonly Vector3 Down = new(0.0f, -1.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating left (-1, 0, 0).
     /// </summary>
-    public static readonly Vector3 Left = new Vector3(-1.0f, 0.0f, 0.0f);
+    public static readonly Vector3 Left = new(-1.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating right (1, 0, 0).
     /// </summary>
-    public static readonly Vector3 Right = new Vector3(1.0f, 0.0f, 0.0f);
+    public static readonly Vector3 Right = new(1.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating forward in a right-handed coordinate system (0, 0, -1).
     /// </summary>
-    public static readonly Vector3 ForwardRH = new Vector3(0.0f, 0.0f, -1.0f);
+    public static readonly Vector3 ForwardRH = new(0.0f, 0.0f, -1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating forward in a left-handed coordinate system (0, 0, 1).
     /// </summary>
-    public static readonly Vector3 ForwardLH = new Vector3(0.0f, 0.0f, 1.0f);
+    public static readonly Vector3 ForwardLH = new(0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating backward in a right-handed coordinate system (0, 0, 1).
     /// </summary>
-    public static readonly Vector3 BackwardRH = new Vector3(0.0f, 0.0f, 1.0f);
+    public static readonly Vector3 BackwardRH = new(0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating backward in a left-handed coordinate system (0, 0, -1).
     /// </summary>
-    public static readonly Vector3 BackwardLH = new Vector3(0.0f, 0.0f, -1.0f);
+    public static readonly Vector3 BackwardLH = new(0.0f, 0.0f, -1.0f);
 
     /// <summary>
     /// The X component of the vector.
@@ -175,10 +175,13 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="values"/> contains more or less than three elements.</exception>
     public Vector3(float[] values) {
-        if (values == null)
-            throw new ArgumentNullException("values");
-        if (values.Length != 3)
-            throw new ArgumentOutOfRangeException("values", "There must be three and only three input values for Vector3.");
+        if (values == null) {
+            throw new ArgumentNullException(nameof(values));
+        }
+
+        if (values.Length != 3) {
+            throw new ArgumentOutOfRangeException(nameof(values), "There must be three and only three input values for Vector3.");
+        }
 
         X = values[0];
         Y = values[1];
@@ -188,16 +191,12 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <summary>
     /// Gets a value indicting whether this instance is normalized.
     /// </summary>
-    public bool IsNormalized {
-        get { return MathUtil.IsOne((X * X) + (Y * Y) + (Z * Z)); }
-    }
+    public readonly bool IsNormalized => MathUtil.IsOne((X * X) + (Y * Y) + (Z * Z));
 
     /// <summary>
     /// Gets a value indicting whether this vector is zero
     /// </summary>
-    public bool IsZero {
-        get { return X == 0 && Y == 0 && Z == 0; }
-    }
+    public readonly bool IsZero => X == 0 && Y == 0 && Z == 0;
 
     /// <summary>
     /// Gets or sets the component at the specified index.
@@ -207,22 +206,19 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <returns>The value of the component at the specified index.</returns>
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown when the <paramref name="index"/> is out of the range [0, 2].</exception>
     public float this[int index] {
-        get {
-            switch (index) {
-                case 0: return X;
-                case 1: return Y;
-                case 2: return Z;
-            }
-
-            throw new ArgumentOutOfRangeException("index", "Indices for Vector3 run from 0 to 2, inclusive.");
-        }
+        readonly get => index switch {
+            0 => X,
+            1 => Y,
+            2 => Z,
+            _ => throw new ArgumentOutOfRangeException(nameof(index), "Indices for Vector3 run from 0 to 2, inclusive."),
+        };
 
         set {
             switch (index) {
                 case 0: X = value; break;
                 case 1: Y = value; break;
                 case 2: Z = value; break;
-                default: throw new ArgumentOutOfRangeException("index", "Indices for Vector3 run from 0 to 2, inclusive.");
+                default: throw new ArgumentOutOfRangeException(nameof(index), "Indices for Vector3 run from 0 to 2, inclusive.");
             }
         }
     }
@@ -235,9 +231,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <see cref="Vector3.LengthSquared"/> may be preferred when only the relative length is needed
     /// and speed is of the essence.
     /// </remarks>
-    public float Length() {
-        return (float) System.Math.Sqrt((X * X) + (Y * Y) + (Z * Z));
-    }
+    public readonly float Length() => (float) System.Math.Sqrt((X * X) + (Y * Y) + (Z * Z));
 
     /// <summary>
     /// Calculates the squared length of the vector.
@@ -247,9 +241,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// This method may be preferred to <see cref="Vector3.Length"/> when only a relative length is needed
     /// and speed is of the essence.
     /// </remarks>
-    public float LengthSquared() {
-        return (X * X) + (Y * Y) + (Z * Z);
-    }
+    public readonly float LengthSquared() => (X * X) + (Y * Y) + (Z * Z);
 
     /// <summary>
     /// Converts the vector into a unit vector.
@@ -268,9 +260,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// Creates an array containing the elements of the vector.
     /// </summary>
     /// <returns>A three-element array containing the components of the vector.</returns>
-    public float[] ToArray() {
-        return new float[] { X, Y, Z };
-    }
+    public readonly float[] ToArray() => [X, Y, Z];
 
     /// <summary>
     /// Adds two vectors.
@@ -278,9 +268,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to add.</param>
     /// <param name="right">The second vector to add.</param>
     /// <param name="result">When the method completes, contains the sum of the two vectors.</param>
-    public static void Add(ref Vector3 left, ref Vector3 right, out Vector3 result) {
-        result = new Vector3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
-    }
+    public static void Add(ref Vector3 left, ref Vector3 right, out Vector3 result) => result = new Vector3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
 
     /// <summary>
     /// Adds two vectors.
@@ -288,9 +276,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to add.</param>
     /// <param name="right">The second vector to add.</param>
     /// <returns>The sum of the two vectors.</returns>
-    public static Vector3 Add(Vector3 left, Vector3 right) {
-        return new Vector3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
-    }
+    public static Vector3 Add(Vector3 left, Vector3 right) => new(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
 
     /// <summary>
     /// Perform a component-wise addition
@@ -298,9 +284,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The input vector</param>
     /// <param name="right">The scalar value to be added to elements</param>
     /// <param name="result">The vector with added scalar for each element.</param>
-    public static void Add(ref Vector3 left, ref float right, out Vector3 result) {
-        result = new Vector3(left.X + right, left.Y + right, left.Z + right);
-    }
+    public static void Add(ref Vector3 left, ref float right, out Vector3 result) => result = new Vector3(left.X + right, left.Y + right, left.Z + right);
 
     /// <summary>
     /// Perform a component-wise addition
@@ -308,9 +292,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The input vector</param>
     /// <param name="right">The scalar value to be added to elements</param>
     /// <returns>The vector with added scalar for each element.</returns>
-    public static Vector3 Add(Vector3 left, float right) {
-        return new Vector3(left.X + right, left.Y + right, left.Z + right);
-    }
+    public static Vector3 Add(Vector3 left, float right) => new(left.X + right, left.Y + right, left.Z + right);
 
     /// <summary>
     /// Subtracts two vectors.
@@ -318,9 +300,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to subtract.</param>
     /// <param name="right">The second vector to subtract.</param>
     /// <param name="result">When the method completes, contains the difference of the two vectors.</param>
-    public static void Subtract(ref Vector3 left, ref Vector3 right, out Vector3 result) {
-        result = new Vector3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
-    }
+    public static void Subtract(ref Vector3 left, ref Vector3 right, out Vector3 result) => result = new Vector3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
 
     /// <summary>
     /// Subtracts two vectors.
@@ -328,9 +308,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to subtract.</param>
     /// <param name="right">The second vector to subtract.</param>
     /// <returns>The difference of the two vectors.</returns>
-    public static Vector3 Subtract(Vector3 left, Vector3 right) {
-        return new Vector3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
-    }
+    public static Vector3 Subtract(Vector3 left, Vector3 right) => new(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
 
     /// <summary>
     /// Perform a component-wise subtraction
@@ -338,9 +316,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The input vector</param>
     /// <param name="right">The scalar value to be subtraced from elements</param>
     /// <param name="result">The vector with subtracted scalar for each element.</param>
-    public static void Subtract(ref Vector3 left, ref float right, out Vector3 result) {
-        result = new Vector3(left.X - right, left.Y - right, left.Z - right);
-    }
+    public static void Subtract(ref Vector3 left, ref float right, out Vector3 result) => result = new Vector3(left.X - right, left.Y - right, left.Z - right);
 
     /// <summary>
     /// Perform a component-wise subtraction
@@ -348,9 +324,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The input vector</param>
     /// <param name="right">The scalar value to be subtraced from elements</param>
     /// <returns>The vector with subtracted scalar for each element.</returns>
-    public static Vector3 Subtract(Vector3 left, float right) {
-        return new Vector3(left.X - right, left.Y - right, left.Z - right);
-    }
+    public static Vector3 Subtract(Vector3 left, float right) => new(left.X - right, left.Y - right, left.Z - right);
 
     /// <summary>
     /// Perform a component-wise subtraction
@@ -358,9 +332,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The scalar value to be subtraced from elements</param>
     /// <param name="right">The input vector.</param>
     /// <param name="result">The vector with subtracted scalar for each element.</param>
-    public static void Subtract(ref float left, ref Vector3 right, out Vector3 result) {
-        result = new Vector3(left - right.X, left - right.Y, left - right.Z);
-    }
+    public static void Subtract(ref float left, ref Vector3 right, out Vector3 result) => result = new Vector3(left - right.X, left - right.Y, left - right.Z);
 
     /// <summary>
     /// Perform a component-wise subtraction
@@ -368,9 +340,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The scalar value to be subtraced from elements</param>
     /// <param name="right">The input vector.</param>
     /// <returns>The vector with subtracted scalar for each element.</returns>
-    public static Vector3 Subtract(float left, Vector3 right) {
-        return new Vector3(left - right.X, left - right.Y, left - right.Z);
-    }
+    public static Vector3 Subtract(float left, Vector3 right) => new(left - right.X, left - right.Y, left - right.Z);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -378,9 +348,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <param name="result">When the method completes, contains the scaled vector.</param>
-    public static void Multiply(ref Vector3 value, float scale, out Vector3 result) {
-        result = new Vector3(value.X * scale, value.Y * scale, value.Z * scale);
-    }
+    public static void Multiply(ref Vector3 value, float scale, out Vector3 result) => result = new Vector3(value.X * scale, value.Y * scale, value.Z * scale);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -388,9 +356,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 Multiply(Vector3 value, float scale) {
-        return new Vector3(value.X * scale, value.Y * scale, value.Z * scale);
-    }
+    public static Vector3 Multiply(Vector3 value, float scale) => new(value.X * scale, value.Y * scale, value.Z * scale);
 
     /// <summary>
     /// Multiply a vector with another by performing component-wise multiplication.
@@ -398,9 +364,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to multiply.</param>
     /// <param name="right">The second vector to multiply.</param>
     /// <param name="result">When the method completes, contains the multiplied vector.</param>
-    public static void Multiply(ref Vector3 left, ref Vector3 right, out Vector3 result) {
-        result = new Vector3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
-    }
+    public static void Multiply(ref Vector3 left, ref Vector3 right, out Vector3 result) => result = new Vector3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
 
     /// <summary>
     /// Multiply a vector with another by performing component-wise multiplication.
@@ -408,9 +372,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to Multiply.</param>
     /// <param name="right">The second vector to multiply.</param>
     /// <returns>The multiplied vector.</returns>
-    public static Vector3 Multiply(Vector3 left, Vector3 right) {
-        return new Vector3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
-    }
+    public static Vector3 Multiply(Vector3 left, Vector3 right) => new(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -418,9 +380,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <param name="result">When the method completes, contains the scaled vector.</param>
-    public static void Divide(ref Vector3 value, float scale, out Vector3 result) {
-        result = new Vector3(value.X / scale, value.Y / scale, value.Z / scale);
-    }
+    public static void Divide(ref Vector3 value, float scale, out Vector3 result) => result = new Vector3(value.X / scale, value.Y / scale, value.Z / scale);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -428,9 +388,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 Divide(Vector3 value, float scale) {
-        return new Vector3(value.X / scale, value.Y / scale, value.Z / scale);
-    }
+    public static Vector3 Divide(Vector3 value, float scale) => new(value.X / scale, value.Y / scale, value.Z / scale);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -438,9 +396,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <param name="value">The vector to scale.</param>
     /// <param name="result">When the method completes, contains the scaled vector.</param>
-    public static void Divide(float scale, ref Vector3 value, out Vector3 result) {
-        result = new Vector3(scale / value.X, scale / value.Y, scale / value.Z);
-    }
+    public static void Divide(float scale, ref Vector3 value, out Vector3 result) => result = new Vector3(scale / value.X, scale / value.Y, scale / value.Z);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -448,50 +404,40 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 Divide(float scale, Vector3 value) {
-        return new Vector3(scale / value.X, scale / value.Y, scale / value.Z);
-    }
+    public static Vector3 Divide(float scale, Vector3 value) => new(scale / value.X, scale / value.Y, scale / value.Z);
 
     /// <summary>
     /// Reverses the direction of a given vector.
     /// </summary>
     /// <param name="value">The vector to negate.</param>
     /// <param name="result">When the method completes, contains a vector facing in the opposite direction.</param>
-    public static void Negate(ref Vector3 value, out Vector3 result) {
-        result = new Vector3(-value.X, -value.Y, -value.Z);
-    }
+    public static void Negate(ref Vector3 value, out Vector3 result) => result = new Vector3(-value.X, -value.Y, -value.Z);
 
     /// <summary>
     /// Reverses the direction of a given vector.
     /// </summary>
     /// <param name="value">The vector to negate.</param>
     /// <returns>A vector facing in the opposite direction.</returns>
-    public static Vector3 Negate(Vector3 value) {
-        return new Vector3(-value.X, -value.Y, -value.Z);
-    }
+    public static Vector3 Negate(Vector3 value) => new(-value.X, -value.Y, -value.Z);
 
     /// <summary>
     /// Returns per component absolute value of a vector
     /// </summary>
     /// <param name="value">Input vector</param>
     /// <param name="result">When the method completes, contains a vector with each component being the absolute value of the input component</param>
-    public static void Abs(ref Vector3 value, out Vector3 result) {
-        result = new Vector3(value.X > 0.0f ? value.X : -value.X,
+    public static void Abs(ref Vector3 value, out Vector3 result) => result = new Vector3(value.X > 0.0f ? value.X : -value.X,
             value.Y > 0.0f ? value.Y : -value.Y,
             value.Z > 0.0f ? value.Z : -value.Z);
-    }
 
     /// <summary>
     /// Returns per component absolute value of a vector
     /// </summary>
     /// <param name="value">Input vector</param>
     /// <returns>A vector with each component being the absolute value of the input component</returns>
-    public static Vector3 Abs(Vector3 value) {
-        return new Vector3(
+    public static Vector3 Abs(Vector3 value) => new(
             value.X > 0.0f ? value.X : -value.X,
             value.Y > 0.0f ? value.Y : -value.Y,
             value.Z > 0.0f ? value.Z : -value.Z);
-    }
 
     /// <summary>
     /// Returns a <see cref="Vector3"/> containing the 3D Cartesian coordinates of a point specified in Barycentric coordinates relative to a 3D triangle.
@@ -502,11 +448,9 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="amount1">Barycentric coordinate b2, which expresses the weighting factor toward vertex 2 (specified in <paramref name="value2"/>).</param>
     /// <param name="amount2">Barycentric coordinate b3, which expresses the weighting factor toward vertex 3 (specified in <paramref name="value3"/>).</param>
     /// <param name="result">When the method completes, contains the 3D Cartesian coordinates of the specified point.</param>
-    public static void Barycentric(ref Vector3 value1, ref Vector3 value2, ref Vector3 value3, float amount1, float amount2, out Vector3 result) {
-        result = new Vector3((value1.X + (amount1 * (value2.X - value1.X))) + (amount2 * (value3.X - value1.X)),
+    public static void Barycentric(ref Vector3 value1, ref Vector3 value2, ref Vector3 value3, float amount1, float amount2, out Vector3 result) => result = new Vector3((value1.X + (amount1 * (value2.X - value1.X))) + (amount2 * (value3.X - value1.X)),
             (value1.Y + (amount1 * (value2.Y - value1.Y))) + (amount2 * (value3.Y - value1.Y)),
             (value1.Z + (amount1 * (value2.Z - value1.Z))) + (amount2 * (value3.Z - value1.Z)));
-    }
 
     /// <summary>
     /// Returns a <see cref="Vector3"/> containing the 3D Cartesian coordinates of a point specified in Barycentric coordinates relative to a 3D triangle.
@@ -518,8 +462,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="amount2">Barycentric coordinate b3, which expresses the weighting factor toward vertex 3 (specified in <paramref name="value3"/>).</param>
     /// <returns>A new <see cref="Vector3"/> containing the 3D Cartesian coordinates of the specified point.</returns>
     public static Vector3 Barycentric(Vector3 value1, Vector3 value2, Vector3 value3, float amount1, float amount2) {
-        Vector3 result;
-        Barycentric(ref value1, ref value2, ref value3, amount1, amount2, out result);
+        Barycentric(ref value1, ref value2, ref value3, amount1, amount2, out var result);
         return result;
     }
 
@@ -554,8 +497,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="max">The maximum value.</param>
     /// <returns>The clamped value.</returns>
     public static Vector3 Clamp(Vector3 value, Vector3 min, Vector3 max) {
-        Vector3 result;
-        Clamp(ref value, ref min, ref max, out result);
+        Clamp(ref value, ref min, ref max, out var result);
         return result;
     }
 
@@ -565,12 +507,10 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">First source vector.</param>
     /// <param name="right">Second source vector.</param>
     /// <param name="result">When the method completes, contains he cross product of the two vectors.</param>
-    public static void Cross(ref Vector3 left, ref Vector3 right, out Vector3 result) {
-        result = new Vector3(
+    public static void Cross(ref Vector3 left, ref Vector3 right, out Vector3 result) => result = new Vector3(
             (left.Y * right.Z) - (left.Z * right.Y),
             (left.Z * right.X) - (left.X * right.Z),
             (left.X * right.Y) - (left.Y * right.X));
-    }
 
     /// <summary>
     /// Calculates the cross product of two vectors.
@@ -579,8 +519,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="right">Second source vector.</param>
     /// <returns>The cross product of the two vectors.</returns>
     public static Vector3 Cross(Vector3 left, Vector3 right) {
-        Vector3 result;
-        Cross(ref left, ref right, out result);
+        Cross(ref left, ref right, out var result);
         return result;
     }
 
@@ -669,9 +608,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="right">The right vector.</param>
     /// <param name="epsilon">The epsilon.</param>
     /// <returns><c>true</c> if left and right are near another 3D, <c>false</c> otherwise</returns>
-    public static bool NearEqual(Vector3 left, Vector3 right, Vector3 epsilon) {
-        return NearEqual(ref left, ref right, ref epsilon);
-    }
+    public static bool NearEqual(Vector3 left, Vector3 right, Vector3 epsilon) => NearEqual(ref left, ref right, ref epsilon);
 
     /// <summary>
     /// Tests whether one 3D vector is near another 3D vector.
@@ -680,11 +617,9 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="right">The right vector.</param>
     /// <param name="epsilon">The epsilon.</param>
     /// <returns><c>true</c> if left and right are near another 3D, <c>false</c> otherwise</returns>
-    public static bool NearEqual(ref Vector3 left, ref Vector3 right, ref Vector3 epsilon) {
-        return MathUtil.WithinEpsilon(left.X, right.X, epsilon.X) &&
+    public static bool NearEqual(ref Vector3 left, ref Vector3 right, ref Vector3 epsilon) => MathUtil.WithinEpsilon(left.X, right.X, epsilon.X) &&
                 MathUtil.WithinEpsilon(left.Y, right.Y, epsilon.Y) &&
                 MathUtil.WithinEpsilon(left.Z, right.Z, epsilon.Z);
-    }
 
     /// <summary>
     /// Calculates the dot product of two vectors.
@@ -692,9 +627,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">First source vector.</param>
     /// <param name="right">Second source vector.</param>
     /// <param name="result">When the method completes, contains the dot product of the two vectors.</param>
-    public static void Dot(ref Vector3 left, ref Vector3 right, out float result) {
-        result = (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z);
-    }
+    public static void Dot(ref Vector3 left, ref Vector3 right, out float result) => result = (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z);
 
     /// <summary>
     /// Calculates the dot product of two vectors.
@@ -702,9 +635,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">First source vector.</param>
     /// <param name="right">Second source vector.</param>
     /// <returns>The dot product of the two vectors.</returns>
-    public static float Dot(Vector3 left, Vector3 right) {
-        return (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z);
-    }
+    public static float Dot(Vector3 left, Vector3 right) => (left.X * right.X) + (left.Y * right.Y) + (left.Z * right.Z);
 
     /// <summary>
     /// Converts the vector into a unit vector.
@@ -753,8 +684,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// Passing <paramref name="amount"/> a value of 0 will cause <paramref name="start"/> to be returned; a value of 1 will cause <paramref name="end"/> to be returned.
     /// </remarks>
     public static Vector3 Lerp(Vector3 start, Vector3 end, float amount) {
-        Vector3 result;
-        Lerp(ref start, ref end, amount, out result);
+        Lerp(ref start, ref end, amount, out var result);
         return result;
     }
 
@@ -778,8 +708,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="amount">Value between 0 and 1 indicating the weight of <paramref name="end"/>.</param>
     /// <returns>The cubic interpolation of the two vectors.</returns>
     public static Vector3 SmoothStep(Vector3 start, Vector3 end, float amount) {
-        Vector3 result;
-        SmoothStep(ref start, ref end, amount, out result);
+        SmoothStep(ref start, ref end, amount, out var result);
         return result;
     }
 
@@ -815,8 +744,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="amount">Weighting factor.</param>
     /// <returns>The result of the Hermite spline interpolation.</returns>
     public static Vector3 Hermite(Vector3 value1, Vector3 tangent1, Vector3 value2, Vector3 tangent2, float amount) {
-        Vector3 result;
-        Hermite(ref value1, ref tangent1, ref value2, ref tangent2, amount, out result);
+        Hermite(ref value1, ref tangent1, ref value2, ref tangent2, amount, out var result);
         return result;
     }
 
@@ -856,8 +784,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="amount">Weighting factor.</param>
     /// <returns>A vector that is the result of the Catmull-Rom interpolation.</returns>
     public static Vector3 CatmullRom(Vector3 value1, Vector3 value2, Vector3 value3, Vector3 value4, float amount) {
-        Vector3 result;
-        CatmullRom(ref value1, ref value2, ref value3, ref value4, amount, out result);
+        CatmullRom(ref value1, ref value2, ref value3, ref value4, amount, out var result);
         return result;
     }
 
@@ -880,8 +807,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="right">The second source vector.</param>
     /// <returns>A vector containing the largest components of the source vectors.</returns>
     public static Vector3 Max(Vector3 left, Vector3 right) {
-        Vector3 result;
-        Max(ref left, ref right, out result);
+        Max(ref left, ref right, out var result);
         return result;
     }
 
@@ -904,8 +830,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="right">The second source vector.</param>
     /// <returns>A vector containing the smallest components of the source vectors.</returns>
     public static Vector3 Min(Vector3 left, Vector3 right) {
-        Vector3 result;
-        Min(ref left, ref right, out result);
+        Min(ref left, ref right, out var result);
         return result;
     }
 
@@ -941,8 +866,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="worldViewProjection">The combined world-view-projection matrix.</param>
     /// <returns>The vector in screen space.</returns>
     public static Vector3 Project(Vector3 vector, float x, float y, float width, float height, float minZ, float maxZ, Matrix worldViewProjection) {
-        Vector3 result;
-        Project(ref vector, x, y, width, height, minZ, maxZ, ref worldViewProjection, out result);
+        Project(ref vector, x, y, width, height, minZ, maxZ, ref worldViewProjection, out var result);
         return result;
     }
 
@@ -983,8 +907,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="worldViewProjection">The combined world-view-projection matrix.</param>
     /// <returns>The vector in object space.</returns>
     public static Vector3 Unproject(Vector3 vector, float x, float y, float width, float height, float minZ, float maxZ, Matrix worldViewProjection) {
-        Vector3 result;
-        Unproject(ref vector, x, y, width, height, minZ, maxZ, ref worldViewProjection, out result);
+        Unproject(ref vector, x, y, width, height, minZ, maxZ, ref worldViewProjection, out var result);
         return result;
     }
 
@@ -1013,8 +936,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <remarks>Reflect only gives the direction of a reflection off a surface, it does not determine
     /// whether the original vector was close enough to the surface to hit it.</remarks>
     public static Vector3 Reflect(Vector3 vector, Vector3 normal) {
-        Vector3 result;
-        Reflect(ref vector, ref normal, out result);
+        Reflect(ref vector, ref normal, out var result);
         return result;
     }
 
@@ -1042,12 +964,17 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
         //q4 = m4 - ((q1 ⋅ m4) / (q1 ⋅ q1)) * q1 - ((q2 ⋅ m4) / (q2 ⋅ q2)) * q2 - ((q3 ⋅ m4) / (q3 ⋅ q3)) * q3
         //q5 = ...
 
-        if (source == null)
-            throw new ArgumentNullException("source");
-        if (destination == null)
-            throw new ArgumentNullException("destination");
-        if (destination.Length < source.Length)
-            throw new ArgumentOutOfRangeException("destination", "The destination array must be of same length or larger length than the source array.");
+        if (source == null) {
+            throw new ArgumentNullException(nameof(source));
+        }
+
+        if (destination == null) {
+            throw new ArgumentNullException(nameof(destination));
+        }
+
+        if (destination.Length < source.Length) {
+            throw new ArgumentOutOfRangeException(nameof(destination), "The destination array must be of same length or larger length than the source array.");
+        }
 
         for (int i = 0; i < source.Length; ++i) {
             Vector3 newvector = source[i];
@@ -1086,12 +1013,17 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
         //q4 = (m4 - (q1 ⋅ m4) * q1 - (q2 ⋅ m4) * q2 - (q3 ⋅ m4) * q3) / |m4 - (q1 ⋅ m4) * q1 - (q2 ⋅ m4) * q2 - (q3 ⋅ m4) * q3|
         //q5 = ...
 
-        if (source == null)
-            throw new ArgumentNullException("source");
-        if (destination == null)
-            throw new ArgumentNullException("destination");
-        if (destination.Length < source.Length)
-            throw new ArgumentOutOfRangeException("destination", "The destination array must be of same length or larger length than the source array.");
+        if (source == null) {
+            throw new ArgumentNullException(nameof(source));
+        }
+
+        if (destination == null) {
+            throw new ArgumentNullException(nameof(destination));
+        }
+
+        if (destination.Length < source.Length) {
+            throw new ArgumentOutOfRangeException(nameof(destination), "The destination array must be of same length or larger length than the source array.");
+        }
 
         for (int i = 0; i < source.Length; ++i) {
             Vector3 newvector = source[i];
@@ -1138,8 +1070,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="rotation">The <see cref="Quaternion"/> rotation to apply.</param>
     /// <returns>The transformed <see cref="Vector4"/>.</returns>
     public static Vector3 Transform(Vector3 vector, Quaternion rotation) {
-        Vector3 result;
-        Transform(ref vector, ref rotation, out result);
+        Transform(ref vector, ref rotation, out var result);
         return result;
     }
 
@@ -1153,12 +1084,17 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="destination"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="destination"/> is shorter in length than <paramref name="source"/>.</exception>
     public static void Transform(Vector3[] source, ref Quaternion rotation, Vector3[] destination) {
-        if (source == null)
-            throw new ArgumentNullException("source");
-        if (destination == null)
-            throw new ArgumentNullException("destination");
-        if (destination.Length < source.Length)
-            throw new ArgumentOutOfRangeException("destination", "The destination array must be of same length or larger length than the source array.");
+        if (source == null) {
+            throw new ArgumentNullException(nameof(source));
+        }
+
+        if (destination == null) {
+            throw new ArgumentNullException(nameof(destination));
+        }
+
+        if (destination.Length < source.Length) {
+            throw new ArgumentOutOfRangeException(nameof(destination), "The destination array must be of same length or larger length than the source array.");
+        }
 
         float x = rotation.X + rotation.X;
         float y = rotation.Y + rotation.Y;
@@ -1197,12 +1133,10 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="vector">The source vector.</param>
     /// <param name="transform">The transformation <see cref="Matrix3x3"/>.</param>
     /// <param name="result">When the method completes, contains the transformed <see cref="Vector3"/>.</param>
-    public static void Transform(ref Vector3 vector, ref Matrix3x3 transform, out Vector3 result) {
-        result = new Vector3((vector.X * transform.M11) + (vector.Y * transform.M21) + (vector.Z * transform.M31),
+    public static void Transform(ref Vector3 vector, ref Matrix3x3 transform, out Vector3 result) => result = new Vector3((vector.X * transform.M11) + (vector.Y * transform.M21) + (vector.Z * transform.M31),
                                 (vector.X * transform.M12) + (vector.Y * transform.M22) + (vector.Z * transform.M32),
                                 (vector.X * transform.M13) + (vector.Y * transform.M23) + (vector.Z * transform.M33)
                             );
-    }
 
     /// <summary>
     /// Transforms a 3D vector by the given <see cref="Matrix3x3"/>.
@@ -1211,8 +1145,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="transform">The transformation <see cref="Matrix3x3"/>.</param>
     /// <returns>The transformed <see cref="Vector3"/>.</returns>
     public static Vector3 Transform(Vector3 vector, Matrix3x3 transform) {
-        Vector3 result;
-        Transform(ref vector, ref transform, out result);
+        Transform(ref vector, ref transform, out var result);
         return result;
     }
 
@@ -1223,8 +1156,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="transform">The transformation <see cref="Matrix"/>.</param>
     /// <param name="result">When the method completes, contains the transformed <see cref="Vector3"/>.</param>
     public static void Transform(ref Vector3 vector, ref Matrix transform, out Vector3 result) {
-        Vector4 intermediate;
-        Transform(ref vector, ref transform, out intermediate);
+        Transform(ref vector, ref transform, out Vector4 intermediate);
         result = (Vector3) intermediate;
     }
 
@@ -1234,13 +1166,11 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="vector">The source vector.</param>
     /// <param name="transform">The transformation <see cref="Matrix"/>.</param>
     /// <param name="result">When the method completes, contains the transformed <see cref="Vector4"/>.</param>
-    public static void Transform(ref Vector3 vector, ref Matrix transform, out Vector4 result) {
-        result = new Vector4(
+    public static void Transform(ref Vector3 vector, ref Matrix transform, out Vector4 result) => result = new Vector4(
             (vector.X * transform.M11) + (vector.Y * transform.M21) + (vector.Z * transform.M31) + transform.M41,
             (vector.X * transform.M12) + (vector.Y * transform.M22) + (vector.Z * transform.M32) + transform.M42,
             (vector.X * transform.M13) + (vector.Y * transform.M23) + (vector.Z * transform.M33) + transform.M43,
             (vector.X * transform.M14) + (vector.Y * transform.M24) + (vector.Z * transform.M34) + transform.M44);
-    }
 
     /// <summary>
     /// Transforms a 3D vector by the given <see cref="Matrix"/>.
@@ -1249,8 +1179,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="transform">The transformation <see cref="Matrix"/>.</param>
     /// <returns>The transformed <see cref="Vector4"/>.</returns>
     public static Vector4 Transform(Vector3 vector, Matrix transform) {
-        Vector4 result;
-        Transform(ref vector, ref transform, out result);
+        Transform(ref vector, ref transform, out Vector4 result);
         return result;
     }
 
@@ -1263,12 +1192,17 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="destination"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="destination"/> is shorter in length than <paramref name="source"/>.</exception>
     public static void Transform(Vector3[] source, ref Matrix transform, Vector4[] destination) {
-        if (source == null)
-            throw new ArgumentNullException("source");
-        if (destination == null)
-            throw new ArgumentNullException("destination");
-        if (destination.Length < source.Length)
-            throw new ArgumentOutOfRangeException("destination", "The destination array must be of same length or larger length than the source array.");
+        if (source == null) {
+            throw new ArgumentNullException(nameof(source));
+        }
+
+        if (destination == null) {
+            throw new ArgumentNullException(nameof(destination));
+        }
+
+        if (destination.Length < source.Length) {
+            throw new ArgumentOutOfRangeException(nameof(destination), "The destination array must be of same length or larger length than the source array.");
+        }
 
         for (int i = 0; i < source.Length; ++i) {
             Transform(ref source[i], ref transform, out destination[i]);
@@ -1289,11 +1223,12 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// with coordinates as the w component can safely be ignored.
     /// </remarks>
     public static void TransformCoordinate(ref Vector3 coordinate, ref Matrix transform, out Vector3 result) {
-        Vector4 vector = new Vector4();
-        vector.X = (coordinate.X * transform.M11) + (coordinate.Y * transform.M21) + (coordinate.Z * transform.M31) + transform.M41;
-        vector.Y = (coordinate.X * transform.M12) + (coordinate.Y * transform.M22) + (coordinate.Z * transform.M32) + transform.M42;
-        vector.Z = (coordinate.X * transform.M13) + (coordinate.Y * transform.M23) + (coordinate.Z * transform.M33) + transform.M43;
-        vector.W = 1f / ((coordinate.X * transform.M14) + (coordinate.Y * transform.M24) + (coordinate.Z * transform.M34) + transform.M44);
+        Vector4 vector = new Vector4 {
+            X = (coordinate.X * transform.M11) + (coordinate.Y * transform.M21) + (coordinate.Z * transform.M31) + transform.M41,
+            Y = (coordinate.X * transform.M12) + (coordinate.Y * transform.M22) + (coordinate.Z * transform.M32) + transform.M42,
+            Z = (coordinate.X * transform.M13) + (coordinate.Y * transform.M23) + (coordinate.Z * transform.M33) + transform.M43,
+            W = 1f / ((coordinate.X * transform.M14) + (coordinate.Y * transform.M24) + (coordinate.Z * transform.M34) + transform.M44)
+        };
 
         result = new Vector3(vector.X * vector.W, vector.Y * vector.W, vector.Z * vector.W);
     }
@@ -1312,8 +1247,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// with coordinates as the w component can safely be ignored.
     /// </remarks>
     public static Vector3 TransformCoordinate(Vector3 coordinate, Matrix transform) {
-        Vector3 result;
-        TransformCoordinate(ref coordinate, ref transform, out result);
+        TransformCoordinate(ref coordinate, ref transform, out var result);
         return result;
     }
 
@@ -1334,12 +1268,17 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// with coordinates as the w component can safely be ignored.
     /// </remarks>
     public static void TransformCoordinate(Vector3[] source, ref Matrix transform, Vector3[] destination) {
-        if (source == null)
-            throw new ArgumentNullException("source");
-        if (destination == null)
-            throw new ArgumentNullException("destination");
-        if (destination.Length < source.Length)
-            throw new ArgumentOutOfRangeException("destination", "The destination array must be of same length or larger length than the source array.");
+        if (source == null) {
+            throw new ArgumentNullException(nameof(source));
+        }
+
+        if (destination == null) {
+            throw new ArgumentNullException(nameof(destination));
+        }
+
+        if (destination.Length < source.Length) {
+            throw new ArgumentOutOfRangeException(nameof(destination), "The destination array must be of same length or larger length than the source array.");
+        }
 
         for (int i = 0; i < source.Length; ++i) {
             TransformCoordinate(ref source[i], ref transform, out destination[i]);
@@ -1359,12 +1298,10 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// apply. This is often preferred for normal vectors as normals purely represent direction
     /// rather than location because normal vectors should not be translated.
     /// </remarks>
-    public static void TransformNormal(ref Vector3 normal, ref Matrix transform, out Vector3 result) {
-        result = new Vector3(
+    public static void TransformNormal(ref Vector3 normal, ref Matrix transform, out Vector3 result) => result = new Vector3(
             (normal.X * transform.M11) + (normal.Y * transform.M21) + (normal.Z * transform.M31),
             (normal.X * transform.M12) + (normal.Y * transform.M22) + (normal.Z * transform.M32),
             (normal.X * transform.M13) + (normal.Y * transform.M23) + (normal.Z * transform.M33));
-    }
 
     /// <summary>
     /// Performs a normal transformation using the given <see cref="Matrix"/>.
@@ -1380,8 +1317,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// rather than location because normal vectors should not be translated.
     /// </remarks>
     public static Vector3 TransformNormal(Vector3 normal, Matrix transform) {
-        Vector3 result;
-        TransformNormal(ref normal, ref transform, out result);
+        TransformNormal(ref normal, ref transform, out var result);
         return result;
     }
 
@@ -1402,12 +1338,17 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// rather than location because normal vectors should not be translated.
     /// </remarks>
     public static void TransformNormal(Vector3[] source, ref Matrix transform, Vector3[] destination) {
-        if (source == null)
-            throw new ArgumentNullException("source");
-        if (destination == null)
-            throw new ArgumentNullException("destination");
-        if (destination.Length < source.Length)
-            throw new ArgumentOutOfRangeException("destination", "The destination array must be of same length or larger length than the source array.");
+        if (source == null) {
+            throw new ArgumentNullException(nameof(source));
+        }
+
+        if (destination == null) {
+            throw new ArgumentNullException(nameof(destination));
+        }
+
+        if (destination.Length < source.Length) {
+            throw new ArgumentOutOfRangeException(nameof(destination), "The destination array must be of same length or larger length than the source array.");
+        }
 
         for (int i = 0; i < source.Length; ++i) {
             TransformNormal(ref source[i], ref transform, out destination[i]);
@@ -1420,9 +1361,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to add.</param>
     /// <param name="right">The second vector to add.</param>
     /// <returns>The sum of the two vectors.</returns>
-    public static Vector3 operator +(Vector3 left, Vector3 right) {
-        return new Vector3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
-    }
+    public static Vector3 operator +(Vector3 left, Vector3 right) => new(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
 
     /// <summary>
     /// Multiplies a vector with another by performing component-wise multiplication equivalent to <see cref="Multiply(ref Vector3,ref Vector3,out Vector3)"/>.
@@ -1430,18 +1369,14 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to multiply.</param>
     /// <param name="right">The second vector to multiply.</param>
     /// <returns>The multiplication of the two vectors.</returns>
-    public static Vector3 operator *(Vector3 left, Vector3 right) {
-        return new Vector3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
-    }
+    public static Vector3 operator *(Vector3 left, Vector3 right) => new(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
 
     /// <summary>
     /// Assert a vector (return it unchanged).
     /// </summary>
     /// <param name="value">The vector to assert (unchanged).</param>
     /// <returns>The asserted (unchanged) vector.</returns>
-    public static Vector3 operator +(Vector3 value) {
-        return value;
-    }
+    public static Vector3 operator +(Vector3 value) => value;
 
     /// <summary>
     /// Subtracts two vectors.
@@ -1449,18 +1384,14 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="left">The first vector to subtract.</param>
     /// <param name="right">The second vector to subtract.</param>
     /// <returns>The difference of the two vectors.</returns>
-    public static Vector3 operator -(Vector3 left, Vector3 right) {
-        return new Vector3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
-    }
+    public static Vector3 operator -(Vector3 left, Vector3 right) => new(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
 
     /// <summary>
     /// Reverses the direction of a given vector.
     /// </summary>
     /// <param name="value">The vector to negate.</param>
     /// <returns>A vector facing in the opposite direction.</returns>
-    public static Vector3 operator -(Vector3 value) {
-        return new Vector3(-value.X, -value.Y, -value.Z);
-    }
+    public static Vector3 operator -(Vector3 value) => new(-value.X, -value.Y, -value.Z);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -1468,9 +1399,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 operator *(float scale, Vector3 value) {
-        return new Vector3(value.X * scale, value.Y * scale, value.Z * scale);
-    }
+    public static Vector3 operator *(float scale, Vector3 value) => new(value.X * scale, value.Y * scale, value.Z * scale);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -1478,9 +1407,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 operator *(Vector3 value, float scale) {
-        return new Vector3(value.X * scale, value.Y * scale, value.Z * scale);
-    }
+    public static Vector3 operator *(Vector3 value, float scale) => new(value.X * scale, value.Y * scale, value.Z * scale);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -1488,9 +1415,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 operator /(Vector3 value, float scale) {
-        return new Vector3(value.X / scale, value.Y / scale, value.Z / scale);
-    }
+    public static Vector3 operator /(Vector3 value, float scale) => new(value.X / scale, value.Y / scale, value.Z / scale);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -1498,9 +1423,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <param name="value">The vector to scale.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 operator /(float scale, Vector3 value) {
-        return new Vector3(scale / value.X, scale / value.Y, scale / value.Z);
-    }
+    public static Vector3 operator /(float scale, Vector3 value) => new(scale / value.X, scale / value.Y, scale / value.Z);
 
     /// <summary>
     /// Scales a vector by the given value.
@@ -1508,9 +1431,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The vector to scale.</param>
     /// <param name="scale">The amount by which to scale the vector.</param>
     /// <returns>The scaled vector.</returns>
-    public static Vector3 operator /(Vector3 value, Vector3 scale) {
-        return new Vector3(value.X / scale.X, value.Y / scale.Y, value.Z / scale.Z);
-    }
+    public static Vector3 operator /(Vector3 value, Vector3 scale) => new(value.X / scale.X, value.Y / scale.Y, value.Z / scale.Z);
 
     /// <summary>
     /// Perform a component-wise addition
@@ -1518,9 +1439,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The input vector.</param>
     /// <param name="scalar">The scalar value to be added on elements</param>
     /// <returns>The vector with added scalar for each element.</returns>
-    public static Vector3 operator +(Vector3 value, float scalar) {
-        return new Vector3(value.X + scalar, value.Y + scalar, value.Z + scalar);
-    }
+    public static Vector3 operator +(Vector3 value, float scalar) => new(value.X + scalar, value.Y + scalar, value.Z + scalar);
 
     /// <summary>
     /// Perform a component-wise addition
@@ -1528,9 +1447,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The input vector.</param>
     /// <param name="scalar">The scalar value to be added on elements</param>
     /// <returns>The vector with added scalar for each element.</returns>
-    public static Vector3 operator +(float scalar, Vector3 value) {
-        return new Vector3(scalar + value.X, scalar + value.Y, scalar + value.Z);
-    }
+    public static Vector3 operator +(float scalar, Vector3 value) => new(scalar + value.X, scalar + value.Y, scalar + value.Z);
 
     /// <summary>
     /// Perform a component-wise subtraction
@@ -1538,9 +1455,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The input vector.</param>
     /// <param name="scalar">The scalar value to be subtraced from elements</param>
     /// <returns>The vector with added scalar from each element.</returns>
-    public static Vector3 operator -(Vector3 value, float scalar) {
-        return new Vector3(value.X - scalar, value.Y - scalar, value.Z - scalar);
-    }
+    public static Vector3 operator -(Vector3 value, float scalar) => new(value.X - scalar, value.Y - scalar, value.Z - scalar);
 
     /// <summary>
     /// Perform a component-wise subtraction
@@ -1548,9 +1463,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="value">The input vector.</param>
     /// <param name="scalar">The scalar value to be subtraced from elements</param>
     /// <returns>The vector with subtraced scalar from each element.</returns>
-    public static Vector3 operator -(float scalar, Vector3 value) {
-        return new Vector3(scalar - value.X, scalar - value.Y, scalar - value.Z);
-    }
+    public static Vector3 operator -(float scalar, Vector3 value) => new(scalar - value.X, scalar - value.Y, scalar - value.Z);
 
     /// <summary>
     /// Tests for equality between two objects.
@@ -1559,9 +1472,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has the same value as <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator ==(Vector3 left, Vector3 right) {
-        return left.Equals(ref right);
-    }
+    public static bool operator ==(Vector3 left, Vector3 right) => left.Equals(ref right);
 
     /// <summary>
     /// Tests for inequality between two objects.
@@ -1570,27 +1481,21 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <param name="right">The second value to compare.</param>
     /// <returns><c>true</c> if <paramref name="left"/> has a different value than <paramref name="right"/>; otherwise, <c>false</c>.</returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public static bool operator !=(Vector3 left, Vector3 right) {
-        return !left.Equals(ref right);
-    }
+    public static bool operator !=(Vector3 left, Vector3 right) => !left.Equals(ref right);
 
     /// <summary>
     /// Performs an explicit conversion from <see cref="Vector3"/> to <see cref="Vector2"/>.
     /// </summary>
     /// <param name="value">The value.</param>
     /// <returns>The result of the conversion.</returns>
-    public static explicit operator Vector2(Vector3 value) {
-        return new Vector2(value.X, value.Y);
-    }
+    public static explicit operator Vector2(Vector3 value) => new(value.X, value.Y);
 
     /// <summary>
     /// Performs an explicit conversion from <see cref="Vector3"/> to <see cref="Vector4"/>.
     /// </summary>
     /// <param name="value">The value.</param>
     /// <returns>The result of the conversion.</returns>
-    public static explicit operator Vector4(Vector3 value) {
-        return new Vector4(value, 0.0f);
-    }
+    public static explicit operator Vector4(Vector3 value) => new(value, 0.0f);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -1598,9 +1503,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public override string ToString() {
-        return string.Format(CultureInfo.CurrentCulture, "X:{0} Y:{1} Z:{2}", X, Y, Z);
-    }
+    public override readonly string ToString() => string.Format(CultureInfo.CurrentCulture, "X:{0} Y:{1} Z:{2}", X, Y, Z);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -1609,9 +1512,10 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format) {
-        if (format == null)
+    public readonly string ToString(string format) {
+        if (format == null) {
             return ToString();
+        }
 
         return string.Format(CultureInfo.CurrentCulture, "X:{0} Y:{1} Z:{2}", X.ToString(format, CultureInfo.CurrentCulture),
             Y.ToString(format, CultureInfo.CurrentCulture), Z.ToString(format, CultureInfo.CurrentCulture));
@@ -1624,9 +1528,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(IFormatProvider formatProvider) {
-        return string.Format(formatProvider, "X:{0} Y:{1} Z:{2}", X, Y, Z);
-    }
+    public readonly string ToString(IFormatProvider? formatProvider) => string.Format(formatProvider, "X:{0} Y:{1} Z:{2}", X, Y, Z);
 
     /// <summary>
     /// Returns a <see cref="System.String"/> that represents this instance.
@@ -1636,9 +1538,10 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <returns>
     /// A <see cref="System.String"/> that represents this instance.
     /// </returns>
-    public string ToString(string format, IFormatProvider formatProvider) {
-        if (format == null)
+    public readonly string ToString(string? format, IFormatProvider? formatProvider) {
+        if (format == null) {
             return ToString(formatProvider);
+        }
 
         return string.Format(formatProvider, "X:{0} Y:{1} Z:{2}", X.ToString(format, formatProvider),
             Y.ToString(format, formatProvider), Z.ToString(format, formatProvider));
@@ -1650,7 +1553,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <returns>
     /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
     /// </returns>
-    public override int GetHashCode() {
+    public override readonly int GetHashCode() {
         unchecked {
             var hashCode = X.GetHashCode();
             hashCode = (hashCode * 397) ^ Y.GetHashCode();
@@ -1667,9 +1570,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// 	<c>true</c> if the specified <see cref="Vector3"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(ref Vector3 other) {
-        return MathUtil.NearEqual(other.X, X) && MathUtil.NearEqual(other.Y, Y) && MathUtil.NearEqual(other.Z, Z);
-    }
+    public readonly bool Equals(ref Vector3 other) => MathUtil.NearEqual(other.X, X) && MathUtil.NearEqual(other.Y, Y) && MathUtil.NearEqual(other.Z, Z);
 
     /// <summary>
     /// Determines whether the specified <see cref="Vector3"/> is equal to this instance.
@@ -1679,9 +1580,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// 	<c>true</c> if the specified <see cref="Vector3"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
     [MethodImpl((MethodImplOptions) 0x100)] // MethodImplOptions.AggressiveInlining
-    public bool Equals(Vector3 other) {
-        return Equals(ref other);
-    }
+    public readonly bool Equals(Vector3 other) => Equals(ref other);
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.
@@ -1690,9 +1589,10 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable {
     /// <returns>
     /// 	<c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
     /// </returns>
-    public override bool Equals(object value) {
-        if (!(value is Vector3))
+    public override readonly bool Equals(object? value) {
+        if (value is not Vector3) {
             return false;
+        }
 
         var strongValue = (Vector3) value;
         return Equals(ref strongValue);
