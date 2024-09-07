@@ -66,6 +66,7 @@ Redistribution and use in source and binary forms, with or without
         }
 
         private static void ExecuteCore(GeneratorExecutionContext context) {
+            // Get all JSON files in the project.
             var relevantContentFiles = GetRelevantContentFiles(context);
             var additionalTexts = relevantContentFiles as AdditionalText[] ?? relevantContentFiles.ToArray();
             if (!additionalTexts.Any()) {
@@ -76,9 +77,9 @@ Redistribution and use in source and binary forms, with or without
                 return;
             }
 
+            // We only care about the first JSON file.
             var file = additionalTexts.First();
             var text = file.GetText(context.CancellationToken);
-
             if (text.Length <= 0) {
                 var noTextDiagnostic = DiagnosticWriter("No text in file",
                                                         "The file has no text.");
@@ -87,9 +88,10 @@ Redistribution and use in source and binary forms, with or without
                 return;
             }
 
+            // Compile the JSON dump into C# classes.
+            // If the compiler dump is null, we can't continue.
             var contextInput = text.ToString();
             var compilerDump = CompileJsonToCsharp(contextInput);
-
             if (compilerDump == null) {
                 var noDumpDiagnostic = DiagnosticWriter("No dump",
                                                         "The compiler dump is null.");
@@ -98,7 +100,8 @@ Redistribution and use in source and binary forms, with or without
                 return;
             }
 
-            var classCounter = GenerateClasses(compilerDump, ContainingNamespace, context);
+            // Generate and add the C# classes to the context.
+            var classCounter = GenerateFullFile(compilerDump, ContainingNamespace, context);
             if (classCounter == 0) {
                 var noClassesDiagnostic = DiagnosticWriter("No classes added",
                                                            "No classes were added to the compilation.");
@@ -107,41 +110,52 @@ Redistribution and use in source and binary forms, with or without
                 return;
             }
 
-            var dispatcherClass = WriteDispatcherClass(compilerDump.ToArray(), ContainingNamespace);
+            // Select only the PropertyClassDefinitions to generate the dispatcher class.
+            var classDefinitions = compilerDump.Where(c => c is PropertyClassDefinition)
+                                               .Cast<PropertyClassDefinition>()
+                                               .ToArray();
+            var dispatcherClass = WriteDispatcherClass(classDefinitions, ContainingNamespace);
             context.AddSource("TypeCache.g.cs", dispatcherClass);
         }
 
         private static IEnumerable<AdditionalText> GetRelevantContentFiles(GeneratorExecutionContext context)
             => context.AdditionalFiles.Where(f => f.Path.EndsWith(".json"));
 
-        private static List<PropertyClassDefinition> CompileJsonToCsharp(string contextInput) {
+        private static List<Definition> CompileJsonToCsharp(string contextInput) {
             var jsonCompiler = new JsonToCsharpCompiler();
-            return jsonCompiler.Compile(contextInput).ToList();
+            return [.. jsonCompiler.Compile(contextInput)];
         }
 
-        private static int GenerateClasses(List<PropertyClassDefinition> compilerDump,
+        private static int GenerateFullFile(List<Definition> compilerDump,
                                     string containingNamespace,
                                     GeneratorExecutionContext context) {
             var classCounter = 0;
             foreach (var classDefinition in compilerDump) {
-                var classSource = GenerateClassSource(classDefinition, containingNamespace);
+                var classSource = GetDefinitionAsCsharpString(classDefinition, containingNamespace);
                 if (classSource == null) {
                     continue;
                 }
 
-                context.AddSource($"{classDefinition.ClassName}.g.cs", classSource);
+                context.AddSource($"{classDefinition.Name}.g.cs", classSource);
                 classCounter++;
             }
             return classCounter;
         }
 
-        private static string GenerateClassSource(PropertyClassDefinition classDefinition,
-                                           string containingNamespace) {
+        private static string GetDefinitionAsCsharpString(Definition definition, string containingNamespace) {
             var jsonCompiler = new JsonToCsharpCompiler();
-            return jsonCompiler.WriteClassAsString(classDefinition,
-                                                      containingNamespace,
-                                                      CopyrightHeader,
+
+            if (definition is EnumDefinition enumDefinition) {
+                return jsonCompiler.WriteEnumAsString(enumDefinition, containingNamespace, CopyrightHeader,
                                                       s_autoGeneratedWarning);
+            }
+            else if (definition is PropertyClassDefinition classDefinition) {
+                return jsonCompiler.WriteClassAsString(classDefinition, containingNamespace, CopyrightHeader,
+                                                       s_autoGeneratedWarning);
+            }
+            else {
+                throw new Exception("Unknown definition type.");
+            }
         }
 
         public void Initialize(GeneratorInitializationContext context) { }
@@ -157,7 +171,7 @@ Redistribution and use in source and binary forms, with or without
             dispatcherBuilder.AppendLine($"\n\tstatic partial void DispatchInternal(uint hash, ref PropertyClass? propertyClass) {{");
             dispatcherBuilder.AppendLine("\t\tpropertyClass = hash switch {");
             dispatcherBuilder.AppendLine($"{string.Join(",\n",
-                classDefinitions.Select(c => $"\t\t\t0x{c.ClassName.GetHashCode():X8} => new {c.ClassName}()"))}");
+                classDefinitions.Select(c => $"\t\t\t0x{c.Name!.GetHashCode():X8} => new {c.Name}()"))}");
             dispatcherBuilder.AppendLine("\t\t};");
             dispatcherBuilder.AppendLine("\t}");
             dispatcherBuilder.AppendLine("}");

@@ -24,11 +24,9 @@ using System.Diagnostics;
 
 namespace Imcodec.ObjectProperty.CodeGen.AST;
 
-[DebuggerDisplay("{Name}")]
-internal class PropertyDefinition {
+internal class PropertyDefinition : Definition {
 
-    private static readonly Dictionary<string, string> s_internalTypeTranslationDict
-        = new Dictionary<string, string> {
+    private static readonly Dictionary<string, string> s_internalTypeTranslationDict = new() {
         // Primitive
         { "int",              "int"            },
         { "unsigned int",     "uint"           },
@@ -70,49 +68,48 @@ internal class PropertyDefinition {
         { "u24",              "U24"            }, // 24-bit unsigned integer
     };
 
-    internal string Name { get; }
     internal string CsharpType { get; private set; }
     internal uint Flags { get; }
     internal bool IsVector { get; }
-    internal uint Hash { get; }
+    internal bool IsEnum { get; private set; }
+    internal Dictionary<string, int> EnumOptions { get; private set; } = [];
 
     // ctor
-    internal PropertyDefinition(string name, string cppType, uint flags, string container, uint hash) {
+    internal PropertyDefinition(string name,
+                                string cppType,
+                                uint flags,
+                                string container,
+                                uint hash,
+                                Dictionary<string, object> enumOptions) {
         this.Name = name;
         this.Flags = flags;
         this.Hash = hash;
+        this.IsEnum = cppType.StartsWith("enum");
+        if (this.IsEnum) {
+            this.EnumOptions = CleanupEnumOptions(enumOptions);
+        }
 
         this.IsVector = IsContainerDynamic(container);
         this.CsharpType = GetCsharpType(cppType, IsVector);
     }
 
-    private static bool IsContainerDynamic(string container) {
-        if (container is "std::vector" || container is "List") {
-            return true;
+    private static bool IsContainerDynamic(string container)
+        => container is "std::vector" or "List";
+
+    private static Dictionary<string, int> CleanupEnumOptions(Dictionary<string, object> enumOptions) {
+        var cleanedOptions = new Dictionary<string, int>();
+        foreach (var option in enumOptions) {
+            if (int.TryParse(option.Value.ToString(), out var value)) {
+                var cleanedKey = NameCleanupUtil.CleanupWizardName(option.Key);
+                cleanedOptions.Add(cleanedKey, value);
+            }
         }
 
-        return false;
+        return cleanedOptions;
     }
 
     private static string GetCsharpType(string cppType, bool isVector) {
-        // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
-        // We'll want to remove that part and just leave the actual type.
-        var sharedPointerIndex = cppType.IndexOf("SharedPointer<");
-        if (sharedPointerIndex != -1) {
-            cppType = cppType.Substring(sharedPointerIndex + "SharedPointer<".Length);
-            cppType = cppType.Substring(0, cppType.Length - 1);
-        }
-
-        // Remove any pointers.
-        cppType = cppType.Replace("*", "");
-
-        // Replace C++'s '::' with dot notation.
-        cppType = cppType.Replace("::", ".");
-
-        // If the type begins with "class" or "struct," just set that.
-        if (cppType.StartsWith("class") || cppType.StartsWith("struct")) {
-            cppType = cppType.Replace("class ", "").Replace("struct ", "");
-        }
+        cppType = NameCleanupUtil.CleanupWizardName(cppType);
 
         if (s_internalTypeTranslationDict.TryGetValue(cppType, out var type)) {
             if (isVector) {

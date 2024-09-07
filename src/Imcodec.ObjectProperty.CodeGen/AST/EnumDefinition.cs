@@ -23,24 +23,14 @@ using System.Diagnostics;
 
 namespace Imcodec.ObjectProperty.CodeGen.AST;
 
-internal class PropertyClassDefinition : Definition {
+internal class EnumDefinition : Definition {
 
-    internal List<string> BaseClassNames{ get; set; } = new List<string>();
-    internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
-    internal List<PropertyDefinition> Properties { get; set; } = [];
+    internal Dictionary<string, int> Options { get; } = [];
 
     // ctor
-    internal PropertyClassDefinition(string className, uint hash) {
-        if (className.StartsWith("enum")) {
-            throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
-        }
-
-        Name = NameCleanupUtil.CleanupWizardName(className);
-        Hash = hash;
+    internal EnumDefinition(string enumName, Dictionary<string, int> options) {
+        Name = enumName;
+        Options = options;
     }
-
-    internal void AddBaseClass(string baseName)
-        => BaseClassNames.Add(NameCleanupUtil.CleanupWizardName(baseName));
-
 
 }
