@@ -19,7 +19,9 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.ObjectProperty.CodeGen.AST;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Imcodec.ObjectProperty.CodeGen {
@@ -60,7 +62,7 @@ namespace Imcodec.ObjectProperty.CodeGen {
             classBuilder.AppendLine($"public record {classDefinition.ClassName} : {topBaseClass} {{\n");
             classBuilder.AppendLine($"\tpublic override uint GetHash() => {classDefinition.Hash};\n");
             foreach (var property in classDefinition.Properties) {
-                classBuilder.AppendLine($"\t{WritePropertyAsString(property)}");
+                classBuilder.AppendLine($"\t{WritePropertyAsString(property)}\n");
             }
             classBuilder.AppendLine("}");
 
@@ -68,16 +70,28 @@ namespace Imcodec.ObjectProperty.CodeGen {
         }
 
         protected virtual string WritePropertyAsString(PropertyDefinition propertyDefinition) {
-            var propertyBuilder = new StringBuilder();
-
             var hash = propertyDefinition.Hash;
             var flags = propertyDefinition.Flags;
             var propertyType = propertyDefinition.CsharpType;
             var propertyName = propertyDefinition.Name;
 
-            propertyBuilder.AppendLine($"[AutoProperty({hash}, {flags})] public {propertyType} {propertyName} {{ get; set; }}");
+            // Flags is an integer. Cast it to the enum type, and write it as a string.
+            var flagsStr = GetFlagsString((int) flags);
 
-            return propertyBuilder.ToString();
+            var endStr = $"// {flagsStr}"
+                + $"\n\t[AutoProperty({hash}, {flags})] public {propertyType} {propertyName} {{ get; set; }}";
+
+            return endStr;
+        }
+
+        public static string GetFlagsString(int value) {
+            var names = Enum.GetValues(typeof(PropertyFlags))
+                             .Cast<PropertyFlags>()
+                             .Where(flag => flag != PropertyFlags.Prop_None)
+                             .Where(flag => (value & (int) flag) == (int) flag)
+                             .Select(flag => flag.ToString().Remove(0, 5));
+
+            return string.Join(", ", names);
         }
 
     }
