@@ -38,7 +38,7 @@ public class PropertyComparer : IComparer<PropertyInfo?> {
 /// <summary>
 /// Defines class capable of undergoing binary serialization.
 /// </summary>
-public abstract class PropertyClass {
+public abstract record PropertyClass {
 
     public abstract uint GetHash();
 
@@ -264,11 +264,7 @@ public abstract class PropertyClass {
 
         // Skip properties that are not marked for serialization,
         // or are deprecated and not dirty encoded.
-        if (!propertyMaskMet || (deprecated && !alwaysEncode)) {
-            return false;
-        }
-
-        return true;
+        return propertyMaskMet && (!deprecated || alwaysEncode);
     }
 
 }

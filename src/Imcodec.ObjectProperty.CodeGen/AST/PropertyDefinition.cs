@@ -18,111 +18,111 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.Math;
-using Imcodec.Types;
-using Imcodec.IO;
+using System;
+using System.Collections.Generic;
 
-namespace Imcodec.ObjectProperty.CodeGen.AST;
+namespace Imcodec.ObjectProperty.CodeGen.AST {
+    internal class PropertyDefinition {
 
-internal record PropertyDefinition {
+        private static readonly Dictionary<string, string> s_internalTypeTranslationDict
+            = new Dictionary<string, string> {
+            // Primitive
+            { "int",              "int"            },
+            { "unsigned int",     "uint"           },
+            { "short",            "short"          },
+            { "unsigned short",   "ushort"         },
+            { "std.string",       "ByteString"     },
+            { "std.wstring",      "WideByteString" },
+            { "long",             "long"           },
+            { "unsigned long",    "ulong"          },
+            { "float",            "float"          },
+            { "bool",             "bool"           },
+            { "double",           "double"         },
+            { "char",             "char"           },
+            { "wchar_t",          "char"           },
+            { "unsigned char",    "byte"           },
+            { "unsigned __int64", "ulong"          },
 
-    private static readonly Dictionary<string, Type> s_internalTypeTranslationDict = new() {
-        // Primitive
-        { "int",              typeof(int)            },
-        { "unsigned int",     typeof(uint)           },
-        { "short",            typeof(short)          },
-        { "unsigned short",   typeof(ushort)         },
-        { "std.string",       typeof(ByteString)     },
-        { "std.wstring",      typeof(WideByteString) },
-        { "long",             typeof(long)           },
-        { "unsigned long",    typeof(ulong)          },
-        { "float",            typeof(float)          },
-        { "bool",             typeof(bool)           },
-        { "double",           typeof(double)         },
-        { "char",             typeof(char)           },
-        { "wchar_t",          typeof(char)           },
-        { "unsigned char",    typeof(byte)           },
-        { "unsigned __int64", typeof(ulong)          },
+            // Internal
+            { "gid",              "GID"            },
+            { "Vector3D",         "Vector3"        },
+            { "Euler",            "Vector3"        },
+            { "Quaternion",       "Quaternion"     },
+            { "Matrix3x3",        "Matrix"         },
+            { "Color",            "Color"          },
+            { "Rect<float>",      "RectangleF"     },
+            { "Rect<int>",        "Rectangle"      },
+            { "Point<float>",     "Vector2"        },
+            { "Point<int>",       "Point"          },
+            { "Size<int>",        "Point"          },
+            { "SerializedBuffer", "ByteString"     },
+            { "SimpleVert",       "string"         },
+            { "SimpleFace",       "string"         },
 
-        // Internal
-        { "gid",              typeof(GID)            },
-        { "Vector3D",         typeof(Vector3)        },
-        { "Euler",            typeof(Vector3)        },
-        { "Quaternion",       typeof(Quaternion)     },
-        { "Matrix3x3",        typeof(Matrix)         },
-        { "Color",            typeof(Color)          },
-        { "Rect<float>",      typeof(RectangleF)     },
-        { "Rect<int>",        typeof(Rectangle)      },
-        { "Point<float>",     typeof(Vector2)        },
-        { "Point<int>",       typeof(Point)          },
-        { "Size<int>",        typeof(Point)          },
-        { "SerializedBuffer", typeof(ByteString)     },
-        { "SimpleVert",       typeof(string)         },
-        { "SimpleFace",       typeof(string)         },
+            { "bui2",             "Bui2"           }, // 2-bit byte
+            { "bui4",             "Bui4"           }, // 4-bit byte
+            { "bui5",             "Bui5"           }, // 5-bit byte
+            { "bui7",             "Bui7"           }, // 7-bit byte
+            { "s24",              "S24"            }, // 24-bit signed integer
+            { "u24",              "U24"            }, // 24-bit unsigned integer
+        };
 
-        { "bui2",             typeof(Bui2)           }, // 2-bit byte
-        { "bui4",             typeof(Bui4)           }, // 4-bit byte
-        { "bui5",             typeof(Bui5)           }, // 5-bit byte
-        { "bui7",             typeof(Bui7)           }, // 7-bit byte
-        { "s24",              typeof(S24)            }, // 24-bit signed integer
-        { "u24",              typeof(U24)            }, // 24-bit unsigned integer
-    };
+        internal string Name { get; }
+        internal string CsharpType { get; private set; }
+        internal uint Flags { get; }
+        internal bool IsVector { get; }
+        internal uint Hash { get; }
 
-    internal string Name { get; }
-    internal string CsharpType { get; private set; }
-    internal uint Flags { get; }
-    internal bool IsVector { get; }
-    internal uint Hash { get; }
+        // ctor
+        internal PropertyDefinition(string name, string cppType, uint flags, string container, uint hash) {
+            this.Name = name;
+            this.Flags = flags;
+            this.Hash = hash;
 
-    // ctor
-    internal PropertyDefinition(string name, string cppType, uint flags, string container, uint hash) {
-        this.Name = name;
-        this.Flags = flags;
-        this.Hash = hash;
-
-        this.IsVector = IsContainerDynamic(container);
-        this.CsharpType = GetCsharpType(cppType, IsVector);
-    }
-
-    private static bool IsContainerDynamic(string container) {
-        if (container is "std::vector" or "List") {
-            return true;
+            this.IsVector = IsContainerDynamic(container);
+            this.CsharpType = GetCsharpType(cppType, IsVector);
         }
 
-        return false;
-    }
+        private static bool IsContainerDynamic(string container) {
+            if (container is "std::vector" || container is "List") {
+                return true;
+            }
 
-    private static string GetCsharpType(string cppType, bool isVector) {
-        // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
-        // We'll want to remove that part and just leave the actual type.
-        var sharedPointerIndex = cppType.IndexOf("SharedPointer<");
-        if (sharedPointerIndex != -1) {
-            cppType = cppType[(sharedPointerIndex + "SharedPointer<".Length)..];
-            cppType = cppType[..^1];
+            return false;
         }
 
-        // Remove any pointers.
-        cppType = cppType.Replace("*", "");
+        private static string GetCsharpType(string cppType, bool isVector) {
+            // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
+            // We'll want to remove that part and just leave the actual type.
+            var sharedPointerIndex = cppType.IndexOf("SharedPointer<");
+            if (sharedPointerIndex != -1) {
+                cppType = cppType.Substring(sharedPointerIndex + "SharedPointer<".Length);
+                cppType = cppType.Substring(0, cppType.Length - 1);
+            }
 
-        // Replace C++'s '::' with dot notation.
-        cppType = cppType.Replace("::", ".");
+            // Remove any pointers.
+            cppType = cppType.Replace("*", "");
 
-        // If the type begins with "class" or "struct," just set that.
-        if (cppType.StartsWith("class") || cppType.StartsWith("struct")) {
-            return cppType.Replace("class ", "").Replace("struct ", "");
-        }
+            // Replace C++'s '::' with dot notation.
+            cppType = cppType.Replace("::", ".");
 
-        if (s_internalTypeTranslationDict.TryGetValue(cppType, out var type)) {
-            if (isVector) {
-                return $"List<{type.Name}>";
+            // If the type begins with "class" or "struct," just set that.
+            if (cppType.StartsWith("class") || cppType.StartsWith("struct")) {
+                return cppType.Replace("class ", "").Replace("struct ", "");
+            }
+
+            if (s_internalTypeTranslationDict.TryGetValue(cppType, out var type)) {
+                if (isVector) {
+                    return $"List<{type}>";
+                }
+                else {
+                    return type;
+                }
             }
             else {
-                return type.Name;
+                throw new Exception($"Unknown type: {cppType}");
             }
         }
-        else {
-            throw new Exception($"Unknown type: {cppType}");
-        }
-    }
 
+    }
 }

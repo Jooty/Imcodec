@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
+        <TargetFramework>netstandard2.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <IsRoslynComponent>true</IsRoslynComponent>
+        <LangVersion>latest</LangVersion>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     </PropertyGroup>
@@ -19,18 +19,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
-        <PackageReference Include="SharpZipLib" Version="1.4.2" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0"
             PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4"
             PrivateAssets="all" />
+        <PackageReference Include="System.Text.Json" Version="8.0.4" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Imcodec.IO\Imcodec.IO.csproj" />
-        <ProjectReference Include="..\Imcodec.Math\Imcodec.Math.csproj" />
-        <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true"
+            PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
 
 </Project>

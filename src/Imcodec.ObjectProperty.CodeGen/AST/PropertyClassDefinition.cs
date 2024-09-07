@@ -18,43 +18,47 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-namespace Imcodec.ObjectProperty.CodeGen.AST;
+using System.Collections.Generic;
 
-internal record PropertyClassDefinition {
+namespace Imcodec.ObjectProperty.CodeGen.AST {
+    internal class PropertyClassDefinition {
 
-    internal string ClassName { get; set; }
-    internal uint Hash { get; set; }
-    internal List<string> BaseClassNames{ get; set; } = [];
-    internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
-    internal List<PropertyDefinition> Properties { get; set; } = [];
+        internal string ClassName { get; set; }
+        internal uint Hash { get; set; }
+        internal List<string> BaseClassNames{ get; set; } = new List<string>();
+        internal List<PropertyClassDefinition> BaseClasses { get; set; }
+            = new List<PropertyClassDefinition>();
+        internal List<PropertyDefinition> Properties { get; set; }
+            = new List<PropertyDefinition>();
 
-    // ctor
-    internal PropertyClassDefinition(string className, uint hash) {
-        ClassName = CleanupClassName(className);
-        Hash = hash;
-    }
-
-    private static string CleanupClassName(string className) {
-        // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
-        // We'll want to remove that part and just leave the actual type.
-        var sharedPointerIndex = className.IndexOf("SharedPointer<");
-        if (sharedPointerIndex != -1) {
-            className = className[(sharedPointerIndex + "SharedPointer<".Length)..];
-            className = className[..^1];
+        // ctor
+        internal PropertyClassDefinition(string className, uint hash) {
+            ClassName = CleanupClassName(className);
+            Hash = hash;
         }
 
-        // If the type begins with "class," trim that off.
-        if (className.StartsWith("class")) {
-            className = className.Replace("class ", "");
+        private static string CleanupClassName(string className) {
+            // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
+            // We'll want to remove that part and just leave the actual type.
+            var sharedPointerIndex = className.IndexOf("SharedPointer<");
+            if (sharedPointerIndex != -1) {
+                var endOfActualType = className.IndexOf(">", sharedPointerIndex);
+                className = className.Substring(sharedPointerIndex + 14, endOfActualType - sharedPointerIndex - 14);
+            }
+
+            // If the type begins with "class," trim that off.
+            if (className.StartsWith("class")) {
+                className = className.Replace("class ", "");
+            }
+
+            // Remove any pointers.
+            className = className.Replace("*", "");
+
+            // Replace any C++ accessors with C# accessors.
+            className = className.Replace("::", ".");
+
+            return className;
         }
 
-        // Remove any pointers.
-        className = className.Replace("*", "");
-
-        // Replace any C++ accessors with C# accessors.
-        className = className.Replace("::", ".");
-
-        return className;
     }
-
 }

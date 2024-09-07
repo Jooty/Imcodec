@@ -233,11 +233,7 @@ public sealed class Property<T>(uint hash,
 
         // Dispatch this hash and see what property class we need to create.
         propertyClass = TypeCache.Dispatch(hash);
-        if (propertyClass == null) {
-            return false;
-        }
-
-        return propertyClass.Decode(reader, serializer);
+        return propertyClass != null && propertyClass.Decode(reader, serializer);
     }
 
     private static uint ReadVectorSize(BitReader reader,

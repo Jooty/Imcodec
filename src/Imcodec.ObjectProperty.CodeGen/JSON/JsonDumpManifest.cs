@@ -18,16 +18,18 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Imcodec.ObjectProperty.CodeGen.JSON;
+namespace Imcodec.ObjectProperty.CodeGen.JSON {
+    public class JsonDumpManifest {
 
-public class JsonDumpManifest {
+       [JsonPropertyName("version")]
+       public int Version { get; set; }
 
-   [JsonPropertyName("version")]
-   public int Version { get; set; }
+       [JsonPropertyName("classes")]
+       public Dictionary<string, JsonDumpClass> Classes { get; set; }
+           = new Dictionary<string, JsonDumpClass>();
 
-   [JsonPropertyName("classes")]
-   public Dictionary<string, JsonDumpClass> Classes { get; set; } = [];
-
+    }
 }
