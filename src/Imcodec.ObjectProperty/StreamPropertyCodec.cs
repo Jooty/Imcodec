@@ -95,8 +95,10 @@ internal static class StreamPropertyCodec {
     /// Tries to get the reader for the specified type.
     /// </summary>
     /// <typeparam name="T">The type for which to get the reader.</typeparam>
-    /// <param name="codec">The reader function for the specified type, if found; otherwise, <c>null</c>.</param>
-    /// <returns><c>true</c> if the reader for the specified type is found; otherwise, <c>false</c>.</returns>
+    /// <param name="codec">The reader function for the specified type, if found;
+    /// otherwise, <c>null</c>.</param>
+    /// <returns><c>true</c> if the reader for the specified type is found;
+    /// otherwise, <c>false</c>.</returns>
     internal static bool TryGetReader<T>(out Func<BitReader, object> codec) {
         if (s_primitiveReaders.TryGetValue(typeof(T), out var func)) {
             codec = func;
@@ -111,8 +113,10 @@ internal static class StreamPropertyCodec {
     /// Tries to get the writer for a specified type.
     /// </summary>
     /// <typeparam name="T">The type for which to get the writer.</typeparam>
-    /// <param name="codec">The writer for the specified type, if found; otherwise, null.</param>
-    /// <returns>true if the writer for the specified type is found; otherwise, false.</returns>
+    /// <param name="codec">The writer for the specified type, if found;
+    /// otherwise, null.</param>
+    /// <returns>true if the writer for the specified type is found;
+    /// otherwise, false.</returns>
     internal static bool TryGetWriter<T>(out Action<BitWriter, object> codec) {
         if (s_primitiveWriters.TryGetValue(typeof(T), out var func)) {
             codec = func;

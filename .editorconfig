@@ -147,6 +147,7 @@ csharp_style_pattern_local_over_anonymous_function = false:none
 indent_size = 4
 insert_final_newline = true
 charset = utf-8
+guideslines = 80
 
 # New line preferences
 csharp_new_line_before_open_brace = none

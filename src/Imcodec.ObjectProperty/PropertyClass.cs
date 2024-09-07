@@ -27,7 +27,8 @@ public class PropertyComparer : IComparer<PropertyInfo?> {
 
     public int Compare(PropertyInfo? x, PropertyInfo? y) {
         if (x?.DeclaringType != y?.DeclaringType) {
-            return x?.DeclaringType?.IsAssignableFrom(y?.DeclaringType) ?? false ? -1 : 1;
+            return x?.DeclaringType?.IsAssignableFrom(y?.DeclaringType)
+                ?? false ? -1 : 1;
         }
         return x?.MetadataToken.CompareTo(y?.MetadataToken) ?? 0;
     }
@@ -69,11 +70,15 @@ public abstract class PropertyClass {
     public virtual void OnPostDecode() { }
 
     /// <summary>
-    /// Encodes the object properties using the specified <see cref="BitWriter"/> and <see cref="ObjectSerializer"/>.
+    /// Encodes the object properties using the specified <see cref="BitWriter"/>
+    /// and <see cref="ObjectSerializer"/>.
     /// </summary>
-    /// <param name="writer">The <see cref="BitWriter"/> used to write the encoded data.</param>
-    /// <param name="serializer">The <see cref="ObjectSerializer"/> used to serialize the object properties.</param>
-    /// <returns><c>true</c> if the encoding is successful; otherwise, <c>false</c>.</returns>
+    /// <param name="writer">The <see cref="BitWriter"/> used to write the
+    /// encoded data.</param>
+    /// <param name="serializer">The <see cref="ObjectSerializer"/> used to
+    /// serialize the object properties.</param>
+    /// <returns><c>true</c> if the encoding is successful;
+    /// otherwise, <c>false</c>.</returns>
     internal bool Encode(BitWriter writer, ObjectSerializer serializer) {
         OnPreEncode();
 
@@ -97,11 +102,13 @@ public abstract class PropertyClass {
     }
 
     /// <summary>
-    /// Decodes the object properties using the specified <see cref="BitReader"/> and <see cref="ObjectSerializer"/>.
+    /// Decodes the object properties using the specified <see cref="BitReader"/>
+    /// and <see cref="ObjectSerializer"/>.
     /// </summary>
     /// <param name="reader">The <see cref="BitReader"/> used for decoding.</param>
     /// <param name="serializer">The <see cref="ObjectSerializer"/> used for decoding.</param>
-    /// <returns><c>true</c> if the decoding is successful for all properties; otherwise, <c>false</c>.</returns>
+    /// <returns><c>true</c> if the decoding is successful for all properties;
+    /// otherwise, <c>false</c>.</returns>
     internal bool Decode(BitReader reader, ObjectSerializer serializer) {
         OnPreDecode();
 
@@ -125,8 +132,10 @@ public abstract class PropertyClass {
     }
 
     private bool DecodeVersionable(BitReader reader, ObjectSerializer serializer) {
-        // Properties may be out of order in the binary stream. Read the hash and size of the first property, which we
-        // know is at the beginning of the stream. From there, we can tell how the properties are laid out.
+        // Properties may be out of order in the binary stream.
+        // Read the hash and size of the first property, which we know is at the
+        // beginning of the stream.
+        // From there, we can tell how the properties are laid out.
         var propMap = Properties.ToDictionary(static p => p.Hash, p => p);
         var objectStart = reader.BitPos();
         var objectSize = reader.ReadUInt32();
@@ -138,7 +147,8 @@ public abstract class PropertyClass {
 
             // Ensure that the property exists.
             if (!propMap.TryGetValue(propertyHash, out var property)) {
-                // We didn't find this property hash in the map. Something totally failed,
+                // We didn't find this property hash in the map.
+                // Something totally failed,
                 // and we have no choice but to return false.
                 return false;
             }
@@ -153,7 +163,7 @@ public abstract class PropertyClass {
                 return false;
             }
 
-            // Seek bit to the end of this property. This isn't strictly necessary, but it's good practice.
+            // Seek bit to the end of this property.
             reader.SeekBit((int) (propertyStart + propertySize));
         }
 
@@ -203,8 +213,11 @@ public abstract class PropertyClass {
 
     private void RegisterProperties() {
         var properties = this.GetType()
-                    .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
-                    .Where(prop => Attribute.IsDefined(prop, typeof(AutoPropertyAttribute)))
+                    .GetProperties(BindingFlags.Public
+                    | BindingFlags.Instance
+                    | BindingFlags.NonPublic
+                    | BindingFlags.FlattenHierarchy)
+                    .Where(static prop => Attribute.IsDefined(prop, typeof(AutoPropertyAttribute)))
                     .OrderBy(x => x, new PropertyComparer());
 
         foreach (var prop in properties) {
@@ -235,17 +248,23 @@ public abstract class PropertyClass {
         }
     }
 
-    private static bool IsPropertyEligibleForProcessing(IProperty property, ObjectSerializer serializer) {
-        // Any property with the encoding flag set will always be encoded so long as the serializer requests it.
-        var dirtyEncode = serializer.SerializerFlags.HasFlag(SerializerFlags.AlwaysEncode)
-            && property.Flags.HasFlag(PropertyFlags.Prop_Encode);
+    private static bool IsPropertyEligibleForProcessing(IProperty property,
+                                                        ObjectSerializer serializer) {
+        var serializerFlags = serializer.SerializerFlags;
+        var serializerMask = serializer.PropertyMask;
+        var propertyFlags = property.Flags;
+
+        // Properties with the Prop_Encode flag set are always encoded.
+        var alwaysEncode = serializerFlags.HasFlag(SerializerFlags.DirtyEncode)
+            && propertyFlags.HasFlag(PropertyFlags.Prop_Encode);
 
         // Check if the property mask is met and if the property is deprecated.
-        var propertyMaskMet = (property.Flags & serializer.PropertyMask) == serializer.PropertyMask;
-        var deprecated = property.Flags.HasFlag(PropertyFlags.Prop_Deprecated);
+        var propertyMaskMet = (propertyFlags & serializerMask) == serializerMask;
+        var deprecated = propertyFlags.HasFlag(PropertyFlags.Prop_Deprecated);
 
-        // Skip properties that are not marked for serialization, or are deprecated and not dirty encoded.
-        if (!propertyMaskMet || (deprecated && !dirtyEncode)) {
+        // Skip properties that are not marked for serialization,
+        // or are deprecated and not dirty encoded.
+        if (!propertyMaskMet || (deprecated && !alwaysEncode)) {
             return false;
         }
 

@@ -26,7 +26,8 @@ namespace Imcodec.ObjectProperty;
 public static class Compression {
 
     /// <summary>
-    /// Compresses the given byte array using the Deflate algorithm with the best compression level.
+    /// Compresses the given byte array using the Deflate algorithm with
+    /// the best compression level.
     /// </summary>
     /// <param name="_bytes">The byte array to compress.</param>
     /// <returns>The compressed byte array.</returns>
@@ -51,7 +52,8 @@ public static class Compression {
     }
 
     /// <summary>
-    /// Decompresses a byte array using the InflaterInputStream class and returns the result as an IEnumerable of bytes.
+    /// Decompresses a byte array using the InflaterInputStream class and
+    /// returns the result as an IEnumerable of bytes.
     /// </summary>
     /// <param name="bytes">The byte array to decompress.</param>
     /// <returns>An IEnumerable of bytes representing the decompressed data.</returns>

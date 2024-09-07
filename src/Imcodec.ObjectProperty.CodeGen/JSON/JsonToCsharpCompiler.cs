@@ -18,8 +18,11 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Runtime.CompilerServices;
 using Imcodec.ObjectProperty.CodeGen.AST;
 using System.Text.Json;
+
+[assembly: InternalsVisibleTo("Imcodec.Test")]
 
 namespace Imcodec.ObjectProperty.CodeGen.JSON;
 
@@ -43,6 +46,11 @@ internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
         foreach (var dumpedClass in dumpedManifest.Classes) {
             var classDefinition = GetPropertyClassDefinition(dumpedClass.Value);
             if (classDefinition is not null) {
+                if (classDefinitions.Any(c => c.ClassName == classDefinition.ClassName)) {
+                    // todo: don't continue. we need to know why there was a duplicate.
+                    continue;
+                }
+
                 classDefinitions.Add(classDefinition);
             }
         }
@@ -51,6 +59,10 @@ internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
     }
 
     private static PropertyClassDefinition? GetPropertyClassDefinition(JsonDumpClass dumpedClass) {
+        if (dumpedClass.Name.Contains('<')) {
+            return null;
+        }
+
         var classDefinition = new PropertyClassDefinition(dumpedClass.Name, dumpedClass.Hash) {
             BaseClassNames = [.. dumpedClass.BaseClasses]
         };

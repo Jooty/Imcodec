@@ -25,27 +25,54 @@ namespace Imcodec.ObjectProperty;
 [Flags]
 public enum SerializerFlags {
 
+    /// <summary>
+    /// States the serializer should use no flags.
+    /// </summary>
     None,
-    UseFlags      = 1 << 0, // States the serializer should use these flags for deserialization.
-    CompactLength = 1 << 1, // Length prefixes are compacted into smaller data types whenever possible.
-    StringEnums   = 1 << 2, // Some enums are made into strings.
-    Compress      = 1 << 3, // Use ZLib compression.
-    AlwaysEncode  = 1 << 4, // Always serialize properties with bitflag `8`.
+
+    /// <summary>
+    /// States the serializer should use these flags for deserialization.
+    /// </summary>
+    UseFlags      = 1 << 0,
+
+    /// <summary>
+    /// States the serializer should use compact length prefixes.
+    /// </summary>
+    CompactLength = 1 << 1,
+
+    /// <summary>
+    /// States the serializer should use string enums.
+    /// </summary>
+    StringEnums   = 1 << 2,
+
+    /// <summary>
+    /// States the serializer should use ZLib compression.
+    /// </summary>
+    Compress      = 1 << 3,
+
+    /// <summary>
+    /// Properties are dirty encoded.
+    /// </summary>
+    DirtyEncode  = 1 << 4,
 
 }
 
 /// <summary>
-/// An object serializer that serializes and deserializes <see cref="PropertyClass"/> objects.
+/// An object serializer that serializes and deserializes
+/// <see cref="PropertyClass"/> objects.
 /// </summary>
 /// <param name="Versionable">If true, <see cref="Property"/> hashes and sizes
-/// are stored in the binary stream. Otherwise, the data is serialized in order of declaration.</param>
-/// <param name="Behaviors">States the <see cref="SerializerFlags"> of the serializer.</param>
+/// are stored in the binary stream. Otherwise, the data is serialized in order
+/// of declaration.</param>
+/// <param name="Behaviors">States the <see cref="SerializerFlags"> of
+/// the serializer.</param>
 public class ObjectSerializer(bool Versionable = true,
                               SerializerFlags Behaviors = SerializerFlags.None) {
 
     /// <summary>
-    /// States whether the object is versionable. If true, <see cref="Property"/> hashes and sizes
-    /// are stored in the binary stream. Otherwise, the data is serialized in order of declaration.
+    /// States whether the object is versionable. If true, <see cref="Property"/>
+    /// hashes and sizes are stored in the binary stream.
+    /// Otherwise, the data is serialized in order of declaration.
     /// </summary>
     public bool Versionable { get; set; } = Versionable;
 
@@ -57,15 +84,20 @@ public class ObjectSerializer(bool Versionable = true,
     /// <summary>
     /// The property flags to use for serialization.
     /// </summary>
-    public PropertyFlags PropertyMask { get; set; } = PropertyFlags.Prop_Transmit | PropertyFlags.Prop_AuthorityTransmit;
+    public PropertyFlags PropertyMask { get; set; }
+        = PropertyFlags.Prop_Transmit | PropertyFlags.Prop_AuthorityTransmit;
 
     /// <summary>
-    /// Serializes the specified <see cref="PropertyClass"/> object using the provided <see cref="PropertyFlags"/> mask.
+    /// Serializes the specified <see cref="PropertyClass"/> object using
+    /// the provided <see cref="PropertyFlags"/> mask.
     /// </summary>
     /// <param name="input">The <see cref="PropertyClass"/> object to serialize.</param>
-    /// <param name="propertyMask">The <see cref="PropertyFlags"/> mask to apply during serialization.</param>
+    /// <param name="propertyMask">The <see cref="PropertyFlags"/> mask to
+    /// apply during serialization.</param>
     /// <param name="output">The serialized byte array output.</param>
-    public bool Serialize(PropertyClass input, PropertyFlags propertyMask, out byte[]? output) {
+    public bool Serialize(PropertyClass input,
+                          PropertyFlags propertyMask,
+                          out byte[]? output) {
         output = default;
         this.PropertyMask = propertyMask;
         var writer = new BitWriter();
@@ -82,7 +114,8 @@ public class ObjectSerializer(bool Versionable = true,
             return false;
         }
 
-        // If the behaviors flag is set to use compression, compress the output buffer.
+        // If the behaviors flag is set to use compression,
+        // compress the output buffer.
         if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
             writer = Compress(writer);
         }
@@ -97,9 +130,13 @@ public class ObjectSerializer(bool Versionable = true,
     /// <typeparam name="T">The type of the object to deserialize.</typeparam>
     /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
     /// <param name=""propertyMask"">The property flags to use for serialization.</param>
-    /// <param name="output">When this method returns, contains the deserialized object of type <typeparamref name="T"/>.</param>
-    /// <returns><c>true</c> if the deserialization is successful; otherwise, <c>false</c>.</returns>
-    public bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T? output) where T : PropertyClass {
+    /// <param name="output">When this method returns, contains the deserialized
+    /// object of type <typeparamref name="T"/>.</param>
+    /// <returns><c>true</c> if the deserialization is successful; otherwise,
+    /// <c>false</c>.</returns>
+    public bool Deserialize<T>(byte[] inputBuffer,
+                               PropertyFlags propertyMask,
+                               out T? output) where T : PropertyClass {
         output = default;
         this.PropertyMask = propertyMask;
         var reader = new BitReader(inputBuffer);
@@ -127,7 +164,8 @@ public class ObjectSerializer(bool Versionable = true,
     /// <summary>
     /// Compresses the data using the specified <see cref="BitWriter"/>.
     /// </summary>
-    /// <param name="writer">The <see cref="BitWriter"/> containing the data to compress.</param>
+    /// <param name="writer">The <see cref="BitWriter"/> containing the data
+    /// to compress.</param>
     /// <returns>A <see cref="BitWriter"/> containing the compressed data.</returns>
     protected virtual BitWriter Compress(BitWriter writer) {
         var uncompressedSize = writer.GetData().Length;
@@ -148,13 +186,15 @@ public class ObjectSerializer(bool Versionable = true,
     /// <summary>
     /// Decompresses the data using the specified <see cref="BitReader"/>.
     /// </summary>
-    /// <param name="inputBuffer">The cref="BitReader"/> containing the compressed data.</param>
+    /// <param name="inputBuffer">The cref="BitReader"/> containing
+    /// the compressed data.</param>
     /// <returns>A <see cref="BitReader"/> containing the decompressed data.</returns>
     protected virtual BitReader? Decompress(BitReader inputBuffer) {
         var uncompressedLength = inputBuffer.ReadInt32();
         var decompressedData = Compression.Decompress(inputBuffer.GetData()[4..]);
 
-        // If the decompressed data length does not match the recorded length, log it and return null.
+        // If the decompressed data length does not match the recorded length,
+        // log it and return null.
         if (decompressedData.Length != uncompressedLength) {
             throw new Exception("Decompressed data length does not match the recorded length.");
         }
@@ -168,14 +208,15 @@ public class ObjectSerializer(bool Versionable = true,
     /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
     /// <param name="propertyClass">The loaded property class, if found.</param>
     /// <returns><c>true</c> if the object was preloaded successfully; otherwise, <c>false</c>.</returns>
-    protected virtual bool PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
+    protected virtual bool PreloadObject(BitReader inputBuffer,
+                                         out PropertyClass? propertyClass) {
         propertyClass = null;
         var hash = inputBuffer.ReadUInt32();
         if (hash == 0) {
             return false;
         }
 
-        //propertyClass = CodeGen.TypeCache.Dispatch(hash);
+        propertyClass = TypeCache.Dispatch(hash);
         return propertyClass != null;
     }
 

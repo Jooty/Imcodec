@@ -33,9 +33,8 @@ public class AutoPropertyAttribute(uint hash, int flags) : Attribute {
 }
 
 /// <summary>
-/// Represents a property with its associated flags, transferability, and a pointer to the data.
-/// This inferface hack is used to allow the <see cref="Property{T}"/> class to be stored in an enumerable,
-/// without specifying the generic type.
+/// Represents an interface of <see cref="Property<T>"/>, allowing for a list
+/// of that type to be stored in a vector without specifying the type.
 /// </summary>
 public interface IProperty {
 
@@ -50,43 +49,62 @@ public interface IProperty {
     internal PropertyFlags Flags { get; }
 
     /// <summary>
-    /// Encodes the value of the property using the specified <paramref name="writer"/> and <paramref name="serializer"/>.
+    /// Encodes the value of the property using the specified
+    /// <paramref name="writer"/> and <paramref name="serializer"/>.
     /// </summary>
-    /// <param name="writer">The <see cref="BitWriter"/> used to write the encoded value.</param>
-    /// <param name="serializer">The <see cref="ObjectSerializer"/> used for nested property class serialization.</param>
-    /// <returns><c>true</c> if the encoding is successful; otherwise, <c>false</c>.</returns>
+    /// <param name="writer">The <see cref="BitWriter"/> used to write the
+    /// encoded value.</param>
+    /// <param name="serializer">The <see cref="ObjectSerializer"/> used for
+    /// nested property class serialization.</param>
+    /// <returns><c>true</c> if the encoding is successful; otherwise,
+    /// <c>false</c>.</returns>
     internal abstract bool Encode(BitWriter writer, ObjectSerializer serializer);
 
     /// <summary>
-    /// Decodes the value of the property using the provided <paramref name="reader"/> and <paramref name="serializer"/>.
+    /// Decodes the value of the property using the provided
+    /// <paramref name="reader"/> and <paramref name="serializer"/>.
     /// </summary>
-    /// <param name="reader">The <see cref="BitReader"/> used to read the encoded value.</param>
-    /// <param name="serializer">The <see cref="ObjectSerializer"/> used to deserialize nested property classes.</param>
-    /// <returns><c>true</c> if the decoding is successful; otherwise, <c>false</c>.</returns>
+    /// <param name="reader">The <see cref="BitReader"/> used to read the
+    /// encoded value.</param>
+    /// <param name="serializer">The <see cref="ObjectSerializer"/> used to
+    /// deserialize nested property classes.</param>
+    /// <returns><c>true</c> if the decoding is successful; otherwise,
+    /// <c>false</c>.</returns>
     internal abstract bool Decode(BitReader reader, ObjectSerializer serializer);
 
 }
 
 /// <summary>
-/// Represents a property with its associated flags, transferability, and a pointer to the data.
+/// Represents a property of a <see cref="PropertyClass"/> object.
 /// </summary>
-public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? getter, MethodInfo? setter, object propertyClass) : IProperty {
+public sealed class Property<T>(uint hash,
+                                PropertyFlags flags,
+                                MethodInfo? getter,
+                                MethodInfo? setter,
+                                object propertyClass) : IProperty {
 
     uint IProperty.Hash { get; } = hash;
     PropertyFlags IProperty.Flags { get; } = flags;
 
-    private static bool IsVector => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
-    private static bool IsEnum => typeof(T).IsEnum;
-    private static Type InnerType => IsVector ? typeof(T).GetGenericArguments()[0] : typeof(T);
+    private static bool IsVector
+        => typeof(T).GetGenericTypeDefinition() == typeof(List<>);
+    private static bool IsEnum
+        => typeof(T).IsEnum;
+    private static Type InnerType
+        => IsVector ? typeof(T).GetGenericArguments()[0] : typeof(T);
 
-    private MethodInfo? Getter { get; } = getter ?? throw new ArgumentNullException(nameof(getter));
-    private MethodInfo? Setter { get; } = setter ?? throw new ArgumentNullException(nameof(setter));
-    private object TargetObject { get; } = propertyClass ?? throw new ArgumentNullException(nameof(propertyClass));
+    private MethodInfo? Getter { get; } = getter
+        ?? throw new ArgumentNullException(nameof(getter));
+    private MethodInfo? Setter { get; } = setter
+        ?? throw new ArgumentNullException(nameof(setter));
+    private object TargetObject { get; } = propertyClass
+        ?? throw new ArgumentNullException(nameof(propertyClass));
 
     bool IProperty.Encode(BitWriter writer, ObjectSerializer serializer) {
         // If the val is a list, encode the list elements.
         if (IsVector) {
-            var list = (IList) (Getter?.Invoke(TargetObject, null) ?? new List<T>());
+            var list = (IList) (Getter?.Invoke(TargetObject, null)
+                ?? new List<T>());
             WriteVectorSize(writer, list.Count, serializer);
 
             foreach (var val in list) {
@@ -96,7 +114,9 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
             }
         }
         else {
-            if (!Property<T>.EncodeElement(writer, serializer, Getter?.Invoke(TargetObject, null))) {
+            if (!Property<T>.EncodeElement(writer,
+                                           serializer,
+                                           Getter?.Invoke(TargetObject, null))) {
                 return false;
             }
         }
@@ -109,11 +129,12 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         if (IsVector) {
             var len = ReadVectorSize(reader, serializer);
             var listType = typeof(List<>).MakeGenericType(InnerType);
-            var list = (IList) (Activator.CreateInstance(listType)
-                ?? throw new InvalidOperationException($"Failed to create instance of type {listType.Name}"));
+            var list = (IList) Activator.CreateInstance(listType)!;
 
             for (int i = 0; i < len; i++) {
-                var decodeSuccess = Property<T>.DecodeElement(reader, serializer, out var val);
+                var decodeSuccess = Property<T>.DecodeElement(reader,
+                                                              serializer,
+                                                              out var val);
                 if (!decodeSuccess) {
                     return false;
                 }
@@ -143,9 +164,13 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         return true;
     }
 
-    private static bool EncodeElement(BitWriter writer, ObjectSerializer serializer, object? val) {
+    private static bool EncodeElement(BitWriter writer,
+                                      ObjectSerializer serializer,
+                                      object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
-            return Property<T>.EncodeNestedPropertyClass(writer, (PropertyClass) val!, serializer);
+            return Property<T>.EncodeNestedPropertyClass(writer,
+                                                         (PropertyClass) val!,
+                                                         serializer);
         }
         else if (IsEnum) {
             writer.WriteUInt32((uint) (int) val!);
@@ -160,9 +185,13 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         }
     }
 
-    private static bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
+    private static bool DecodeElement(BitReader reader,
+                                      ObjectSerializer serializer,
+                                      out object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
-            var decodeSuccess = DecodeNestedPropertyClass(reader, serializer, out var propertyClass);
+            var decodeSuccess = DecodeNestedPropertyClass(reader,
+                                                          serializer,
+                                                          out var propertyClass);
             val = propertyClass;
             return decodeSuccess;
         }
@@ -179,7 +208,9 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         }
     }
 
-    private static bool EncodeNestedPropertyClass(BitWriter writer, PropertyClass propertyClass, ObjectSerializer serializer) {
+    private static bool EncodeNestedPropertyClass(BitWriter writer,
+                                                  PropertyClass propertyClass,
+                                                  ObjectSerializer serializer) {
         if (propertyClass == null) {
             writer.WriteUInt32(0);
             return true;
@@ -189,7 +220,9 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         return propertyClass.Encode(writer, serializer);
     }
 
-    private static bool DecodeNestedPropertyClass(BitReader reader, ObjectSerializer serializer, out PropertyClass? propertyClass) {
+    private static bool DecodeNestedPropertyClass(BitReader reader,
+                                                  ObjectSerializer serializer,
+                                                  out PropertyClass? propertyClass) {
         propertyClass = null;
 
         var hash = reader.ReadUInt32();
@@ -199,7 +232,7 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         }
 
         // Dispatch this hash and see what property class we need to create.
-        //propertyClass = TypeCache.Dispatch(hash);
+        propertyClass = TypeCache.Dispatch(hash);
         if (propertyClass == null) {
             return false;
         }
@@ -207,14 +240,17 @@ public sealed class Property<T>(uint hash, PropertyFlags flags, MethodInfo? gett
         return propertyClass.Decode(reader, serializer);
     }
 
-    private static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer)
+    private static uint ReadVectorSize(BitReader reader,
+                                       ObjectSerializer serializer)
         // Read the vector size. The size is encoded as a compact length if the flag is set.
         // Otherwise, the size is encoded as a 32-bit unsigned integer.
         => serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)
             ? reader.ReadBits<uint>(reader.ReadBit() ? 31 : 7)
             : reader.ReadUInt32();
 
-    private static void WriteVectorSize(BitWriter writer, int size, ObjectSerializer serializer) {
+    private static void WriteVectorSize(BitWriter writer,
+                                        int size,
+                                        ObjectSerializer serializer) {
         // Write the vector size. The size is encoded as a compact length if the flag is set.
         // Otherwise, the size is encoded as a 32-bit unsigned integer.
         if (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {

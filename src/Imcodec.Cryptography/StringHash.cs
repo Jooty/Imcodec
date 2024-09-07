@@ -69,6 +69,7 @@ public static class StringHash {
         return (typeHash + propHash) & 0xFFFF_FFFF;
     }
 
-    private static uint Djb2(string str) => str.Aggregate<char, uint>(5381, (current, c) => ((current << 5) + current) + c);
+    private static uint Djb2(string str)
+        => str.Aggregate<char, uint>(5381, (current, c) => (current << 5) + current + c);
 
 }

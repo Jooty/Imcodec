@@ -34,7 +34,8 @@ public readonly struct ByteString {
     public ByteString(string toString)
         => _bytes = Encoding.UTF8.GetBytes(toString);
 
-    public static implicit operator string(ByteString byteString) => byteString._bytes is null
+    public static implicit operator string(ByteString byteString)
+        => byteString._bytes is null
             ? string.Empty
             : Encoding.UTF8.GetString(byteString._bytes);
 
@@ -46,11 +47,14 @@ public readonly struct ByteString {
         return new ByteString(Encoding.UTF8.GetBytes(str));
     }
 
-    public static implicit operator byte[](ByteString byteString) => byteString._bytes;
+    public static implicit operator byte[](ByteString byteString)
+        => byteString._bytes;
 
-    public static implicit operator ByteString(byte[] buffer) => new ByteString(buffer);
+    public static implicit operator ByteString(byte[] buffer)
+        => new(buffer);
 
-    public override readonly string? ToString() => _bytes is null ? null : Encoding.UTF8.GetString(_bytes);
+    public override readonly string? ToString()
+        => _bytes is null ? null : Encoding.UTF8.GetString(_bytes);
 
     public readonly int Length {
         get {

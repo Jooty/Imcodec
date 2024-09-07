@@ -45,11 +45,14 @@ internal record PropertyClassDefinition {
 
         // If the type begins with "class," trim that off.
         if (className.StartsWith("class")) {
-            return className.Replace("class ", "");
+            className = className.Replace("class ", "");
         }
 
         // Remove any pointers.
         className = className.Replace("*", "");
+
+        // Replace any C++ accessors with C# accessors.
+        className = className.Replace("::", ".");
 
         return className;
     }

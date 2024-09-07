@@ -18,7 +18,12 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.ObjectProperty.CodeGen.JSON;
+using Imcodec.ObjectProperty.CodeGen;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 
 namespace Imcodec.Test.CodeGen;
 
@@ -26,23 +31,39 @@ public class CodeGenTest {
 
     private const string JSON_DUMP_PATH = "CodeGen/Inputs/r756936_WizardDev.json";
 
-    //[Fact]
-    //public void JsonCodeGenTest() {
-    //    var json = GetJsonDump();
-    //    var compiler = new JsonToCsharpCompiler();
-    //    var code = compiler.Compile(json);
+    [Fact]
+    public void JsonCodeGenTest() {
+        var jsonDump = GetJsonDump();
+        Assert.NotNull(jsonDump);
 
-    //    Assert.NotNull(code);
-    //}
+        // Create a compilation of our JSON dump.
+        var compilation = CreateCompilation(jsonDump);
 
-    private static string GetJsonDump() {
+        var generator = new SourceGenerator();
+        var driver = CSharpGeneratorDriver.Create(generator);
+
+        var runDriver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var diagnostics);
+
+        // We can now assert things about the resulting compilation:
+        // See also: https://github.com/dotnet/roslyn/blob/main/docs/features/source-generators.cookbook.md#unit-testing-of-generators
+        Debug.Assert(diagnostics.IsEmpty); // there were no diagnostics created by the generators
+        Debug.Assert(outputCompilation.SyntaxTrees.Count() >= 2); // Syntax trees are the amount of files we added to the context.
+    }
+
+    private static string? GetJsonDump() {
         // Check to see if the file exists.
         var filePath = $"{Directory.GetCurrentDirectory()}/{JSON_DUMP_PATH}";
         if (!File.Exists(filePath)) {
-            throw new FileNotFoundException("The JSON dump file does not exist.");
+            return null;
         }
 
         return File.ReadAllText(filePath);
     }
+
+    private static Compilation CreateCompilation(string source)
+            => CSharpCompilation.Create("compilation",
+                [CSharpSyntaxTree.ParseText(source)],
+                [MetadataReference.CreateFromFile(typeof(Binder).GetTypeInfo().Assembly.Location)],
+                new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 
 }

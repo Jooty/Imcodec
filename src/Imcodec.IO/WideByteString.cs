@@ -47,11 +47,14 @@ public readonly struct WideByteString {
         return new WideByteString(Encoding.Unicode.GetBytes(str));
     }
 
-    public static implicit operator byte[](WideByteString byteString) => byteString._bytes;
+    public static implicit operator byte[](WideByteString byteString)
+        => byteString._bytes;
 
-    public static implicit operator WideByteString(byte[] buffer) => new(buffer);
+    public static implicit operator WideByteString(byte[] buffer)
+        => new(buffer);
 
-    public override string? ToString() => _bytes is null ? null : Encoding.Unicode.GetString(_bytes);
+    public override string? ToString()
+        => _bytes is null ? null : Encoding.Unicode.GetString(_bytes);
 
     public int Length => _bytes?.Length ?? 0;
 

@@ -141,9 +141,11 @@ public class BitReader : BitManipulator {
     /// <summary>
     /// Reads a string. Will not reset the bit position.
     /// </summary>
-    /// <returns>A <see cref="string"/> representation of the string, which is interpreted as UTF-8</returns>
+    /// <returns>A <see cref="string"/> representation of the string,
+    /// which is interpreted as UTF-8</returns>
     public string ReadString() {
-        // If the compact string length bit is flagged, attempt to read a compressed length. If the length MSB is 1,
+        // If the compact string length bit is flagged, attempt to read a
+        // compressed length. If the length MSB is 1,
         // it is not compressed and still uses 16-bits.
         var length = base.CompactLengths
             ? ReadBits<int>(ReadBit() ? 15 : 7)
@@ -157,7 +159,8 @@ public class BitReader : BitManipulator {
     /// <summary>
     /// Reads a 32-bit prefixed string. Will not reset the bit position.
     /// </summary>
-    /// <returns>A <see cref="string"/> representation of the string, which is interpreted as UTF-8</returns>
+    /// <returns>A <see cref="string"/> representation of the string,
+    /// which is interpreted as UTF-8</returns>
     public string ReadBigString() {
         ResetBitPos();
         var length = _reader.ReadInt32();
@@ -171,7 +174,8 @@ public class BitReader : BitManipulator {
     /// </summary>
     /// <returns>The string that was read, interpreted as Unicode.</returns>
     public string ReadWString() {
-        // If the compact string length bit is flagged, attempt to read a compressed length. If the length MSB is 1,
+        // If the compact string length bit is flagged, attempt to read a
+        // compressed length. If the length MSB is 1,
         // it is not compressed and still uses 16-bits.
         var length = base.CompactLengths
             ? ReadBits<int>(ReadBit() ? 15 : 7)
@@ -181,8 +185,8 @@ public class BitReader : BitManipulator {
             return string.Empty;
         }
 
-        // KingsIsle will still serialize the length as if it was a UTF-8 string, meaning we must double
-        // the read length.
+        // KingsIsle will still serialize the length as if it was a UTF-8 string,
+        // meaning we must double the read length.
         var bytes = ReadBytes(length * 2);
         return Encoding.Unicode.GetString(bytes);
     }
@@ -296,7 +300,8 @@ public class BitReader : BitManipulator {
     }
 
     /// <summary>
-    /// Reads a single bit from the stream. Will not reset the bit position, unless it is over 8.
+    /// Reads a single bit from the stream. Will not reset the bit position,
+    /// unless it is over 8.
     /// </summary>
     /// <returns>A boolean flag denoting the value of the bit that was read.</returns>
     public bool ReadBit() {
@@ -321,13 +326,10 @@ public class BitReader : BitManipulator {
     /// Reads a certain amount of bits.
     /// </summary>
     /// <param name="bitCount">The amount of bits to read.</param>
-    /// <typeparam name="T">The type that will be used to represent the bits read.</typeparam>
+    /// <typeparam name="T">The type that will be used to
+    /// represent the bits read.</typeparam>
     /// <returns>The declared type T.</returns>
     public unsafe T ReadBits<T>(int bitCount) where T : unmanaged {
-        //if (sizeof(T) * 8 >= bitCount) {
-        //    throw new ArgumentException("The type T is too large to hold the amount of bits specified.");
-        //}
-
         var obj = new T();
         var ptr = (byte*) &obj;
 
