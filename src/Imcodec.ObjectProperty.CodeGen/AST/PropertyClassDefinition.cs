@@ -19,64 +19,66 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Collections.Generic;
+using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.AST {
-    internal class PropertyClassDefinition {
+namespace Imcodec.ObjectProperty.CodeGen.AST;
 
-        internal string ClassName { get; set; }
-        internal uint Hash { get; set; }
+[DebuggerDisplay("{ClassName}")]
+internal class PropertyClassDefinition {
 
-        internal List<string> BaseClassNames{ get; set; } = new List<string>();
-        internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
-        internal List<PropertyDefinition> Properties { get; set; } = [];
+    internal string ClassName { get; set; }
+    internal uint Hash { get; set; }
 
-        // ctor
-        internal PropertyClassDefinition(string className, uint hash) {
-            if (className.StartsWith("enum")) {
-                throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
-            }
+    internal List<string> BaseClassNames{ get; set; } = new List<string>();
+    internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
+    internal List<PropertyDefinition> Properties { get; set; } = [];
 
-            ClassName = CleanupClassName(className);
-            Hash = hash;
+    // ctor
+    internal PropertyClassDefinition(string className, uint hash) {
+        if (className.StartsWith("enum")) {
+            throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
         }
 
-        internal void AddBaseClass(string baseName) {
-            BaseClassNames.Add(CleanupClassName(baseName));
-        }
-
-        private static string CleanupClassName(string className) {
-            // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
-            // We'll want to remove that part and just leave the actual type.
-            var sharedPointerIndex = className.IndexOf("SharedPointer<");
-            if (sharedPointerIndex != -1) {
-                var endOfActualType = className.IndexOf(">", sharedPointerIndex);
-                className = className.Substring(sharedPointerIndex + 14, endOfActualType - sharedPointerIndex - 14);
-            }
-
-            // If the type begins with "class," trim that off.
-            if (className.StartsWith("class")) {
-                className = className.Replace("class ", "");
-            }
-
-            // If the type begins with "struct," trim that off.
-            if (className.StartsWith("struct")) {
-                className = className.Replace("struct ", "");
-            }
-
-            // Remove any pointers.
-            className = className.Replace("*", "");
-
-            // Replace any C++ accessors with C# accessors.
-            className = className.Replace("::", ".");
-
-            // Trim the class name to the right-most accessor.
-            var lastAccessorIndex = className.LastIndexOf(".");
-            if (lastAccessorIndex != -1) {
-                className = className.Substring(lastAccessorIndex + 1);
-            }
-
-            return className;
-        }
-
+        ClassName = CleanupClassName(className);
+        Hash = hash;
     }
+
+    internal void AddBaseClass(string baseName) {
+        BaseClassNames.Add(CleanupClassName(baseName));
+    }
+
+    private static string CleanupClassName(string className) {
+        // The type may be a shared pointer, with syntax of SharedPointer<{actualType}>.
+        // We'll want to remove that part and just leave the actual type.
+        var sharedPointerIndex = className.IndexOf("SharedPointer<");
+        if (sharedPointerIndex != -1) {
+            var endOfActualType = className.IndexOf(">", sharedPointerIndex);
+            className = className.Substring(sharedPointerIndex + 14, endOfActualType - sharedPointerIndex - 14);
+        }
+
+        // If the type begins with "class," trim that off.
+        if (className.StartsWith("class")) {
+            className = className.Replace("class ", "");
+        }
+
+        // If the type begins with "struct," trim that off.
+        if (className.StartsWith("struct")) {
+            className = className.Replace("struct ", "");
+        }
+
+        // Remove any pointers.
+        className = className.Replace("*", "");
+
+        // Replace any C++ accessors with C# accessors.
+        className = className.Replace("::", ".");
+
+        // Trim the class name to the right-most accessor.
+        var lastAccessorIndex = className.LastIndexOf(".");
+        if (lastAccessorIndex != -1) {
+            className = className.Substring(lastAccessorIndex + 1);
+        }
+
+        return className;
+    }
+
 }

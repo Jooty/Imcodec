@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 [assembly: InternalsVisibleTo("Imcodec.Test")]
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
 
 namespace Imcodec.ObjectProperty.CodeGen.JSON {
     internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
@@ -142,16 +143,14 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
 
                 foreach (var baseclass in classDefinition.BaseClasses) {
                     foreach (var property in baseclass.Properties) {
-                        if (classDefinition.Properties.Any(p => p.Name == property.Name)) {
-                            classDefinition.Properties.Remove(property);
-                        }
+                        classDefinition.Properties.RemoveAll(p => p.Hash == property.Hash);
                     }
                 }
             }
         }
 
         private static JsonDumpManifest GetJsonDumpManifest(string json)
-            => JsonSerializer.Deserialize<JsonDumpManifest>(json);
+            => JsonSerializer.Deserialize<JsonDumpManifest>(json)!;
 
     }
 }

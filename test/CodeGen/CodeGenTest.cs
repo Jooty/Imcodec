@@ -53,16 +53,12 @@ public class CodeGenTest {
     }
 
     [Fact]
-    public void DumpManifestTest() {
+    public void GenerateFromJsonManifestTest() {
         var jsonDump = GetJsonDump();
         Assert.NotNull(jsonDump);
 
         var compiler = new JsonToCsharpCompiler();
         var classDefinitions = compiler.Compile(jsonDump);
-
-        // Write the class definitions to a file. Serialize the classes as json.
-        var json = JsonSerializer.Serialize(classDefinitions);
-        File.WriteAllText($"{Directory.GetCurrentDirectory()}/CodeGen/Outputs/JsonToCsharpCompiler.json", json);
 
         Assert.NotEmpty(classDefinitions);
     }

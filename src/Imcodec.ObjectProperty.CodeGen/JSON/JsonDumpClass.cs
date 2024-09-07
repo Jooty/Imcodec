@@ -19,23 +19,24 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
-namespace Imcodec.ObjectProperty.CodeGen.JSON {
-    public class JsonDumpClass {
+namespace Imcodec.ObjectProperty.CodeGen.JSON;
 
-        [JsonPropertyName("name")]
-        public string Name { get; set; }
+[DebuggerDisplay("{Name}")]
+public class JsonDumpClass {
 
-        [JsonPropertyName("bases")]
-        public IList<string> BaseClasses { get; set; }
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 
-        [JsonPropertyName("hash")]
-        public uint Hash { get; set; }
+    [JsonPropertyName("bases")]
+    public IList<string>? BaseClasses { get; set; }
 
-        [JsonPropertyName("properties")]
-        public Dictionary<string, JsonDumpProperty> Properties { get; set; }
-            = new Dictionary<string, JsonDumpProperty>();
+    [JsonPropertyName("hash")]
+    public uint Hash { get; set; }
 
-    }
+    [JsonPropertyName("properties")]
+    public Dictionary<string, JsonDumpProperty> Properties { get; set; } = [];
+
 }
