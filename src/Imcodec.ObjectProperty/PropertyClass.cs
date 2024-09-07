@@ -42,12 +42,10 @@ public abstract record PropertyClass {
 
     public abstract uint GetHash();
 
-    protected List<IProperty> Properties { get; } = [];
+    private List<IProperty> Properties { get; } = [];
 
     // ctor
-    public PropertyClass() {
-        RegisterProperties();
-    }
+    protected PropertyClass() => RegisterProperties();
 
     /// <summary>
     /// Called before encoding the object to the binary stream.
@@ -239,7 +237,7 @@ public abstract record PropertyClass {
                 this
             );
 
-            if (propertyContainer is not null and IProperty propContainer) {
+            if (propertyContainer is IProperty propContainer) {
                 Properties.Add(propContainer);
             }
             else {

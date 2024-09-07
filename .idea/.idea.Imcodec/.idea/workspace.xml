@@ -8,19 +8,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e5f59247-353e-4f5d-adf2-8f7aeb60d1ef" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Properties/launchSettings.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/AST/PropertyClassDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/AST/PropertyClassDefinition.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/AST/PropertyDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/AST/PropertyDefinition.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Imcodec.ObjectProperty.CodeGen.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Imcodec.ObjectProperty.CodeGen.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpClass.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpClass.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpManifest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpManifest.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpProperty.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpProperty.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonToCsharpCompiler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonToCsharpCompiler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Property.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Property.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/PropertyClass.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/PropertyClass.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/TypeCache.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/TypeCache.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/CodeGen/CodeGenTest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/test/CodeGen/CodeGenTest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/ObjectPropertyTest/DummyCache.cs" beforeDir="false" afterPath="$PROJECT_DIR$/test/ObjectPropertyTest/DummyCache.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,7 +42,7 @@
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="SWEA" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
@@ -65,7 +62,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "RoslynSettingsId",
+    "settings.editor.selected.configurable": "CodeInspectionSettingsId",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -99,7 +96,10 @@
       <workItem from="1725569499251" duration="67000" />
       <workItem from="1725734427492" duration="83000" />
       <workItem from="1725737142079" duration="1490000" />
-      <workItem from="1725738687553" duration="1239000" />
+      <workItem from="1725738687553" duration="1756000" />
+      <workItem from="1725740471757" duration="1615000" />
+      <workItem from="1725742123667" duration="1261000" />
+      <workItem from="1725744334822" duration="1025000" />
     </task>
     <servers />
   </component>

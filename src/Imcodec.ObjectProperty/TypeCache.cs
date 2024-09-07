@@ -20,8 +20,14 @@ modification, are permitted provided that the following conditions are met:
 
 namespace Imcodec.ObjectProperty;
 
-internal static partial class TypeCache {
+public static partial class TypeCache {
 
-    internal static PropertyClass? Dispatch(uint hash) => null;
+    public static PropertyClass? Dispatch(uint hash) {
+        PropertyClass? propertyClass = null;
+        DispatchInternal(hash, ref propertyClass);
+        return propertyClass;
+    }
+
+    static partial void DispatchInternal(uint hash, ref PropertyClass? propertyClass);
 
 }

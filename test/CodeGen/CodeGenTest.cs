@@ -19,11 +19,13 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.ObjectProperty.CodeGen;
+using Imcodec.ObjectProperty.CodeGen.JSON;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 
 namespace Imcodec.Test.CodeGen;
 
@@ -48,6 +50,21 @@ public class CodeGenTest {
         // See also: https://github.com/dotnet/roslyn/blob/main/docs/features/source-generators.cookbook.md#unit-testing-of-generators
         Debug.Assert(diagnostics.IsEmpty); // there were no diagnostics created by the generators
         Debug.Assert(outputCompilation.SyntaxTrees.Count() >= 2); // Syntax trees are the amount of files we added to the context.
+    }
+
+    [Fact]
+    public void DumpManifestTest() {
+        var jsonDump = GetJsonDump();
+        Assert.NotNull(jsonDump);
+
+        var compiler = new JsonToCsharpCompiler();
+        var classDefinitions = compiler.Compile(jsonDump);
+
+        // Write the class definitions to a file. Serialize the classes as json.
+        var json = JsonSerializer.Serialize(classDefinitions);
+        File.WriteAllText($"{Directory.GetCurrentDirectory()}/CodeGen/Outputs/JsonToCsharpCompiler.json", json);
+
+        Assert.NotEmpty(classDefinitions);
     }
 
     private static string? GetJsonDump() {

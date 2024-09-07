@@ -25,7 +25,7 @@ using System.Text;
 namespace Imcodec.ObjectProperty.CodeGen {
     internal abstract class ExternToCsharpCompiler {
 
-        internal List<string> _usings = [
+        private readonly List<string> _usings = [
             "System",
             "System.Collections.Generic",
             "Imcodec.Types",
@@ -67,7 +67,7 @@ namespace Imcodec.ObjectProperty.CodeGen {
             return classBuilder.ToString();
         }
 
-        internal virtual string WritePropertyAsString(PropertyDefinition propertyDefinition) {
+        protected virtual string WritePropertyAsString(PropertyDefinition propertyDefinition) {
             var propertyBuilder = new StringBuilder();
 
             var hash = propertyDefinition.Hash;

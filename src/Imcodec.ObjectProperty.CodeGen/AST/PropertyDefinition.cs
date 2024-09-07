@@ -108,7 +108,7 @@ namespace Imcodec.ObjectProperty.CodeGen.AST {
 
             // If the type begins with "class" or "struct," just set that.
             if (cppType.StartsWith("class") || cppType.StartsWith("struct")) {
-                return cppType.Replace("class ", "").Replace("struct ", "");
+                cppType = cppType.Replace("class ", "").Replace("struct ", "");
             }
 
             if (s_internalTypeTranslationDict.TryGetValue(cppType, out var type)) {
@@ -120,7 +120,7 @@ namespace Imcodec.ObjectProperty.CodeGen.AST {
                 }
             }
             else {
-                throw new Exception($"Unknown type: {cppType}");
+                return cppType;
             }
         }
 

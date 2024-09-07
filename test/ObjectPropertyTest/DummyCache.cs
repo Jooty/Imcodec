@@ -36,7 +36,7 @@ public static class Generation {
         };
 }
 
-public partial class LootInfoList : PropertyClass {
+public partial record LootInfoList : PropertyClass {
 
     public override uint GetHash() => 1214710570;
 
@@ -45,7 +45,7 @@ public partial class LootInfoList : PropertyClass {
 
 }
 
-public partial class GoldLootInfo : LootInfo {
+public partial record GoldLootInfo : LootInfo {
 
     public override uint GetHash() => 461650270;
 
@@ -53,7 +53,7 @@ public partial class GoldLootInfo : LootInfo {
 
 }
 
-public class MagicXPLootInfo : LootInfo {
+public record MagicXPLootInfo : LootInfo {
 
     public override uint GetHash() => 1701545865;
 
@@ -62,7 +62,7 @@ public class MagicXPLootInfo : LootInfo {
 
 }
 
-public partial class LootInfo : LootInfoBase {
+public partial record LootInfo : LootInfoBase {
 
     public override uint GetHash() => 1119240234;
 
@@ -103,7 +103,7 @@ public partial class LootInfo : LootInfoBase {
 
 }
 
-public partial class LootInfoBase : PropertyClass {
+public partial record LootInfoBase : PropertyClass {
 
     public override uint GetHash() => 1246183594;
 

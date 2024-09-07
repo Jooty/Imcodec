@@ -25,16 +25,23 @@ namespace Imcodec.ObjectProperty.CodeGen.AST {
 
         internal string ClassName { get; set; }
         internal uint Hash { get; set; }
+
         internal List<string> BaseClassNames{ get; set; } = new List<string>();
-        internal List<PropertyClassDefinition> BaseClasses { get; set; }
-            = new List<PropertyClassDefinition>();
-        internal List<PropertyDefinition> Properties { get; set; }
-            = new List<PropertyDefinition>();
+        internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
+        internal List<PropertyDefinition> Properties { get; set; } = [];
 
         // ctor
         internal PropertyClassDefinition(string className, uint hash) {
+            if (className.StartsWith("enum")) {
+                throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
+            }
+
             ClassName = CleanupClassName(className);
             Hash = hash;
+        }
+
+        internal void AddBaseClass(string baseName) {
+            BaseClassNames.Add(CleanupClassName(baseName));
         }
 
         private static string CleanupClassName(string className) {
@@ -51,11 +58,22 @@ namespace Imcodec.ObjectProperty.CodeGen.AST {
                 className = className.Replace("class ", "");
             }
 
+            // If the type begins with "struct," trim that off.
+            if (className.StartsWith("struct")) {
+                className = className.Replace("struct ", "");
+            }
+
             // Remove any pointers.
             className = className.Replace("*", "");
 
             // Replace any C++ accessors with C# accessors.
             className = className.Replace("::", ".");
+
+            // Trim the class name to the right-most accessor.
+            var lastAccessorIndex = className.LastIndexOf(".");
+            if (lastAccessorIndex != -1) {
+                className = className.Substring(lastAccessorIndex + 1);
+            }
 
             return className;
         }

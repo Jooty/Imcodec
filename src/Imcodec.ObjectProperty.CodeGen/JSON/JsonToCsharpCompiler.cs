@@ -40,7 +40,13 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
                 throw new Exception("No class definitions were found in the JSON dump manifest.");
             }
 
-            return classDefinitions.ToArray();
+            // Second pass: class definitions currently only have the string names of their parent classes.
+            // On the second pass, we want to find the actual class definitions for each parent class.
+            // We also want to remove any properties that are duplicated in the parent classes.
+            SetBaseClasses(ref classDefinitions);
+            RemoveDuplicatePropertiesFromClasses(ref classDefinitions);
+
+            return [.. classDefinitions];
         }
 
         private static List<PropertyClassDefinition> GetPropertyClassDefinitions(JsonDumpManifest dumpedManifest) {
@@ -62,30 +68,86 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
             return classDefinitions;
         }
 
-        private static PropertyClassDefinition GetPropertyClassDefinition(JsonDumpClass dumpedClass) {
+        private static PropertyClassDefinition? GetPropertyClassDefinition(JsonDumpClass dumpedClass) {
             if (dumpedClass.Name.Contains('<')) {
                 return null;
             }
 
-            var classDefinition = new PropertyClassDefinition(dumpedClass.Name, dumpedClass.Hash) {
-                BaseClassNames = dumpedClass.BaseClasses.ToList()
-            };
+            if (dumpedClass.Name.StartsWith("enum")) {
+                return null;
+            }
+
+            if (dumpedClass.BaseClasses.Count <= 0) {
+                return null;
+            }
+
+            var classDefinition = new PropertyClassDefinition(dumpedClass.Name,
+                                                              dumpedClass.Hash);
+            foreach (var baseClass in dumpedClass.BaseClasses) {
+                classDefinition.AddBaseClass(baseClass);
+            }
 
             foreach (var dumpedProperty in dumpedClass.Properties) {
-                var propertyDefinition = GetPropertyDefinition(dumpedProperty.Key, dumpedProperty.Value);
+                var propertyDefinition = GetPropertyDefinition(dumpedProperty.Key,
+                                                               dumpedProperty.Value);
+                if (propertyDefinition == null) {
+                    continue;
+                }
+
                 classDefinition.Properties.Add(propertyDefinition);
             }
 
             return classDefinition;
         }
 
-        private static PropertyDefinition GetPropertyDefinition(string propertyName, JsonDumpProperty dumpedProperty) {
+        private static PropertyDefinition? GetPropertyDefinition(string propertyName, JsonDumpProperty dumpedProperty) {
             // If the type begins with "enum," skip.
             if (dumpedProperty.Type.StartsWith("enum")) {
                 return null;
             }
 
-            return new PropertyDefinition(propertyName, dumpedProperty.Type, dumpedProperty.Flags, dumpedProperty.Container, dumpedProperty.Hash);
+            return new PropertyDefinition(propertyName,
+                                          dumpedProperty.Type,
+                                          dumpedProperty.Flags,
+                                          dumpedProperty.Container,
+                                          dumpedProperty.Hash);
+        }
+
+        private static void SetBaseClasses(ref List<PropertyClassDefinition> classDefinitions) {
+            foreach (var classDefinition in classDefinitions) {
+                if (classDefinition.BaseClassNames.Count == 0) {
+                    throw new Exception($"Class \"{classDefinition.ClassName}\" has no base class.");
+                }
+
+                // Find each of the base classes in the list of class definitions.
+                // Our integrity check has a -1 because the base class is always
+                // 'PropertyClass', which is always defined.
+                var baseClasses = classDefinitions.Where(c => classDefinition.BaseClassNames.Contains(c.ClassName)).ToList();
+                if (baseClasses.Count != classDefinition.BaseClassNames.Count - 1) {
+                    throw new Exception($"Class \"{classDefinition.ClassName}\" has a base class that was not found.");
+                }
+
+                classDefinition.BaseClasses = baseClasses;
+            }
+        }
+
+        private static void RemoveDuplicatePropertiesFromClasses(ref List<PropertyClassDefinition> classDefinitions) {
+            // Each PropertyClassDefinition has a number of parent classes. We want to remove the properties
+            // that are duplicated in the parent classes. If the definition only inherits from PropertyClass, we
+            // don't need to do anything.
+            foreach (var classDefinition in classDefinitions) {
+                if (classDefinition.BaseClasses.Count == 0) {
+                    continue;
+                }
+
+                foreach (var baseclass in classDefinition.BaseClasses) {
+                    foreach (var property in baseclass.Properties) {
+                        if (classDefinition.Properties.Any(p => p.Name == property.Name)) {
+                            classDefinition.Properties.Remove(property);
+                        }
+                    }
+                }
+            }
         }
 
         private static JsonDumpManifest GetJsonDumpManifest(string json)
