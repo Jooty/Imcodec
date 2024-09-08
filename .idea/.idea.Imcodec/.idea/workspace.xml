@@ -9,7 +9,8 @@
   <component name="ChangeListManager">
     <list default="true" id="e5f59247-353e-4f5d-adf2-8f7aeb60d1ef" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Imcodec.ObjectProperty.CodeGen.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Imcodec.ObjectProperty.CodeGen.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyDefinition.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.Types/GID.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.Types/GID.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/ObjectPropertyTest/LootTableTest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/test/ObjectPropertyTest/LootTableTest.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -81,7 +82,7 @@
       <workItem from="1725762323969" duration="41000" />
       <workItem from="1725764323620" duration="96000" />
       <workItem from="1725764454236" duration="1199000" />
-      <workItem from="1725765681742" duration="1867000" />
+      <workItem from="1725765681742" duration="2651000" />
     </task>
     <servers />
   </component>

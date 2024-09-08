@@ -42,7 +42,7 @@ internal class PropertyDefinition : Definition {
         { "char",             "char"           },
         { "wchar_t",          "char"           },
         { "unsigned char",    "byte"           },
-        { "unsigned __int64", "ulong"          },
+        { "unsigned __int64", "GID"            },
 
         // Internal
         { "gid",              "GID"            },
@@ -112,12 +112,7 @@ internal class PropertyDefinition : Definition {
         cppType = NameCleanupUtil.CleanupWizardName(cppType);
 
         if (s_internalTypeTranslationDict.TryGetValue(cppType, out var type)) {
-            if (isVector) {
-                return $"List<{type}>";
-            }
-            else {
-                return type;
-            }
+            return isVector ? $"List<{type}>" : type;
         }
         else {
             return isVector ? $"List<{cppType}>" : cppType;

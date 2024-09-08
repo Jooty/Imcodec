@@ -18,36 +18,50 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Runtime.InteropServices;
+
 namespace Imcodec.Types;
 
-public struct GID : IConvertible {
+[StructLayout(LayoutKind.Explicit)]
+public struct GID(ulong full) : IConvertible {
 
-   // todo: go back and redo this. this is a union type in C++. How can we do that in C#?
+    [FieldOffset(0)]
+    public ulong Full = full;
 
-    private ulong _value;
+    [FieldOffset(0)]
+    public PartsStruct MParts;
 
-    public ulong Value { readonly get => _value; set => _value = value; }
-    public GID(ulong value) => _value = value;
+    public ulong Value {
+        readonly get => Full;
+        set => Full = value;
+    }
+
+    public struct PartsStruct {
+        public uint Id;
+        public byte Block;
+        public byte Type;
+        public ushort ServerProc;
+    }
 
     public static explicit operator GID(ulong value) => new GID(value);
-    public static implicit operator ulong(GID gid) => gid._value;
+    public static implicit operator ulong(GID gid) => gid.Full;
 
     public readonly TypeCode GetTypeCode() => TypeCode.UInt64;
-    public readonly bool ToBoolean(IFormatProvider? provider) => _value != 0;
-    public readonly char ToChar(IFormatProvider? provider) => (char) _value;
-    public readonly sbyte ToSByte(IFormatProvider? provider) => (sbyte) _value;
-    public readonly byte ToByte(IFormatProvider? provider) => (byte) _value;
-    public readonly short ToInt16(IFormatProvider? provider) => (short) _value;
-    public readonly ushort ToUInt16(IFormatProvider? provider) => (ushort) _value;
-    public readonly int ToInt32(IFormatProvider? provider) => (int) _value;
-    public readonly uint ToUInt32(IFormatProvider? provider) => (uint) _value;
-    public readonly long ToInt64(IFormatProvider? provider) => (long) _value;
-    public readonly ulong ToUInt64(IFormatProvider? provider) => _value;
-    public readonly float ToSingle(IFormatProvider? provider) => _value;
-    public readonly double ToDouble(IFormatProvider? provider) => _value;
-    public readonly decimal ToDecimal(IFormatProvider? provider) => _value;
+    public readonly bool ToBoolean(IFormatProvider? provider) => Full != 0;
+    public readonly char ToChar(IFormatProvider? provider) => (char) Full;
+    public readonly sbyte ToSByte(IFormatProvider? provider) => (sbyte) Full;
+    public readonly byte ToByte(IFormatProvider? provider) => (byte) Full;
+    public readonly short ToInt16(IFormatProvider? provider) => (short) Full;
+    public readonly ushort ToUInt16(IFormatProvider? provider) => (ushort) Full;
+    public readonly int ToInt32(IFormatProvider? provider) => (int) Full;
+    public readonly uint ToUInt32(IFormatProvider? provider) => (uint) Full;
+    public readonly long ToInt64(IFormatProvider? provider) => (long) Full;
+    public readonly ulong ToUInt64(IFormatProvider? provider) => Full;
+    public readonly float ToSingle(IFormatProvider? provider) => Full;
+    public readonly double ToDouble(IFormatProvider? provider) => Full;
+    public readonly decimal ToDecimal(IFormatProvider? provider) => Full;
     public readonly DateTime ToDateTime(IFormatProvider? provider) => throw new InvalidCastException();
-    public readonly string ToString(IFormatProvider? provider) => _value.ToString();
-    public readonly object ToType(Type conversionType, IFormatProvider? provider) => Convert.ChangeType(_value, conversionType);
+    public readonly string ToString(IFormatProvider? provider) => Full.ToString();
+    public readonly object ToType(Type conversionType, IFormatProvider? provider) => Convert.ChangeType(Full, conversionType);
 
 }

@@ -55,6 +55,9 @@ internal static class NameCleanupUtil {
             input = input.Substring(lastAccessorIndex + 1);
         }
 
+        // Remove any `.m_full` suffixes.
+        input = input.Replace(".m_full", "");
+
         return input;
     }
 
