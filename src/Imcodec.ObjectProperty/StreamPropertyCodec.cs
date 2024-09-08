@@ -21,6 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using Imcodec.IO;
 using Imcodec.Math;
 using Imcodec.Types;
+using Imcodec.ObjectProperty.Bit;
 
 namespace Imcodec.ObjectProperty;
 
