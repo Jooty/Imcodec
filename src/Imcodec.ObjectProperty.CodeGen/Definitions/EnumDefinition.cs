@@ -21,7 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.AST;
+namespace Imcodec.ObjectProperty.CodeGen.Definitions;
 
 internal class EnumDefinition : Definition {
 

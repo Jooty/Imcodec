@@ -20,7 +20,7 @@ modification, are permitted provided that the following conditions are met:
 
 using System.Text;
 using Microsoft.CodeAnalysis;
-using Imcodec.ObjectProperty.CodeGen.AST;
+using Imcodec.ObjectProperty.CodeGen.Definitions;
 using Imcodec.ObjectProperty.CodeGen.JSON;
 using System.Linq;
 using System;

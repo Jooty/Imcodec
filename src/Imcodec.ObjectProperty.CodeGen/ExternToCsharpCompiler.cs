@@ -18,7 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.ObjectProperty.CodeGen.AST;
+using Imcodec.ObjectProperty.CodeGen.Definitions;
 using System;
 using System.Collections.Generic;
 using System.Linq;

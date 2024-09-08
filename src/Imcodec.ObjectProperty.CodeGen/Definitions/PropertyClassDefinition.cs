@@ -21,13 +21,26 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.AST;
+namespace Imcodec.ObjectProperty.CodeGen.Definitions;
 
-[DebuggerDisplay("{Name}")]
-internal class Definition {
+internal class PropertyClassDefinition : Definition {
 
-    internal string? Name { get; set; }
-    internal uint Hash { get; set; }
+    internal List<string> BaseClassNames{ get; set; } = new List<string>();
+    internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
+    internal List<PropertyDefinition> Properties { get; set; } = [];
+
+    // ctor
+    internal PropertyClassDefinition(string className, uint hash) {
+        if (className.StartsWith("enum")) {
+            throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
+        }
+
+        Name = NameCleanupUtil.CleanupWizardName(className);
+        Hash = hash;
+    }
+
+    internal void AddBaseClass(string baseName)
+        => BaseClassNames.Add(NameCleanupUtil.CleanupWizardName(baseName));
 
 
 }

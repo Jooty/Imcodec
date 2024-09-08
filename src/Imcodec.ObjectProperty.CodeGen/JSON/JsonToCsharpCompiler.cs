@@ -19,7 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Runtime.CompilerServices;
-using Imcodec.ObjectProperty.CodeGen.AST;
+using Imcodec.ObjectProperty.CodeGen.Definitions;
 using System.Text.Json;
 using System;
 using System.Collections.Generic;
