@@ -26,6 +26,7 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Text;
+using System.Threading;
 
 namespace Imcodec.ObjectProperty.CodeGen {
     [Generator]
@@ -65,6 +66,8 @@ Redistribution and use in source and binary forms, with or without
             }
         }
 
+        public void Initialize(GeneratorInitializationContext context) { }
+
         private static void ExecuteCore(GeneratorExecutionContext context) {
             // Get all JSON files in the project.
             var relevantContentFiles = GetRelevantContentFiles(context);
@@ -76,21 +79,26 @@ Redistribution and use in source and binary forms, with or without
 
                 return;
             }
-
-            // We only care about the first JSON file.
-            var file = additionalTexts.First();
-            var text = file.GetText(context.CancellationToken);
-            if (text == null) {
-                var noTextDiagnostic = DiagnosticWriter("No text in file",
-                                                        "The file has no text.");
-                context.ReportDiagnostic(noTextDiagnostic);
+            else if (additionalTexts.Count() > 1) {
+                var tooManyJsonDiagnostic = DiagnosticWriter("Too many JSON files found",
+                                                  "Too many JSON files found in the project. Only one JSON file is supported.");
+                context.ReportDiagnostic(tooManyJsonDiagnostic);
 
                 return;
             }
 
+            // The previous check ensures that there is only one JSON file. We can safely get the first one.
+            // Ensure that the text is available and we're able to continue.
+            var file = additionalTexts.First();
+            var text = file.GetText(context.CancellationToken);
+            if (text == null) {
+                var noTextDiagnostic = DiagnosticWriter("No text in file","The file has no text.");
+                context.ReportDiagnostic(noTextDiagnostic);
+
+                return;
+            }
             if (text.Length <= 0) {
-                var noTextDiagnostic = DiagnosticWriter("No text in file",
-                                                        "The file has no text.");
+                var noTextDiagnostic = DiagnosticWriter("No text in file", "The file has no text.");
                 context.ReportDiagnostic(noTextDiagnostic);
 
                 return;
@@ -99,17 +107,16 @@ Redistribution and use in source and binary forms, with or without
             // Compile the JSON dump into C# classes.
             // If the compiler dump is null, we can't continue.
             var contextInput = text.ToString();
-            var compilerDump = CompileJsonToCsharp(contextInput);
+            var compilerDump = GetAbstractDefinitionsFromJson(contextInput);
             if (compilerDump == null) {
-                var noDumpDiagnostic = DiagnosticWriter("No dump",
-                                                        "The compiler dump is null.");
+                var noDumpDiagnostic = DiagnosticWriter("No dump", "The compiler dump is null.");
                 context.ReportDiagnostic(noDumpDiagnostic);
 
                 return;
             }
 
             // Generate and add the C# classes to the context.
-            var classCounter = GenerateFullFile(compilerDump, ContainingNamespace, context);
+            var classCounter = GenerateFilesFromAbstractDefinitions(compilerDump, ContainingNamespace, context, context.CancellationToken);
             if (classCounter == 0) {
                 var noClassesDiagnostic = DiagnosticWriter("No classes added",
                                                            "No classes were added to the compilation.");
@@ -129,18 +136,25 @@ Redistribution and use in source and binary forms, with or without
         private static IEnumerable<AdditionalText> GetRelevantContentFiles(GeneratorExecutionContext context)
             => context.AdditionalFiles.Where(f => f.Path.EndsWith(".json"));
 
-        private static List<Definition> CompileJsonToCsharp(string contextInput) {
+        private static List<Definition> GetAbstractDefinitionsFromJson(string jsonInput) {
             var jsonCompiler = new JsonToCsharpCompiler();
-            return [.. jsonCompiler.Compile(contextInput)];
+            return [.. jsonCompiler.Compile(jsonInput)];
         }
 
-        private static int GenerateFullFile(List<Definition> compilerDump,
+        private static int GenerateFilesFromAbstractDefinitions(List<Definition> compilerDump,
                                     string containingNamespace,
-                                    GeneratorExecutionContext context) {
+                                    GeneratorExecutionContext context,
+                                    CancellationToken cancellationToken) {
             var classCounter = 0;
             foreach (var classDefinition in compilerDump) {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var classSource = GetDefinitionAsCsharpString(classDefinition, containingNamespace);
                 if (classSource == null) {
+                    var noSourceDiagnostic = DiagnosticWriter("No source",
+                                                              $"The source for {classDefinition.Name} is null.");
+                    context.ReportDiagnostic(noSourceDiagnostic);
+
                     continue;
                 }
 
@@ -161,8 +175,6 @@ Redistribution and use in source and binary forms, with or without
                 _ => throw new Exception("Unknown definition type.")
             };
         }
-
-        public void Initialize(GeneratorInitializationContext context) { }
 
         private static string WriteDispatcherClass(PropertyClassDefinition[] classDefinitions,
                                                    string containingNamespace) {

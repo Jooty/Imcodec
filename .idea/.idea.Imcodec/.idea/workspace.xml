@@ -8,12 +8,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e5f59247-353e-4f5d-adf2-8f7aeb60d1ef" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Properties/launchSettings.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/NameCleanupUtil.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/NameCleanupUtil.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/NameCleanupUtil.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyClassDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyClassDefinition.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyDefinition.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/CodeGen/CodeGenTest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/test/CodeGen/CodeGenTest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Imcodec.Test.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/test/Imcodec.Test.csproj" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +35,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/21ff22cf362d4bdbafe09ecf5335945619050/5c/c9f5eb18/Assert.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/d6a452d68f9a4c4ba1a496eceea943534b1eb0/57/8602b5bd/GeneratedSourceResult.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
@@ -111,7 +113,7 @@
       <workItem from="1725762323969" duration="41000" />
       <workItem from="1725764323620" duration="96000" />
       <workItem from="1725764454236" duration="1199000" />
-      <workItem from="1725765681742" duration="10669000" />
+      <workItem from="1725765681742" duration="13687000" />
     </task>
     <servers />
   </component>

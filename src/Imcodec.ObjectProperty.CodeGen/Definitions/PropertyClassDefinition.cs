@@ -35,12 +35,12 @@ internal class PropertyClassDefinition : Definition {
             throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
         }
 
-        Name = NameCleanupUtil.CleanupWizardName(className);
+        Name = NameSanitizer.SanitizeIdentifier(className);
         Hash = hash;
     }
 
     internal void AddBaseClass(string baseName)
-        => BaseClassNames.Add(NameCleanupUtil.CleanupWizardName(baseName));
+        => BaseClassNames.Add(NameSanitizer.SanitizeIdentifier(baseName));
 
 
 }
