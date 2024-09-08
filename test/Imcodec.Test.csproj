@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="CodeGen/Inputs/r756936_WizardDev.json">
+    <None Update="CodeGen/Inputs/**/*.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

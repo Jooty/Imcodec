@@ -5,10 +5,18 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\Generated</CompilerGeneratedFilesOutputPath>
+        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
+
+    <Target Name="CleanSourceGeneratedFiles" BeforeTargets="BeforeBuild"
+        DependsOnTargets="$(BeforeBuildDependsOn)">
+        <RemoveDir Directories="Generated" />
+    </Target>
+
+    <ItemGroup>
+        <Compile Remove="$(CompilerGeneratedFilesOutputPath)/*.cs" />
+    </ItemGroup>
 
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
@@ -30,11 +38,12 @@
         <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
         <ProjectReference Include="..\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj"
             OutputItemType="Analyzer"
-            ReferenceOutputAssembly="true" />
+            ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>
-        <AdditionalFiles Include=".\Inputs\r756936_WizardDev.json" />
+        <!-- This file below is what the source generator will use. Ensure that it is a WizWalker type dump. -->
+        <AdditionalFiles Include="./GeneratorInput/**/*.json" />
     </ItemGroup>
 
 </Project>

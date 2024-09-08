@@ -80,6 +80,14 @@ Redistribution and use in source and binary forms, with or without
             // We only care about the first JSON file.
             var file = additionalTexts.First();
             var text = file.GetText(context.CancellationToken);
+            if (text == null) {
+                var noTextDiagnostic = DiagnosticWriter("No text in file",
+                                                        "The file has no text.");
+                context.ReportDiagnostic(noTextDiagnostic);
+
+                return;
+            }
+
             if (text.Length <= 0) {
                 var noTextDiagnostic = DiagnosticWriter("No text in file",
                                                         "The file has no text.");

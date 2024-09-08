@@ -52,11 +52,6 @@ namespace Imcodec.ObjectProperty.CodeGen {
 
             classBuilder.AppendLine($"\nnamespace {containingNamespace};\n");
 
-            // We only care about the top-most base class.
-            if (classDefinition.BaseClassNames.Count == 0) {
-                return null;
-            }
-
             var topBaseClass = classDefinition.BaseClassNames[0];
 
             classBuilder.AppendLine($"public record {classDefinition.Name} : {topBaseClass} {{\n");

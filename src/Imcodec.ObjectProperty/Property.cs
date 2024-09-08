@@ -87,7 +87,7 @@ public sealed class Property<T>(uint hash,
     PropertyFlags IProperty.Flags { get; } = flags;
 
     private static bool IsVector
-        => typeof(T).GetGenericTypeDefinition() == typeof(List<>);
+        => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
     private static bool IsEnum
         => typeof(T).IsEnum;
     private static Type InnerType

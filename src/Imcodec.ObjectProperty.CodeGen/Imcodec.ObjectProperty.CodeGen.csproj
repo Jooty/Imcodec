@@ -3,9 +3,8 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <IsRoslynComponent>true</IsRoslynComponent>
         <LangVersion>latest</LangVersion>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <IsRoslynComponent>true</IsRoslynComponent>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     </PropertyGroup>
 
