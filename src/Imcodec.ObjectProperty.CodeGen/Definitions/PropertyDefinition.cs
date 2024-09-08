@@ -34,6 +34,7 @@ internal class PropertyDefinition : Definition {
         { "unsigned short",   "ushort"         },
         { "std.string",       "ByteString"     },
         { "std.wstring",      "WideByteString" },
+        { "wstring",          "WideByteString" },
         { "long",             "long"           },
         { "unsigned long",    "ulong"          },
         { "float",            "float"          },
@@ -81,10 +82,11 @@ internal class PropertyDefinition : Definition {
                                 string container,
                                 uint hash,
                                 Dictionary<string, object> enumOptions) {
-        this.Name = name;
+        this.Name = NameCleanupUtil.CleanupWizardName(name);
         this.Flags = flags;
         this.Hash = hash;
         this.IsEnum = cppType.StartsWith("enum");
+
         if (this.IsEnum) {
             this.EnumOptions = CleanupEnumOptions(enumOptions);
         }
@@ -101,6 +103,8 @@ internal class PropertyDefinition : Definition {
         foreach (var option in enumOptions) {
             if (int.TryParse(option.Value.ToString(), out var value)) {
                 var cleanedKey = NameCleanupUtil.CleanupWizardName(option.Key);
+                cleanedKey = cleanedKey.Replace(" ", "_");
+
                 cleanedOptions.Add(cleanedKey, value);
             }
         }

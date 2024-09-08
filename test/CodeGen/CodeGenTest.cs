@@ -34,25 +34,6 @@ public class CodeGenTest {
     private const string JSON_DUMP_PATH = "CodeGen/Inputs/r756936_WizardDev.json";
 
     [Fact]
-    public void JsonCodeGenTest() {
-        var jsonDump = GetJsonDump();
-        Assert.NotNull(jsonDump);
-
-        // Create a compilation of our JSON dump.
-        var compilation = CreateCompilation(jsonDump);
-
-        var generator = new SourceGenerator();
-        var driver = CSharpGeneratorDriver.Create(generator);
-
-        var runDriver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var diagnostics);
-
-        // We can now assert things about the resulting compilation:
-        // See also: https://github.com/dotnet/roslyn/blob/main/docs/features/source-generators.cookbook.md#unit-testing-of-generators
-        Debug.Assert(diagnostics.IsEmpty); // there were no diagnostics created by the generators
-        Debug.Assert(outputCompilation.SyntaxTrees.Count() >= 2); // Syntax trees are the amount of files we added to the context.
-    }
-
-    [Fact]
     public void GenerateFromJsonManifestTest() {
         var jsonDump = GetJsonDump();
         Assert.NotNull(jsonDump);
@@ -72,11 +53,5 @@ public class CodeGenTest {
 
         return File.ReadAllText(filePath);
     }
-
-    private static Compilation CreateCompilation(string source)
-            => CSharpCompilation.Create("compilation",
-                [CSharpSyntaxTree.ParseText(source)],
-                [MetadataReference.CreateFromFile(typeof(Binder).GetTypeInfo().Assembly.Location)],
-                new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 
 }

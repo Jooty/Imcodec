@@ -49,14 +49,14 @@ internal static class NameCleanupUtil {
         input = input.Replace("struct ", "");
         input = input.Replace("enum ", "");
 
+        // Remove any `.m_full` suffixes.
+        input = input.Replace(".m_full", "");
+
         // Trim the class name to the right-most accessor.
         var lastAccessorIndex = input.LastIndexOf(".");
         if (lastAccessorIndex != -1) {
             input = input.Substring(lastAccessorIndex + 1);
         }
-
-        // Remove any `.m_full` suffixes.
-        input = input.Replace(".m_full", "");
 
         return input;
     }
