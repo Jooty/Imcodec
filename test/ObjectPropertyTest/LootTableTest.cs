@@ -25,16 +25,16 @@ namespace Imcodec.Test.ObjectPropertyTest;
 public class LootTableTest {
 
     /*
-    Loot reward lists contain a little of everything we ne need to test. They contain a list of types which derive PropertyClass,
+    Loot reward lists contain a little of everything we need to test. They contain a list of types which derive PropertyClass,
     basic struct types, and a ByteString. We will test the serialization and deserialization of a loot table.
     */
 
-    private const string LOOT_TABLE_BLOB = "2A0367480100000089876B65050000000000050000005E39841B0100000002000000";
+    private const string LootTableBlob = "2A0367480100000089876B65050000000000050000005E39841B0100000002000000";
 
     [Fact]
     public void TryDeserializeLootTableBlob() {
         var serializer = new ObjectSerializer(false);
-        var byteBlob = Convert.FromHexString(LOOT_TABLE_BLOB);
+        var byteBlob = Convert.FromHexString(LootTableBlob);
         var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
 
         Assert.True(deserializeSuccess);
@@ -58,20 +58,17 @@ public class LootTableTest {
                 m_goldAmount = 2,
                 m_lootType = LOOT_TYPE.LOOT_TYPE_GOLD
             },
-            m_loot = new() {
-                new MagicXPLootInfo {
-                    m_lootType = LOOT_TYPE.LOOT_TYPE_MAGIC_XP,
-                    m_experience = 5
-                },
-            }
+            m_loot = [
+                new MagicXPLootInfo { m_lootType = LOOT_TYPE.LOOT_TYPE_MAGIC_XP, m_experience = 5 }
+            ]
         };
 
         var serializeSuccess = serializer.Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
         Assert.True(serializeSuccess);
         Assert.True(byteBlob is not null);
 
-        var hexBlob = BitConverter.ToString(byteBlob).Replace("-", "");;
-        Assert.Equal(LOOT_TABLE_BLOB, hexBlob);
+        var hexBlob = BitConverter.ToString(byteBlob).Replace("-", "");
+        Assert.Equal(LootTableBlob, hexBlob);
     }
 
 }
