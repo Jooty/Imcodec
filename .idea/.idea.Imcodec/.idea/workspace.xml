@@ -9,14 +9,6 @@
   <component name="ChangeListManager">
     <list default="true" id="e5f59247-353e-4f5d-adf2-8f7aeb60d1ef" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Properties/launchSettings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Imcodec.ObjectProperty.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Imcodec.ObjectProperty.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Inputs/r756936_WizardDev.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Property.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Property.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/Imcodec.Test.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/test/Imcodec.Test.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/ObjectPropertyTest/DummyCache.cs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/test/ObjectPropertyTest/LootTableTest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/test/ObjectPropertyTest/LootTableTest.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -102,6 +94,8 @@
       <workItem from="1725749467679" duration="3248000" />
       <workItem from="1725753940066" duration="124000" />
       <workItem from="1725754291511" duration="2780000" />
+      <workItem from="1725762323969" duration="41000" />
+      <workItem from="1725764323620" duration="96000" />
     </task>
     <servers />
   </component>

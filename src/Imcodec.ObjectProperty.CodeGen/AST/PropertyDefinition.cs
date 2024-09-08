@@ -120,7 +120,7 @@ internal class PropertyDefinition : Definition {
             }
         }
         else {
-            return cppType;
+            return isVector ? $"List<{cppType}>" : cppType;
         }
     }
 

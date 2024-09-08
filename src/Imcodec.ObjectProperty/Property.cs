@@ -18,6 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System;
 using System.Collections;
 using System.Reflection;
 using Imcodec.IO;
@@ -90,7 +91,7 @@ public sealed class Property<T>(uint hash,
         => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
     private static bool IsEnum
         => typeof(T).IsEnum;
-    private static Type InnerType
+    private static System.Type InnerType
         => IsVector ? typeof(T).GetGenericArguments()[0] : typeof(T);
 
     private MethodInfo? Getter { get; } = getter
