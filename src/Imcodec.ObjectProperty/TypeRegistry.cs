@@ -20,14 +20,23 @@ modification, are permitted provided that the following conditions are met:
 
 namespace Imcodec.ObjectProperty;
 
-public static partial class TypeCache {
+/// <summary>
+/// A registry for types to be used in serialization and deserialization.
+/// </summary>
+public abstract class TypeRegistry {
 
-    public static PropertyClass? Dispatch(uint hash) {
-        PropertyClass? propertyClass = null;
-        DispatchInternal(hash, ref propertyClass);
-        return propertyClass;
-    }
+    /// <summary>
+    /// Register a type to be used in serialization and deserialization.
+    /// </summary>
+    /// <param name="hash">The type to register.</param>
+    /// <param name="t">The type to register.</param>
+    public abstract void RegisterType(uint hash, System.Type t);
 
-    static partial void DispatchInternal(uint hash, ref PropertyClass? propertyClass);
+    /// <summary>
+    /// Lookup a type by its hash.
+    /// </summary>
+    /// <param name="hash">The hash to lookup.</param>
+    /// <param name="dispatchedType">The type that was found.</param>
+    public abstract System.Type? LookupType(uint hash);
 
 }

@@ -33,7 +33,7 @@ public class LootTableTest {
 
     [Fact]
     public void TryDeserializeLootTableBlob() {
-        var serializer = new ObjectSerializer(false);
+        var serializer = new ObjectSerializer(false, SerializerFlags.None, new DummyTypeRegistry());
         var byteBlob = Convert.FromHexString(LootTableBlob);
         var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
 

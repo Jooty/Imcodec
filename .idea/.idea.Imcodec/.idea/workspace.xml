@@ -9,19 +9,10 @@
   <component name="ChangeListManager">
     <list default="true" id="e5f59247-353e-4f5d-adf2-8f7aeb60d1ef" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Imcodec/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/Definition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/Definition.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/EnumDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/EnumDefinition.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/NameSanitizer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/NameSanitizer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyClassDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyClassDefinition.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyDefinition.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyFlags.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/Definitions/PropertyFlags.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/ExternToCsharpCompiler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpClass.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpClass.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpManifest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpManifest.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpProperty.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonDumpProperty.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonToCsharpCompiler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/JSON/JsonToCsharpCompiler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty.CodeGen/SourceGenerator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/CodeGen/CodeGenTest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/test/CodeGen/CodeGenTest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/ObjectSerializer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/ObjectSerializer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Property.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/Property.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Imcodec.ObjectProperty/TypeCache.cs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/test/ObjectPropertyTest/LootTableTest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/test/ObjectPropertyTest/LootTableTest.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -49,7 +40,7 @@
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
+    <option name="selectedTabId" value="Toolset" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
@@ -124,6 +115,7 @@
       <workItem from="1725764454236" duration="1199000" />
       <workItem from="1725765681742" duration="13687000" />
       <workItem from="1725842835570" duration="698000" />
+      <workItem from="1725845080332" duration="754000" />
     </task>
     <servers />
   </component>

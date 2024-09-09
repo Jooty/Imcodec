@@ -60,32 +60,46 @@ public enum SerializerFlags {
 /// <summary>
 /// An object serializer that serializes and deserializes
 /// <see cref="PropertyClass"/> objects.
-/// </summary>
-/// <param name="Versionable">If true, <see cref="Property"/> hashes and sizes
-/// are stored in the binary stream. Otherwise, the data is serialized in order
-/// of declaration.</param>
-/// <param name="Behaviors">States the <see cref="SerializerFlags"> of
-/// the serializer.</param>
-public class ObjectSerializer(bool Versionable = true,
-                              SerializerFlags Behaviors = SerializerFlags.None) {
+public class ObjectSerializer {
 
     /// <summary>
     /// States whether the object is versionable. If true, <see cref="Property"/>
     /// hashes and sizes are stored in the binary stream.
     /// Otherwise, the data is serialized in order of declaration.
     /// </summary>
-    public bool Versionable { get; set; } = Versionable;
+    public bool Versionable { get; set; }
 
     /// <summary>
     /// States the behaviors of the serializer.
     /// </summary>
-    public SerializerFlags SerializerFlags { get; set; } = Behaviors;
+    public SerializerFlags SerializerFlags { get; set; }
 
     /// <summary>
     /// The property flags to use for serialization.
     /// </summary>
     public PropertyFlags PropertyMask { get; set; }
         = PropertyFlags.Prop_Transmit | PropertyFlags.Prop_AuthorityTransmit;
+
+    /// <summary>
+    /// The type registry to dispatch types from.
+    /// </summary>
+    public TypeRegistry TypeRegistry { get; set; }
+
+    // ctor
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ObjectSerializer"/> class.
+    /// </summary>
+    /// <param name="Versionable">States whether the object is versionable.</param>
+    /// <param name="Behaviors">States the behaviors of the serializer.</param>
+    /// <param name="typeRegistry">The type registry to use for serialization.</param>
+    public ObjectSerializer(bool Versionable = true,
+                            SerializerFlags Behaviors = SerializerFlags.None,
+                            TypeRegistry? typeRegistry = null) {
+        typeRegistry ??= new ClientGeneratedTypeRegistry();
+        this.Versionable = Versionable;
+        this.SerializerFlags = Behaviors;
+        this.TypeRegistry = typeRegistry;
+    }
 
     /// <summary>
     /// Serializes the specified <see cref="PropertyClass"/> object using
@@ -216,7 +230,14 @@ public class ObjectSerializer(bool Versionable = true,
             return false;
         }
 
-        propertyClass = TypeCache.Dispatch(hash);
+        var lookupType = TypeRegistry.LookupType(hash);
+        if (lookupType == null) {
+            return false;
+        }
+
+        // Create a new instance of the property class.
+        propertyClass = (PropertyClass)Activator.CreateInstance(lookupType)!;
+
         return propertyClass != null;
     }
 

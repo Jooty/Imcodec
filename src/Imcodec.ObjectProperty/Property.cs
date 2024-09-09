@@ -233,7 +233,14 @@ public sealed class Property<T>(uint hash,
         }
 
         // Dispatch this hash and see what property class we need to create.
-        propertyClass = TypeCache.Dispatch(hash);
+        var fetchedType = serializer.TypeRegistry.LookupType(hash);
+        if (fetchedType == null) {
+            return false;
+        }
+
+        // Create a new instance of the property class.
+        propertyClass = (PropertyClass) Activator.CreateInstance(fetchedType)!;
+
         return propertyClass != null && propertyClass.Decode(reader, serializer);
     }
 
