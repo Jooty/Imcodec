@@ -143,7 +143,7 @@ public class BitReader : BitManipulator {
     /// </summary>
     /// <returns>A <see cref="string"/> representation of the string,
     /// which is interpreted as UTF-8</returns>
-    public string ReadString() {
+    public ByteString ReadString() {
         // If the compact string length bit is flagged, attempt to read a
         // compressed length. If the length MSB is 1,
         // it is not compressed and still uses 16-bits.
@@ -153,7 +153,7 @@ public class BitReader : BitManipulator {
 
         var bytes = ReadBytes(length);
 
-        return Encoding.UTF8.GetString(bytes);
+        return new ByteString(Encoding.UTF8.GetString(bytes));
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public class BitReader : BitManipulator {
     /// </summary>
     /// <returns>A <see cref="string"/> representation of the string,
     /// which is interpreted as UTF-8</returns>
-    public string ReadBigString() {
+    public ByteString ReadBigString() {
         ResetBitPos();
         var length = _reader.ReadInt32();
         var bytes = ReadBytes(length);
@@ -173,7 +173,7 @@ public class BitReader : BitManipulator {
     /// Reads an Unicode encoded string. Will not reset the bit position.
     /// </summary>
     /// <returns>The string that was read, interpreted as Unicode.</returns>
-    public string ReadWString() {
+    public ByteString ReadWString() {
         // If the compact string length bit is flagged, attempt to read a
         // compressed length. If the length MSB is 1,
         // it is not compressed and still uses 16-bits.
@@ -185,7 +185,7 @@ public class BitReader : BitManipulator {
             return string.Empty;
         }
 
-        // KingsIsle will still serialize the length as if it was a UTF-8 string,
+        // Client will still serialize the length as if it was a UTF-8 string,
         // meaning we must double the read length.
         var bytes = ReadBytes(length * 2);
         return Encoding.Unicode.GetString(bytes);

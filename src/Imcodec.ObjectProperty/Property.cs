@@ -156,8 +156,17 @@ public sealed class Property<T>(uint hash,
                 return false;
             }
 
-            // Cast the list to the appropriate type and set the value.
-            _ = Setter?.Invoke(TargetObject, [(T) val!]);
+            // Cast the value to the appropriate type and set the value.
+            if (typeof(T).IsAssignableFrom(val?.GetType())) {
+                _ = Setter?.Invoke(TargetObject, [(T) val!]);
+            }
+            else if (val is null) {
+                _ = Setter?.Invoke(TargetObject, null);
+            }
+            else {
+                var changedType = Convert.ChangeType(val, typeof(T));
+                _ = Setter?.Invoke(TargetObject, [(T) changedType]);
+            }
 
             return true;
         }
@@ -165,9 +174,7 @@ public sealed class Property<T>(uint hash,
         return true;
     }
 
-    private static bool EncodeElement(BitWriter writer,
-                                      ObjectSerializer serializer,
-                                      object? val) {
+    private static bool EncodeElement(BitWriter writer, ObjectSerializer serializer, object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
             return Property<T>.EncodeNestedPropertyClass(writer,
                                                          (PropertyClass) val!,
@@ -186,13 +193,9 @@ public sealed class Property<T>(uint hash,
         }
     }
 
-    private static bool DecodeElement(BitReader reader,
-                                      ObjectSerializer serializer,
-                                      out object? val) {
+    private static bool DecodeElement(BitReader reader, ObjectSerializer serializer, out object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
-            var decodeSuccess = DecodeNestedPropertyClass(reader,
-                                                          serializer,
-                                                          out var propertyClass);
+            var decodeSuccess = DecodeNestedPropertyClass(reader, serializer, out var propertyClass);
             val = propertyClass;
             return decodeSuccess;
         }
@@ -201,7 +204,7 @@ public sealed class Property<T>(uint hash,
             return true;
         }
         else if (StreamPropertyCodec.TryGetReader<T>(out var codec)) {
-            val = (T?) codec.Invoke(reader);
+            val = codec.Invoke(reader);
             return true;
         }
         else {
