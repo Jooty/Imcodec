@@ -138,7 +138,7 @@ Redistribution and use in source and binary forms, with or without
 
         private static List<Definition> GetAbstractDefinitionsFromJson(string jsonInput) {
             var jsonCompiler = new JsonToCsharpCompiler();
-            return [.. jsonCompiler.Compile(jsonInput)];
+            return jsonCompiler.Compile(jsonInput).ToList();
         }
 
         private static int GenerateFilesFromAbstractDefinitions(List<Definition> compilerDump,
@@ -186,8 +186,12 @@ Redistribution and use in source and binary forms, with or without
             dispatcherBuilder.AppendLine("public static partial class TypeCache {");
             dispatcherBuilder.AppendLine($"\n\tstatic partial void DispatchInternal(uint hash, ref PropertyClass? propertyClass) {{");
             dispatcherBuilder.AppendLine("\t\tpropertyClass = hash switch {");
-            dispatcherBuilder.AppendLine($"{string.Join(",\n",
-                classDefinitions.Select(c => $"\t\t\t0x{c.Name!.GetHashCode():X8} => new {c.Name}()"))}");
+
+            foreach (var classDefinition in classDefinitions) {
+                var hashAsHex = $"0x{classDefinition.Hash:X8}";
+                dispatcherBuilder.AppendLine($"\t\t\t{hashAsHex} => new {classDefinition.Name}(),");
+            }
+
             dispatcherBuilder.AppendLine("\t\t};");
             dispatcherBuilder.AppendLine("\t}");
             dispatcherBuilder.AppendLine("}");

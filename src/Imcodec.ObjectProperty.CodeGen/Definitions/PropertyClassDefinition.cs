@@ -21,26 +21,26 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.Definitions;
+namespace Imcodec.ObjectProperty.CodeGen.Definitions {
+    internal class PropertyClassDefinition : Definition {
 
-internal class PropertyClassDefinition : Definition {
+        internal List<string> BaseClassNames{ get; set; } = new List<string>();
+        internal List<PropertyClassDefinition> BaseClasses { get; set; } = new List<PropertyClassDefinition>();
+        internal List<PropertyDefinition> Properties { get; set; } = new List<PropertyDefinition>();
 
-    internal List<string> BaseClassNames{ get; set; } = new List<string>();
-    internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
-    internal List<PropertyDefinition> Properties { get; set; } = [];
+        // ctor
+        internal PropertyClassDefinition(string className, uint hash) {
+            if (className.StartsWith("enum")) {
+                throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
+            }
 
-    // ctor
-    internal PropertyClassDefinition(string className, uint hash) {
-        if (className.StartsWith("enum")) {
-            throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
+            Name = NameSanitizer.SanitizeIdentifier(className);
+            Hash = hash;
         }
 
-        Name = NameSanitizer.SanitizeIdentifier(className);
-        Hash = hash;
+        internal void AddBaseClass(string baseName)
+            => BaseClassNames.Add(NameSanitizer.SanitizeIdentifier(baseName));
+
+
     }
-
-    internal void AddBaseClass(string baseName)
-        => BaseClassNames.Add(NameSanitizer.SanitizeIdentifier(baseName));
-
-
 }

@@ -22,49 +22,49 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.Definitions;
+namespace Imcodec.ObjectProperty.CodeGen.Definitions {
+    internal class PropertyDefinition : Definition {
 
-internal class PropertyDefinition : Definition {
+        internal string CsharpType { get; private set; }
+        internal uint Flags { get; }
+        internal bool IsVector { get; }
+        internal bool IsEnum { get; private set; }
+        internal Dictionary<string, int> EnumOptions { get; private set; } = new Dictionary<string, int>();
 
-    internal string CsharpType { get; private set; }
-    internal uint Flags { get; }
-    internal bool IsVector { get; }
-    internal bool IsEnum { get; private set; }
-    internal Dictionary<string, int> EnumOptions { get; private set; } = [];
+        // ctor
+        internal PropertyDefinition(string name,
+                                    string cppType,
+                                    uint flags,
+                                    string container,
+                                    uint hash,
+                                    Dictionary<string, object> enumOptions) {
+            this.Name = NameSanitizer.SanitizeIdentifier(name);
+            this.IsVector = IsContainerDynamic(container);
+            this.CsharpType = NameSanitizer.GetCsharpType(cppType, IsVector);
+            this.Flags = flags;
+            this.Hash = hash;
 
-    // ctor
-    internal PropertyDefinition(string name,
-                                string cppType,
-                                uint flags,
-                                string container,
-                                uint hash,
-                                Dictionary<string, object> enumOptions) {
-        this.Name = NameSanitizer.SanitizeIdentifier(name);
-        this.IsVector = IsContainerDynamic(container);
-        this.CsharpType = NameSanitizer.GetCsharpType(cppType, IsVector);
-        this.Flags = flags;
-        this.Hash = hash;
-
-        // Check if the type is an enum. If it is, clean up the options.
-        this.IsEnum = cppType.StartsWith("enum");
-        if (this.IsEnum) {
-            this.EnumOptions = CleanupEnumOptions(enumOptions);
-        }
-    }
-
-    private static bool IsContainerDynamic(string container)
-        => container is "std::vector" or "List";
-
-    private static Dictionary<string, int> CleanupEnumOptions(Dictionary<string, object> enumOptions) {
-        var cleanedOptions = new Dictionary<string, int>();
-        foreach (var option in enumOptions) {
-            if (int.TryParse(option.Value.ToString(), out var value)) {
-                var cleanedKey = NameSanitizer.SanitizeEnumOption(option.Key);
-                cleanedOptions.Add(cleanedKey, value);
+            // Check if the type is an enum. If it is, clean up the options.
+            this.IsEnum = cppType.StartsWith("enum");
+            if (this.IsEnum) {
+                this.EnumOptions = CleanupEnumOptions(enumOptions);
             }
         }
 
-        return cleanedOptions;
-    }
+        private static bool IsContainerDynamic(string container)
+            => container is "std::vector" or "List";
 
+        private static Dictionary<string, int> CleanupEnumOptions(Dictionary<string, object> enumOptions) {
+            var cleanedOptions = new Dictionary<string, int>();
+            foreach (var option in enumOptions) {
+                if (int.TryParse(option.Value.ToString(), out var value)) {
+                    var cleanedKey = NameSanitizer.SanitizeEnumOption(option.Key);
+                    cleanedOptions.Add(cleanedKey, value);
+                }
+            }
+
+            return cleanedOptions;
+        }
+
+    }
 }

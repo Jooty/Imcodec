@@ -21,13 +21,13 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.Definitions;
+namespace Imcodec.ObjectProperty.CodeGen.Definitions {
+    [DebuggerDisplay("{Name}")]
+    internal class Definition {
 
-[DebuggerDisplay("{Name}")]
-internal class Definition {
-
-    internal string? Name { get; set; }
-    internal uint Hash { get; set; }
+        internal string? Name { get; set; }
+        internal uint Hash { get; set; }
 
 
+    }
 }

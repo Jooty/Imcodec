@@ -18,14 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.ObjectProperty.CodeGen;
 using Imcodec.ObjectProperty.CodeGen.JSON;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text.Json;
 
 namespace Imcodec.Test.CodeGen;
 

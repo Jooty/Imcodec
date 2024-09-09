@@ -21,16 +21,16 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.Definitions;
+namespace Imcodec.ObjectProperty.CodeGen.Definitions {
+    internal class EnumDefinition : Definition {
 
-internal class EnumDefinition : Definition {
+        internal Dictionary<string, int> Options { get; } = new Dictionary<string, int>();
 
-    internal Dictionary<string, int> Options { get; } = [];
+        // ctor
+        internal EnumDefinition(string enumName, Dictionary<string, int> options) {
+            Name = enumName;
+            Options = options;
+        }
 
-    // ctor
-    internal EnumDefinition(string enumName, Dictionary<string, int> options) {
-        Name = enumName;
-        Options = options;
     }
-
 }
