@@ -1,16 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
 
-    <Target Name="CleanSourceGeneratedFiles" BeforeTargets="BeforeBuild"
-        DependsOnTargets="$(BeforeBuildDependsOn)">
+    <Target Name="CleanSourceGeneratedFiles" BeforeTargets="BeforeBuild" DependsOnTargets="$(BeforeBuildDependsOn)">
         <RemoveDir Directories="Generated" />
     </Target>
 
@@ -35,10 +32,10 @@
     <ItemGroup>
         <ProjectReference Include="..\Imcodec.IO\Imcodec.IO.csproj" />
         <ProjectReference Include="..\Imcodec.Math\Imcodec.Math.csproj" />
-        <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
         <ProjectReference Include="..\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj"
-            OutputItemType="Analyzer"
-            ReferenceOutputAssembly="false" />
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
     </ItemGroup>
 
     <ItemGroup>

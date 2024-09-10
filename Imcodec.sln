@@ -3,19 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Test", "test\Imcodec.Test.csproj", "{AA2DCD75-3A02-4B6F-BBA7-44B75B3D4BAB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.Test", "test\Imcodec.Test.csproj", "{AA2DCD75-3A02-4B6F-BBA7-44B75B3D4BAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Cryptography", "src\Imcodec.Cryptography\Imcodec.Cryptography.csproj", "{C3C14EBB-0CC0-4F03-8DC9-530524ED53E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.Cryptography", "src\Imcodec.Cryptography\Imcodec.Cryptography.csproj", "{C3C14EBB-0CC0-4F03-8DC9-530524ED53E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.IO", "src\Imcodec.IO\Imcodec.IO.csproj", "{BF9B5DCA-85F0-448A-A9D0-D9D704C2AFD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.IO", "src\Imcodec.IO\Imcodec.IO.csproj", "{BF9B5DCA-85F0-448A-A9D0-D9D704C2AFD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Math", "src\Imcodec.Math\Imcodec.Math.csproj", "{1FF66DA4-DBD3-46F1-9069-0C8FB4A1BE6B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.Math", "src\Imcodec.Math\Imcodec.Math.csproj", "{1FF66DA4-DBD3-46F1-9069-0C8FB4A1BE6B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.ObjectProperty", "src\Imcodec.ObjectProperty\Imcodec.ObjectProperty.csproj", "{3530103D-3D76-4CE0-A057-0F6768EB8027}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.ObjectProperty", "src\Imcodec.ObjectProperty\Imcodec.ObjectProperty.csproj", "{3530103D-3D76-4CE0-A057-0F6768EB8027}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.ObjectProperty.CodeGen", "src\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj", "{53848145-2A78-4EE5-954D-1485E0AE9467}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.ObjectProperty.CodeGen", "src\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj", "{53848145-2A78-4EE5-954D-1485E0AE9467}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Types", "src\Imcodec.Types\Imcodec.Types.csproj", "{92125F0A-6B03-4741-98A7-F9D656AB1698}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.Types", "src\Imcodec.Types\Imcodec.Types.csproj", "{92125F0A-6B03-4741-98A7-F9D656AB1698}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,14 +25,24 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{AA2DCD75-3A02-4B6F-BBA7-44B75B3D4BAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AA2DCD75-3A02-4B6F-BBA7-44B75B3D4BAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA2DCD75-3A02-4B6F-BBA7-44B75B3D4BAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA2DCD75-3A02-4B6F-BBA7-44B75B3D4BAB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C3C14EBB-0CC0-4F03-8DC9-530524ED53E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C3C14EBB-0CC0-4F03-8DC9-530524ED53E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3C14EBB-0CC0-4F03-8DC9-530524ED53E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3C14EBB-0CC0-4F03-8DC9-530524ED53E1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BF9B5DCA-85F0-448A-A9D0-D9D704C2AFD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BF9B5DCA-85F0-448A-A9D0-D9D704C2AFD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF9B5DCA-85F0-448A-A9D0-D9D704C2AFD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF9B5DCA-85F0-448A-A9D0-D9D704C2AFD1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1FF66DA4-DBD3-46F1-9069-0C8FB4A1BE6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1FF66DA4-DBD3-46F1-9069-0C8FB4A1BE6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FF66DA4-DBD3-46F1-9069-0C8FB4A1BE6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FF66DA4-DBD3-46F1-9069-0C8FB4A1BE6B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3530103D-3D76-4CE0-A057-0F6768EB8027}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3530103D-3D76-4CE0-A057-0F6768EB8027}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3530103D-3D76-4CE0-A057-0F6768EB8027}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3530103D-3D76-4CE0-A057-0F6768EB8027}.Release|Any CPU.Build.0 = Release|Any CPU
 		{53848145-2A78-4EE5-954D-1485E0AE9467}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{53848145-2A78-4EE5-954D-1485E0AE9467}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{53848145-2A78-4EE5-954D-1485E0AE9467}.Release|Any CPU.ActiveCfg = Release|Any CPU
