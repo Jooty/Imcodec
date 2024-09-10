@@ -34,6 +34,7 @@ namespace Imcodec.ObjectProperty.CodeGen {
             "Imcodec.IO",
             "Imcodec.Math",
             "Imcodec.ObjectProperty",
+            "Imcodec.ObjectProperty.Bit",
         };
 
         /// <summary>
