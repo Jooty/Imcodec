@@ -30,6 +30,11 @@ public sealed class Archive {
     private readonly Dictionary<string, Lazy<FileEntry>> _fileEntries = [];
     private readonly Stream _archiveStream;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Archive"/> class.
+    /// </summary>
+    /// <param name="files">The files in the archive.</param>
+    /// <param name="archiveStream">The stream containing the archive data.</param>
     public Archive(Dictionary<string, FileEntry> files, Stream archiveStream) {
         _archiveStream = archiveStream;
 

@@ -23,17 +23,17 @@ using Imcodec.IO;
 namespace Imcodec.Wad;
 
 /// <summary>
-/// Manages the parsing of the archive.
+///
 /// </summary>
 public class ArchiveParser {
 
     /// <summary>
-    /// Parses the given archive stream and returns an instance of the Archive class.
+    /// Parses an archive from a stream.
     /// </summary>
-    /// <param name="archiveStream">The stream containing the archive data.</param>/// <returns>An instance of the
-    /// Archive class.</returns>
-    /// <exception cref="InvalidArchiveFormatException">Thrown when the stream does not
-    /// contain a valid archive header.</exception>
+    /// <param name="archiveStream">The stream containing the archive data.</param>
+    /// <returns>The parsed archive.</returns>
+    /// <exception cref="InvalidArchiveFormatException">Thrown when the stream does not contain a valid archive.</exception>
+    /// <exception cref="Exception">Thrown when the file name could not be read.</exception>
     public static Archive Parse(Stream archiveStream) {
         var binaryReader = new BitReader(archiveStream);
 
