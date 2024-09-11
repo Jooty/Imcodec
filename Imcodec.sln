@@ -17,6 +17,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.ObjectProperty.Code
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Imcodec.Types", "src\Imcodec.Types\Imcodec.Types.csproj", "{92125F0A-6B03-4741-98A7-F9D656AB1698}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{44F69016-FBB3-4E28-A2A7-56156606C2E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Wad", "src\Imcodec.Wad\Imcodec.Wad.csproj", "{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,11 +55,18 @@ Global
 		{92125F0A-6B03-4741-98A7-F9D656AB1698}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{92125F0A-6B03-4741-98A7-F9D656AB1698}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92125F0A-6B03-4741-98A7-F9D656AB1698}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B1782BEE-0AE9-4840-8CD5-8CF3C2B2238B}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696} = {44F69016-FBB3-4E28-A2A7-56156606C2E4}
 	EndGlobalSection
 EndGlobal
