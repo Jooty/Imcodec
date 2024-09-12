@@ -123,7 +123,7 @@ public sealed class Archive {
         var fileSpan = ReadFromStream(_archiveStream, fileEntry.Size);
 
         if (fileEntry.IsCompressed) {
-            return ZLibCompressionService.Inflate(fileSpan, (int) fileEntry.CompressedSize);
+            return ZLibUtility.Inflate(fileSpan, (int) fileEntry.CompressedSize);
         }
 
         return new Memory<byte>(fileSpan.ToArray());
@@ -135,7 +135,7 @@ public sealed class Archive {
         await _archiveStream.ReadAsync(buffer, 0, buffer.Length);
 
         if (fileEntry.IsCompressed) {
-            return await ZLibCompressionService.InflateAsync(buffer, (int) fileEntry.CompressedSize);
+            return await ZLibUtility.InflateAsync(buffer, (int) fileEntry.CompressedSize);
         }
 
         return buffer;

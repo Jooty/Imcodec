@@ -23,24 +23,31 @@ using System.IO.Compression;
 
 namespace Imcodec.Test.Wad;
 
-public class ZLibCompressionServiceTest {
+public class ZLibTest {
 
     [Fact]
-    public void Inflate_ValidCompressedData_ReturnsDecompressedData() {
+    public void Deflate_ValidData_ReturnsCompressedData() {
         // Arrange
         byte[] originalData = [1, 2, 3, 4, 5];
-        byte[] compressedData;
-        var expectedSize = originalData.Length;
-
-        using (var outputStream = new MemoryStream()) {
-            using (var zlibStream = new DeflateStream(outputStream, CompressionMode.Compress)) {
-                zlibStream.Write(originalData, 0, originalData.Length);
-            }
-            compressedData = outputStream.ToArray();
-        }
+        var data = new Memory<byte>(originalData);
 
         // Act
-        var decompressedData = ZLibCompressionService.Inflate(compressedData, expectedSize);
+        var compressedData = ZLibUtility.Deflate(data);
+
+        // Assert
+        Assert.NotNull(compressedData);
+        Assert.NotEqual(originalData.Length, compressedData.Length);
+    }
+
+    [Fact]
+    public void DeflateAndInflate_ValidData_ReturnsOriginalData() {
+        // Arrange
+        byte[] originalData = [1, 2, 3, 4, 5];
+        var data = new Memory<byte>(originalData);
+
+        // Act
+        var compressedData = ZLibUtility.Deflate(data);
+        var decompressedData = ZLibUtility.Inflate(compressedData, originalData.Length);
 
         // Assert
         Assert.Equal(originalData, decompressedData.ToArray());
