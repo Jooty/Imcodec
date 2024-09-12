@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Imcodec.Wad\Imcodec.Wad.csproj" />
+        <ProjectReference Include="..\Imcodec.ObjectProperty\Imcodec.ObjectProperty.csproj" />
     </ItemGroup>
 
 </Project>

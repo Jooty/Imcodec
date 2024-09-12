@@ -52,8 +52,8 @@ public sealed class ArchiveCommands {
             return;
         }
 
-        var archiveName = ExtractFileName(archivePath);
-        outputPath = GetOutputPath(archivePath, outputPath, archiveName!);
+        var archiveName = IOUtility.ExtractFileName(archivePath);
+        outputPath = IOUtility.GetOutputDirectory(archivePath, outputPath, archiveName!);
 
         if (!Directory.Exists(outputPath)) {
             Directory.CreateDirectory(outputPath);
@@ -71,8 +71,8 @@ public sealed class ArchiveCommands {
                 continue;
             }
 
-            var actualFileName = ExtractFileName(entry.Key);
-            var actualPath = ExtractDirectoryPath(entry.Key) ?? "";
+            var actualFileName = IOUtility.ExtractFileName(entry.Key);
+            var actualPath = IOUtility.ExtractDirectoryPath(entry.Key) ?? "";
 
             var fullPath = Path.Combine(outputPath, actualPath!);
             var fullOutputPath = Path.Combine(fullPath, actualFileName!);
@@ -82,41 +82,6 @@ public sealed class ArchiveCommands {
 
             File.WriteAllBytes(fullOutputPath, fileData.Value.ToArray());
         }
-    }
-
-    private static string GetOutputPath(string archivePath, string outputPath, string archiveName) {
-        // The character '.' is used to represent the current directory. If the output path is the current
-        // directory, we'll use the archive name as the output directory.
-        if (outputPath == ".") {
-            outputPath = Path.Combine(Path.GetDirectoryName(archivePath)!, RemoveExtension(archiveName));
-        }
-
-        return outputPath;
-    }
-
-    private static string? ExtractFileName(string path) {
-        // Get the file name after the last directory separator.
-        // Verify it's a file name and not a directory.
-        var fileName = path.Split(Path.DirectorySeparatorChar).Last();
-        return fileName.Contains('.') ? fileName : null;
-    }
-
-    private static string? ExtractDirectoryPath(string path) {
-        // Get the path without the file name.
-        // Verify it's a directory path and not a file name.
-        var idx = path.LastIndexOf(Path.DirectorySeparatorChar);
-        if (idx == -1) {
-            return null;
-        }
-
-        var pathWithoutFileName = path[..idx];
-        return pathWithoutFileName.Contains('.') ? null : pathWithoutFileName;
-    }
-
-    private static string RemoveExtension(string path) {
-        // Remove the file extension from the file name.
-        var fileName = ExtractFileName(path);
-        return fileName?.Split('.').First() ?? path;
     }
 
 }

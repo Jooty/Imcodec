@@ -22,7 +22,8 @@ using Cocona;
 
 namespace Imcodec.Cli;
 
-[HasSubCommands(typeof(ArchiveCommands), Description = "Archive related commands.")]
+[HasSubCommands(typeof(ArchiveCommands), commandName: "wad", Description = "Archive related commands.")]
+[HasSubCommands(typeof(DeserializeCommands), commandName: "op", Description = "Deserialization related commands.")]
 public class Program {
 
     public static void Main(string[] args)
