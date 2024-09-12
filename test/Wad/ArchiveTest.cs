@@ -28,8 +28,8 @@ public class ArchiveTest {
     public void Constructor_ShouldInitializeFileEntries() {
         // Arrange
         var files = new Dictionary<string, FileEntry> {
-            { "file1.txt", new FileEntry { Offset = 0, Size = 100, IsCompressed = false } },
-            { "file2.txt", new FileEntry { Offset = 100, Size = 200, IsCompressed = true } }
+            { "file1.txt", new FileEntry { Offset = 0, UncompressedSize = 100, IsCompressed = false } },
+            { "file2.txt", new FileEntry { Offset = 100, UncompressedSize = 200, IsCompressed = true } }
         };
         using var stream = new MemoryStream();
 
@@ -45,7 +45,7 @@ public class ArchiveTest {
         // Arrange
         var fileEntry = new FileEntry {
             Offset = 0,
-            Size = 4,
+            UncompressedSize = 4,
             IsCompressed = false
         };
 
@@ -64,7 +64,7 @@ public class ArchiveTest {
     [Fact]
     public async Task OpenFileAsync_ShouldReturnFileData() {
         // Arrange
-        var fileEntry = new FileEntry { Offset = 0, Size = 4, IsCompressed = false };
+        var fileEntry = new FileEntry { Offset = 0, UncompressedSize = 4, IsCompressed = false };
         var files = new Dictionary<string, FileEntry> { { "file1.txt", fileEntry } };
         using var stream = new MemoryStream([1, 2, 3, 4]);
         var archive = new Archive(files, stream, 0);
@@ -108,8 +108,8 @@ public class ArchiveTest {
     [Fact]
     public void Package_ShouldReturnCorrectMemoryBlock() {
         // Arrange
-        var fileEntry1 = new FileEntry { Offset = 0, Size = 4, IsCompressed = false };
-        var fileEntry2 = new FileEntry { Offset = 4, Size = 4, IsCompressed = false };
+        var fileEntry1 = new FileEntry { Offset = 0, UncompressedSize = 4, IsCompressed = false };
+        var fileEntry2 = new FileEntry { Offset = 4, UncompressedSize = 4, IsCompressed = false };
         var files = new Dictionary<string, FileEntry> {
             { "file1.txt", fileEntry1 },
             { "file2.txt", fileEntry2 }

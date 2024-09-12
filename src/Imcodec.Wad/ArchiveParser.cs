@@ -89,7 +89,7 @@ public class ArchiveParser {
             Crc32 = crc32,
             IsCompressed = isCompressed,
             Offset = offset,
-            Size = size,
+            UncompressedSize = size,
         };
     }
 

@@ -25,7 +25,7 @@ namespace Imcodec.Wad;
 public sealed class FileEntry {
 
     public uint Offset { get; init; }
-    public uint Size { get; init; }
+    public uint UncompressedSize { get; init; }
     public uint CompressedSize { get; init; }
     public bool IsCompressed { get; init; }
     public uint Crc32 { get; init; }
@@ -33,7 +33,7 @@ public sealed class FileEntry {
 
     public void PackToStream(BitWriter writer) {
         writer.WriteUInt32(Offset);
-        writer.WriteUInt32(Size);
+        writer.WriteUInt32(UncompressedSize);
         writer.WriteUInt32(CompressedSize);
         writer.WriteBit(IsCompressed);
         writer.WriteUInt32(Crc32);
