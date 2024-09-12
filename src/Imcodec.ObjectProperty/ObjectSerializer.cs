@@ -85,6 +85,8 @@ public class ObjectSerializer {
     /// </summary>
     public TypeRegistry TypeRegistry { get; set; }
 
+    private static readonly ClientGeneratedTypeRegistry s_defaultTypeRegistry = new();
+
     // ctor
     /// <summary>
     /// Initializes a new instance of the <see cref="ObjectSerializer"/> class.
@@ -95,10 +97,24 @@ public class ObjectSerializer {
     public ObjectSerializer(bool Versionable = true,
                             SerializerFlags Behaviors = SerializerFlags.None,
                             TypeRegistry? typeRegistry = null) {
-        typeRegistry ??= new ClientGeneratedTypeRegistry();
         this.Versionable = Versionable;
         this.SerializerFlags = Behaviors;
-        this.TypeRegistry = typeRegistry;
+        this.TypeRegistry = typeRegistry ?? s_defaultTypeRegistry;
+    }
+
+    /// <summary>
+    /// Serializes the specified <see cref="PropertyClass"/> object using
+    /// the provided property mask.
+    /// </summary>
+    /// <param name="input">The <see cref="PropertyClass"/> object to serialize.</param>
+    /// <param name="propertyMask">The property mask to use for serialization.</param>
+    /// <param name="output">The serialized byte array output.</param>
+    /// <returns><c>true</c> if the serialization is successful; otherwise, <c>false</c>.</returns>
+    public virtual bool Serializer(PropertyClass input,
+                           uint propertyMask,
+                           out byte[]? output) {
+        var castedFlags = (PropertyFlags) propertyMask;
+        return Serialize(input, castedFlags, out output);
     }
 
     /// <summary>
@@ -109,7 +125,7 @@ public class ObjectSerializer {
     /// <param name="propertyMask">The <see cref="PropertyFlags"/> mask to
     /// apply during serialization.</param>
     /// <param name="output">The serialized byte array output.</param>
-    public bool Serialize(PropertyClass input,
+    public virtual bool Serialize(PropertyClass input,
                           PropertyFlags propertyMask,
                           out byte[]? output) {
         output = default;
@@ -143,12 +159,28 @@ public class ObjectSerializer {
     /// </summary>
     /// <typeparam name="T">The type of the object to deserialize.</typeparam>
     /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
+    /// <param name="propertyMask">The property mask to use for serialization.</param>
+    /// <param name="output">When this method returns, contains the deserialized
+    /// object of type <typeparamref name="T"/>.</param>
+    /// <returns><c>true</c> if the deserialization is successful; otherwise,
+    public virtual bool Deserialize<T>(byte[] inputBuffer,
+                               uint propertyMask,
+                               out T? output) where T : PropertyClass {
+        var castedFlags = (PropertyFlags) propertyMask;
+        return Deserialize(inputBuffer, castedFlags, out output);
+    }
+
+    /// <summary>
+    /// Deserializes the input buffer into an instance of the specified type.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to deserialize.</typeparam>
+    /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
     /// <param name=""propertyMask"">The property flags to use for serialization.</param>
     /// <param name="output">When this method returns, contains the deserialized
     /// object of type <typeparamref name="T"/>.</param>
     /// <returns><c>true</c> if the deserialization is successful; otherwise,
     /// <c>false</c>.</returns>
-    public bool Deserialize<T>(byte[] inputBuffer,
+    public virtual bool Deserialize<T>(byte[] inputBuffer,
                                PropertyFlags propertyMask,
                                out T? output) where T : PropertyClass {
         output = default;
