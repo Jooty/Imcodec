@@ -27,7 +27,7 @@ namespace Imcodec.Wad;
 /// </summary>
 public sealed class Archive {
 
-    private readonly Dictionary<string, Lazy<FileEntry>> _fileEntries = [];
+    public readonly Dictionary<string, Lazy<FileEntry>> Files = [];
     private readonly Stream _archiveStream;
     private readonly uint _version;
 
@@ -42,7 +42,7 @@ public sealed class Archive {
         _version = version;
 
         foreach (var file in files) {
-            _fileEntries.Add(file.Key, new Lazy<FileEntry>(() => file.Value));
+            Files.Add(file.Key, new Lazy<FileEntry>(() => file.Value));
         }
     }
 
@@ -51,8 +51,8 @@ public sealed class Archive {
     /// </summary>
     /// <param name="fileName">The name of the file.</param>
     /// <returns>A memory block of the file data, or null if not found.</returns>
-    public ReadOnlyMemory<byte>? OpenFile(string fileName) {
-        if (_fileEntries.TryGetValue(fileName, out var lazyEntry)) {
+    public Memory<byte>? OpenFile(string fileName) {
+        if (Files.TryGetValue(fileName, out var lazyEntry)) {
             var fileEntry = lazyEntry.Value;
             return ReadFileData(fileEntry);
         }
@@ -65,8 +65,8 @@ public sealed class Archive {
     /// </summary>
     /// <param name="fileName">The name of the file.</param>
     /// <returns>A memory block of the file data, or null if not found.</returns>
-    public async Task<ReadOnlyMemory<byte>?> OpenFileAsync(string fileName) {
-        if (_fileEntries.TryGetValue(fileName, out var lazyEntry)) {
+    public async Task<Memory<byte>?> OpenFileAsync(string fileName) {
+        if (Files.TryGetValue(fileName, out var lazyEntry)) {
             var fileEntry = lazyEntry.Value;
             return await ReadFileDataAsync(fileEntry);
         }
@@ -78,13 +78,13 @@ public sealed class Archive {
     /// Gets the number of file entries in the archive.
     /// </summary>
     public int FileCount
-        => _fileEntries.Count;
+        => Files.Count;
 
     /// <summary>
     /// Checks if the archive contains a file.
     /// </summary>
     public bool ContainsFile(string fileName)
-        => _fileEntries.ContainsKey(fileName);
+        => Files.ContainsKey(fileName);
 
     /// <summary>
     /// Gets the size of the archive.
@@ -92,7 +92,7 @@ public sealed class Archive {
     /// <returns>The size of the archive.</returns>
     public uint Size() {
         // Get the last file entry. Add the offset and size to get the end of the file.
-        var lastFileEntry = _fileEntries.Last().Value.Value;
+        var lastFileEntry = Files.Last().Value.Value;
 
         return lastFileEntry.Offset + lastFileEntry.Size;
     }
@@ -101,7 +101,7 @@ public sealed class Archive {
     /// Packages the archive into a memory block.
     /// </summary>
     /// <returns>A memory block of the archive data.</returns>
-    public ReadOnlyMemory<byte> Package() {
+    public Memory<byte> Package() {
         var writer = new BitWriter();
 
         // Write magic header
@@ -109,16 +109,16 @@ public sealed class Archive {
         writer.WriteBytes(header);
 
         writer.WriteUInt32(_version);
-        writer.WriteUInt32((uint) _fileEntries.Count);
+        writer.WriteUInt32((uint) Files.Count);
 
-        foreach (var fileEntry in _fileEntries.Values) {
+        foreach (var fileEntry in Files.Values) {
             fileEntry.Value.PackToStream(writer);
         }
 
         return writer.GetData();
     }
 
-    private ReadOnlyMemory<byte> ReadFileData(FileEntry fileEntry) {
+    private Memory<byte> ReadFileData(FileEntry fileEntry) {
         _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
         var fileSpan = ReadFromStream(_archiveStream, fileEntry.Size);
 
@@ -126,10 +126,10 @@ public sealed class Archive {
             return ZLibCompressionService.Inflate(fileSpan, (int) fileEntry.CompressedSize);
         }
 
-        return new ReadOnlyMemory<byte>(fileSpan.ToArray());
+        return new Memory<byte>(fileSpan.ToArray());
     }
 
-    private async Task<ReadOnlyMemory<byte>> ReadFileDataAsync(FileEntry fileEntry) {
+    private async Task<Memory<byte>> ReadFileDataAsync(FileEntry fileEntry) {
         _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
         var buffer = new byte[fileEntry.Size];
         await _archiveStream.ReadAsync(buffer, 0, buffer.Length);
@@ -141,7 +141,7 @@ public sealed class Archive {
         return buffer;
     }
 
-    private static ReadOnlySpan<byte> ReadFromStream(Stream stream, long size) {
+    private static Memory<byte> ReadFromStream(Stream stream, long size) {
         var buffer = new byte[size];
         var read = stream.Read(buffer, 0, (int) size);
         if (read != size) {
