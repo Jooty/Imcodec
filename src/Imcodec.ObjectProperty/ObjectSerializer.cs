@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.IO;
+using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.ObjectProperty;
 

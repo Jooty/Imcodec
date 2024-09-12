@@ -18,7 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-namespace Imcodec.ObjectProperty;
+namespace Imcodec.ObjectProperty.TypeCache;
 
 // This class is empty on purpose; it is meant to be populated by the code generator.
 // It exists here, partially, to allow the object serializer to by default use this registry.

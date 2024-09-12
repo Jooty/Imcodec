@@ -69,7 +69,6 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
                 }
 
                 if (classDefinitions.Any(c => c.Name == classDefinition.Name)) {
-                    // todo: don't continue. we need to know why there was a duplicate.
                     continue;
                 }
 
@@ -110,7 +109,9 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
 
                 // If the PropertyDefinition is an enum, we need to add it to the enum definitions.
                 if (propertyDefinition.IsEnum) {
-                    var enumDefinition = new EnumDefinition(propertyDefinition.CsharpType!, propertyDefinition.EnumOptions);
+                    // The C# type may contain 'List<>'. We want to remove this.
+                    var abstractType = propertyDefinition.CsharpType!.Replace("List<", "").Replace(">", "");
+                    var enumDefinition = new EnumDefinition(abstractType, propertyDefinition.EnumOptions);
                     _enumDefinitions.Add(enumDefinition);
                 }
 
