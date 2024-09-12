@@ -29,14 +29,17 @@ public sealed class Archive {
 
     private readonly Dictionary<string, Lazy<FileEntry>> _fileEntries = [];
     private readonly Stream _archiveStream;
+    private readonly uint _version;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Archive"/> class.
     /// </summary>
     /// <param name="files">The files in the archive.</param>
     /// <param name="archiveStream">The stream containing the archive data.</param>
-    public Archive(Dictionary<string, FileEntry> files, Stream archiveStream) {
+    /// <param name="version">The version of the archive.</param>
+    public Archive(Dictionary<string, FileEntry> files, Stream archiveStream, uint version) {
         _archiveStream = archiveStream;
+        _version = version;
 
         foreach (var file in files) {
             _fileEntries.Add(file.Key, new Lazy<FileEntry>(() => file.Value));
@@ -92,6 +95,27 @@ public sealed class Archive {
         var lastFileEntry = _fileEntries.Last().Value.Value;
 
         return lastFileEntry.Offset + lastFileEntry.Size;
+    }
+
+    /// <summary>
+    /// Packages the archive into a memory block.
+    /// </summary>
+    /// <returns>A memory block of the archive data.</returns>
+    public ReadOnlyMemory<byte> Package() {
+        var writer = new BitWriter();
+
+        // Write magic header
+        var header = "KIWAD"u8.ToArray();
+        writer.WriteBytes(header);
+
+        writer.WriteUInt32(_version);
+        writer.WriteUInt32((uint) _fileEntries.Count);
+
+        foreach (var fileEntry in _fileEntries.Values) {
+            fileEntry.Value.PackToStream(writer);
+        }
+
+        return writer.GetData();
     }
 
     private ReadOnlyMemory<byte> ReadFileData(FileEntry fileEntry) {

@@ -18,6 +18,8 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Imcodec.IO;
+
 namespace Imcodec.Wad;
 
 public sealed class FileEntry {
@@ -28,5 +30,14 @@ public sealed class FileEntry {
     public bool IsCompressed { get; init; }
     public uint Crc32 { get; init; }
     public string? FileName { get; init; }
+
+    public void PackToStream(BitWriter writer) {
+        writer.WriteUInt32(Offset);
+        writer.WriteUInt32(Size);
+        writer.WriteUInt32(CompressedSize);
+        writer.WriteBit(IsCompressed);
+        writer.WriteUInt32(Crc32);
+        writer.WriteBigString(FileName!);
+    }
 
 }

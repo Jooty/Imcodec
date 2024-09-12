@@ -60,7 +60,12 @@ public class ArchiveParser {
             }
         }
 
-        return new Archive(files, archiveStream);
+        // Verify the amount of file entries read matches the file count.
+        if (files.Count != fileCount) {
+            throw new InvalidArchiveFormatException("Failed to read all file entries.");
+        }
+
+        return new Archive(files, archiveStream, version);
     }
 
     private static FileEntry ReadFileEntry(BitReader binaryReader) {

@@ -34,7 +34,7 @@ public class ArchiveTest {
         using var stream = new MemoryStream();
 
         // Act
-        var archive = new Archive(files, stream);
+        var archive = new Archive(files, stream, 0);
 
         // Assert
         Assert.Equal(2, archive.FileCount);
@@ -51,7 +51,7 @@ public class ArchiveTest {
 
         var files = new Dictionary<string, FileEntry> { { "file1.txt", fileEntry } };
         using var stream = new MemoryStream([1, 2, 3, 4]);
-        var archive = new Archive(files, stream);
+        var archive = new Archive(files, stream, 0);
 
         // Act
         var result = archive.OpenFile("file1.txt");
@@ -67,7 +67,7 @@ public class ArchiveTest {
         var fileEntry = new FileEntry { Offset = 0, Size = 4, IsCompressed = false };
         var files = new Dictionary<string, FileEntry> { { "file1.txt", fileEntry } };
         using var stream = new MemoryStream([1, 2, 3, 4]);
-        var archive = new Archive(files, stream);
+        var archive = new Archive(files, stream, 0);
 
         // Act
         var result = await archive.OpenFileAsync("file1.txt");
@@ -82,7 +82,7 @@ public class ArchiveTest {
         // Arrange
         var files = new Dictionary<string, FileEntry>();
         using var stream = new MemoryStream();
-        var archive = new Archive(files, stream);
+        var archive = new Archive(files, stream, 0);
 
         // Act
         var result = archive.OpenFile("nonexistent.txt");
@@ -96,13 +96,36 @@ public class ArchiveTest {
         // Arrange
         var files = new Dictionary<string, FileEntry>();
         using var stream = new MemoryStream();
-        var archive = new Archive(files, stream);
+        var archive = new Archive(files, stream, 0);
 
         // Act
         var result = await archive.OpenFileAsync("nonexistent.txt");
 
         // Assert
         Assert.Null(result);
+    }
+
+    [Fact]
+    public void Package_ShouldReturnCorrectMemoryBlock() {
+        // Arrange
+        var fileEntry1 = new FileEntry { Offset = 0, Size = 4, IsCompressed = false };
+        var fileEntry2 = new FileEntry { Offset = 4, Size = 4, IsCompressed = false };
+        var files = new Dictionary<string, FileEntry> {
+            { "file1.txt", fileEntry1 },
+            { "file2.txt", fileEntry2 }
+        };
+        using var stream = new MemoryStream([1, 2, 3, 4, 5, 6, 7, 8]);
+        var archive = new Archive(files, stream, 1);
+
+        // Act
+        var result = archive.Package();
+
+        // Assert
+        var expectedHeader = "KIWAD"u8.ToArray();
+        var expectedVersion = BitConverter.GetBytes((uint) 1);
+        var expectedFileCount = BitConverter.GetBytes((uint) 2);
+        var expectedData = expectedHeader.Concat(expectedVersion).Concat(expectedFileCount).ToArray();
+        Assert.True(result.Span[..expectedData.Length].SequenceEqual(expectedData));
     }
 
 }

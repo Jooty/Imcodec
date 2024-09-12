@@ -199,11 +199,12 @@ public class BitWriter : BitManipulator {
     }
 
     /// <summary>
-    /// Writes a string to the packet with a null terminated (0)
+    /// Writes a string to the packet with a null terminated (0). The size of the string will be written with
+    /// 4 bytes rather than 2 bytes.
     /// </summary>
     /// <param name="str"></param>
-    public void WriteCString(string str) {
-        if (str.ToString() is null || str.ToString() == string.Empty) {
+    public void WriteBigString(string str) {
+        if (str is null || str.ToString() == string.Empty) {
             WriteUInt8(0);
             return;
         }
