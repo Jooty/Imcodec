@@ -172,7 +172,7 @@ public sealed class Property<T>(uint hash,
         else if (IsEnum) {
             return Property<T>.EncodeEnum(writer, val!, serializer);
         }
-        else if (StreamPropertyCodec.TryGetWriter<T>(out var codec)) {
+        else if (StreamPropertyCodec.TryGetWriter(InnerType, out var codec)) {
             codec.Invoke(writer, (T) val!);
 
             return true;
@@ -261,13 +261,13 @@ public sealed class Property<T>(uint hash,
         else if (IsEnum) {
             return Property<T>.DecodeEnum(reader, out val, serializer);
         }
-        else if (StreamPropertyCodec.TryGetReader<T>(out var codec)) {
+        else if (StreamPropertyCodec.TryGetReader(InnerType, out var codec)) {
             val = codec.Invoke(reader);
 
             return true;
         }
 
-        throw new Exception($"Failed to decode element of type {InnerType}");
+        throw new Exception($"Failed to decode element of type {typeof(T)}");
     }
 
     private static bool DecodeEnum(BitReader reader, out object val, ObjectSerializer serializer) {
