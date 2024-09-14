@@ -26,11 +26,15 @@ namespace Imcodec.ObjectProperty;
 /// <summary>
 /// A serializer that prefixes the buffer with a magic header and serializer flags.
 /// This is usually used for BiND buffers, which are serialized files found within the client.
+/// todo: docs
 /// </summary>
 public class BindSerializer : ObjectSerializer {
 
     private const uint BiNDMagic = 0x644E4942;
     private const uint BiNDDefaultFlags = 0x7;
+
+    public bool Serialize<T>(T input, out byte[]? output) where T : PropertyClass
+        => Serialize(input, (PropertyFlags) BiNDDefaultFlags, out output);
 
     public override bool Serialize(PropertyClass input, PropertyFlags propertyMask, out byte[]? output) {
         output = default;
@@ -56,6 +60,9 @@ public class BindSerializer : ObjectSerializer {
 
         return true;
     }
+
+    public bool Deserialize<T>(byte[] inputBuffer, out T output) where T : PropertyClass
+        => Deserialize(inputBuffer, (PropertyFlags) BiNDDefaultFlags, out output);
 
     public override bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) {
         output = default!;

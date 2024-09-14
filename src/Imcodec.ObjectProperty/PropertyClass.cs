@@ -96,6 +96,7 @@ public abstract record PropertyClass {
         }
 
         OnPostEncode();
+
         return true;
     }
 
@@ -126,6 +127,7 @@ public abstract record PropertyClass {
         }
 
         OnPostDecode();
+
         return true;
     }
 
@@ -191,6 +193,7 @@ public abstract record PropertyClass {
         writer.SeekBit(0);
         writer.WriteUInt32((uint)objectSize);
         writer.SeekBit(objectSize);
+
         return true;
     }
 
@@ -231,8 +234,7 @@ public abstract record PropertyClass {
         }
     }
 
-    private static bool IsPropertyEligibleForProcessing(IProperty property,
-                                                        ObjectSerializer serializer) {
+    private static bool IsPropertyEligibleForProcessing(IProperty property, ObjectSerializer serializer) {
         var serializerFlags = serializer.SerializerFlags;
         var serializerMask = serializer.PropertyMask;
         var propertyFlags = property.Flags;

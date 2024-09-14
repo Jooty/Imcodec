@@ -27,8 +27,6 @@ namespace Imcodec.Cli;
 
 public class DeserializeCommands {
 
-    private const uint BiNdDefaultFlags = 0x7;
-
     [Command("de", Description = "Deserialize a BiND buffer to a JSON file.")]
     public void Deserialize([Argument] string inputPath,
                             [Argument] string outputPath = ".") {
@@ -41,12 +39,11 @@ public class DeserializeCommands {
         // Read the file into a buffer and deserialize it.
         var buffer = File.ReadAllBytes(inputPath);
         var bindSerializer = new BindSerializer();
-        if (!bindSerializer.Deserialize<PropertyClass>(buffer, (PropertyFlags) BiNdDefaultFlags, out var propertyClass)) {
+        if (!bindSerializer.Deserialize<PropertyClass>(buffer, out var propertyClass)) {
             Console.WriteLine("Failed to deserialize the buffer.");
             return;
         }
 
-        var fileName = IOUtility.ExtractFileName(inputPath);
         outputPath = IOUtility.GetOutputFile(inputPath, outputPath);
 
         // Create options to serialize any enums as strings.
@@ -57,6 +54,8 @@ public class DeserializeCommands {
         // Serialize the property class to a JSON file.
         var json = JsonConvert.SerializeObject(propertyClass, Formatting.Indented, jsonSerializerSettings);
         File.WriteAllText(outputPath, json);
+
+        Console.WriteLine($"Successfully deserialized the buffer to '{outputPath}'.");
     }
 
 }
