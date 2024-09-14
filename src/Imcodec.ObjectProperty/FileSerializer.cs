@@ -24,11 +24,9 @@ using System.Buffers.Binary;
 namespace Imcodec.ObjectProperty;
 
 /// <summary>
-/// A serializer that prefixes the buffer with a magic header and serializer flags.
-/// This is usually used for BiND buffers, which are serialized files found within the client.
-/// todo: docs
+/// Defines a class capable of serializing and deserializing objects to and from a file.
 /// </summary>
-public class BindSerializer : ObjectSerializer {
+public class FileSerializer : ObjectSerializer {
 
     private const uint BiNDMagic = 0x644E4942;
     private const uint BiNDDefaultFlags = 0x7;
@@ -76,19 +74,18 @@ public class BindSerializer : ObjectSerializer {
 
         // Read the magic header and check if it is correct.
         var magic = reader.ReadUInt32();
-        if (magic != BiNDMagic) {
-            return false;
+        var skipLen = 0;
+        if (magic == BiNDMagic) {
+            // If the BiND header is present, the serializer flags will be next.
+            skipLen = sizeof(uint) * 2; // Skip the magic and flags.
+
+            var flags = (SerializerFlags) reader.ReadUInt32();
+            if ((((uint) flags) & 8) != 0) {
+                _ = reader.ReadBit();
+            }
+            base.SerializerFlags = flags;
         }
 
-        // If the BiND header is present, the serializer flags will be next.
-        var flags = (SerializerFlags) reader.ReadUInt32();
-        if ((((uint) flags) & 8) != 0) {
-            _ = reader.ReadBit();
-        }
-        base.SerializerFlags = flags;
-
-        // Call the base class deserialize and check if it was successful.
-        var skipLen = sizeof(uint) * 2; // Skip the magic and flags.
         var baseInput = inputBuffer.Skip(skipLen).ToArray();
         if (!base.Deserialize<T>(baseInput, propertyMask, out var baseOutput)) {
             return false;

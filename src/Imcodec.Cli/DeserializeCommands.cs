@@ -38,7 +38,7 @@ public class DeserializeCommands {
 
         // Read the file into a buffer and deserialize it.
         var buffer = File.ReadAllBytes(inputPath);
-        var bindSerializer = new BindSerializer();
+        var bindSerializer = new FileSerializer();
         if (!bindSerializer.Deserialize<PropertyClass>(buffer, out var propertyClass)) {
             Console.WriteLine("Failed to deserialize the buffer.");
             return;
