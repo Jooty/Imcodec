@@ -308,10 +308,9 @@ public sealed class Property<T>(uint hash,
         // Otherwise, the size is encoded as a 32-bit unsigned integer.
         if (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {
             // If the MSB is set, the size is encoded as a 32-bit unsigned integer again.
-            var isFull = reader.ReadBit();
-            var readSize = (isFull ? sizeof(uint) : sizeof(byte)) - 1;
+            var sizeRedundant = reader.ReadBit();
 
-            return reader.ReadBits<uint>(readSize);
+            return reader.ReadBits<uint>(sizeRedundant ? 31 : 7);
         }
         else {
             return reader.ReadUInt32();
