@@ -23,6 +23,10 @@ using System.Buffers.Binary;
 
 namespace Imcodec.ObjectProperty;
 
+/// <summary>
+/// A serializer that prefixes the buffer with a magic header and serializer flags.
+/// This is usually used for BiND buffers, which are serialized files found within the client.
+/// </summary>
 public class BindSerializer : ObjectSerializer {
 
     private const uint BiNDMagic = 0x644E4942;

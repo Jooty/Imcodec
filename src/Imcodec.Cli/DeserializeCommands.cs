@@ -27,7 +27,7 @@ namespace Imcodec.Cli;
 
 public class DeserializeCommands {
 
-    private const uint BiNDDefaultFlags = 0x7;
+    private const uint BiNdDefaultFlags = 0x7;
 
     [Command("de", Description = "Deserialize a BiND buffer to a JSON file.")]
     public void Deserialize([Argument] string inputPath,
@@ -41,7 +41,7 @@ public class DeserializeCommands {
         // Read the file into a buffer and deserialize it.
         var buffer = File.ReadAllBytes(inputPath);
         var bindSerializer = new BindSerializer();
-        if (!bindSerializer.Deserialize<PropertyClass>(buffer, (PropertyFlags) BiNDDefaultFlags, out var propertyClass)) {
+        if (!bindSerializer.Deserialize<PropertyClass>(buffer, (PropertyFlags) BiNdDefaultFlags, out var propertyClass)) {
             Console.WriteLine("Failed to deserialize the buffer.");
             return;
         }

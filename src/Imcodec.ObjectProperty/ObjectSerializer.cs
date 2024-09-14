@@ -133,6 +133,11 @@ public class ObjectSerializer {
         this.PropertyMask = propertyMask;
         var writer = new BitWriter();
 
+        // If the flags request it, ensure our BitWriter is writing with compact lengths.
+        if (SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {
+            writer.WithCompactLengths();
+        }
+
         // Write the property class hash.
         writer.WriteUInt32(input.GetHash());
 
@@ -194,6 +199,11 @@ public class ObjectSerializer {
             if (reader == null) {
                 return false;
             }
+        }
+
+        // If the flags request it, ensure our BitReader is reading with compact lengths.
+        if (SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {
+            reader.WithCompactLengths();
         }
 
         if (!PreloadObject(reader, out var propertyClass)) {
