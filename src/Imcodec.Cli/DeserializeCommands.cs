@@ -19,7 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System;
-using System.Text.Json;
+using Newtonsoft.Json;
 using Cocona;
 using Imcodec.ObjectProperty;
 
@@ -49,12 +49,14 @@ public class DeserializeCommands {
         var fileName = IOUtility.ExtractFileName(inputPath);
         outputPath = IOUtility.GetOutputFile(inputPath, outputPath);
 
-        // Serialize the property class to a JSON file.
-        var stringJson = JsonSerializer.Serialize(propertyClass, new JsonSerializerOptions {
-            WriteIndented = true
-        });
+        // Create options to serialize any enums as strings.
+        var jsonSerializerSettings = new JsonSerializerSettings {
+            Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
+        };
 
-        File.WriteAllText($"{outputPath}.json", stringJson);
+        // Serialize the property class to a JSON file.
+        var json = JsonConvert.SerializeObject(propertyClass, Formatting.Indented, jsonSerializerSettings);
+        File.WriteAllText(outputPath, json);
     }
 
 }
