@@ -52,7 +52,7 @@ namespace Imcodec.ObjectProperty.CodeGen.Definitions {
         }
 
         private static bool IsContainerDynamic(string container)
-            => container is "std::vector" or "List";
+            => container is "std::vector" or "List" or "Vector";
 
         private static Dictionary<string, int> CleanupEnumOptions(Dictionary<string, object> enumOptions) {
             var cleanedOptions = new Dictionary<string, int>();
