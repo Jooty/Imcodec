@@ -80,7 +80,7 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
 
         private PropertyClassDefinition? GetDefinition(JsonDumpClass dumpedClass) {
             // Anything containing a '<' is usually client jargon. We don't want to generate code for it.
-            if (dumpedClass.Name.Contains('<')) {
+            if (dumpedClass.Name.Contains('<') || dumpedClass.Name.Contains('*')) {
                 return null;
             }
 

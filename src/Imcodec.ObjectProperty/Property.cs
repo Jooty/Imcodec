@@ -21,6 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections;
 using System.Reflection;
 using Imcodec.IO;
+using Imcodec.Types;
 
 namespace Imcodec.ObjectProperty;
 
@@ -132,12 +133,17 @@ public sealed class Property<T>(uint hash,
 
             // Cast the value to the appropriate type and set the value.
             if (val is null) {
-                _ = Setter?.Invoke(TargetObject, null);
-            }
-            else if (typeof(T).IsAssignableFrom(val?.GetType())) {
-                _ = Setter?.Invoke(TargetObject, [(T) val!]);
+                _ = Setter?.Invoke(TargetObject, [null]);
             }
             else {
+                // fixme: GID fails to be casted
+                if (val is ulong v) {
+                    var gid = new GID(v);
+                    _ = Setter?.Invoke(TargetObject, [(T) (object) gid]);
+
+                    return true;
+                }
+
                 var changedType = Convert.ChangeType(val, typeof(T));
                 _ = Setter?.Invoke(TargetObject, [(T) changedType!]);
             }
@@ -235,15 +241,38 @@ public sealed class Property<T>(uint hash,
 
         var listType = typeof(List<>).MakeGenericType(InnerType);
         var list = (IList) Activator.CreateInstance(listType)!;
+        var startingPos = reader.BitPos();
+        var isPropertyClassList = InnerType.IsSubclassOf(typeof(PropertyClass));
 
         for (int i = 0; i < len; i++) {
-            if (!DecodeElement(reader, serializer, out var element)) {
-                return false;
+            startingPos = reader.BitPos();
+            val = list;
+
+            if (DecodeElement(reader, serializer, out var element)) {
+                var index = list.Add(element!);
+                if (index < 0) {
+                    throw new Exception("Failed to add element to list.");
+                }
+
+                continue;
             }
 
-            var index = list.Add(element!);
-            if (index < 0) {
-                throw new Exception("Failed to add element to list.");
+            // In the case that this is a list of PropertyClass and the serializer in versionable, there
+            // is a recovery option. PropertyClasses are prefixed with the hash and size of the object. If
+            // the decoding fails, we can skip the object by reading the hash and size and seeking to the
+            // next object.
+            if (isPropertyClassList && serializer.Versionable) {
+                reader.SeekBit(startingPos);
+                _ = reader.ReadUInt32(); // Skip the hash
+                var size = ReadVectorSize(reader, serializer);
+
+                // Ensure that seeking the bit will not exceed the buffer size.
+                if (reader.BitPos() + size > reader.Count() * 8) {
+                    // We return true because we didn't technically fail to decode the list.
+                    return true;
+                }
+
+                reader.SeekBit((int) (startingPos + size));
             }
         }
 
