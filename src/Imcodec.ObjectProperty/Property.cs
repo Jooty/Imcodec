@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Collections;
+using System.ComponentModel;
 using System.Reflection;
 using Imcodec.IO;
 using Imcodec.Types;
@@ -136,16 +137,20 @@ public sealed class Property<T>(uint hash,
                 _ = Setter?.Invoke(TargetObject, [null]);
             }
             else {
-                // fixme: GID fails to be casted
-                if (val is ulong v) {
-                    var gid = new GID(v);
-                    _ = Setter?.Invoke(TargetObject, [(T) (object) gid]);
-
-                    return true;
+                if (InnerType.IsPrimitive) {
+                    _ = Setter?.Invoke(TargetObject, [Convert.ChangeType(val, InnerType)]);
                 }
-
-                var changedType = Convert.ChangeType(val, typeof(T));
-                _ = Setter?.Invoke(TargetObject, [(T) changedType!]);
+                else if (InnerType.IsEnum) {
+                    _ = Setter?.Invoke(TargetObject, [Enum.ToObject(InnerType, val)]);
+                }
+                else if (InnerType.IsAssignableFrom(val.GetType())) {
+                    _ = Setter?.Invoke(TargetObject, [val]);
+                }
+                else {
+                    // Call the constructor of the type and set the value.
+                    var instance = Activator.CreateInstance(InnerType, val);
+                    _ = Setter?.Invoke(TargetObject, [instance]);
+                }
             }
         }
 
