@@ -335,9 +335,16 @@ public sealed class Property<T>(uint hash,
             return value;
         }
         else {
-            // Call the constructor of the type and set the value.
-            var instance = Activator.CreateInstance(InnerType, value);
-            return instance;
+            // Find a constructor with the same number of parameters as the value's properties
+            var constructors = InnerType.GetConstructors();
+            foreach (var constructor in constructors) {
+                var parameters = constructor.GetParameters();
+                if (parameters.Length == 1 && parameters[0].ParameterType.IsAssignableFrom(value.GetType())) {
+                    return constructor.Invoke([value]);
+                }
+            }
+
+            throw new InvalidOperationException($"No suitable constructor found for type {InnerType}");
         }
     }
 
