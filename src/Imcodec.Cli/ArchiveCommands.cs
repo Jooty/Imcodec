@@ -102,7 +102,7 @@ public sealed class ArchiveCommands {
             // Either write to the file, or attempt deserialization. If we fail to deserialize, we'll write
             // the bytes to disk.
             if (attemptDeserialization && s_deserExtIncludeList.Contains(fileExt)) {
-                var deserializedData = TryDeserializeFile(fileData!);
+                var deserializedData = TryDeserializeFile(fileEntry.FileName!, fileData!);
                 if (deserializedData != null) {
                     // If we deserialized successfully, remove the existing extension and add the deserialization
                     // suffix.
@@ -112,16 +112,13 @@ public sealed class ArchiveCommands {
 
                     continue;
                 }
-                else {
-                    Console.WriteLine($"Failed to deserialize file '{fileEntry.FileName}'.");
-                }
             }
 
             File.WriteAllBytes(fileOutputPath, fileData!);
         }
     }
 
-    private static string? TryDeserializeFile(byte[] fileData) {
+    private static string? TryDeserializeFile(string fileName, byte[] fileData) {
         try {
             var bindSerializer = new FileSerializer();
             if (bindSerializer.Deserialize<PropertyClass>(fileData, out var propertyClass)) {
@@ -136,7 +133,7 @@ public sealed class ArchiveCommands {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine($"Failed to deserialize file: {ex.Message}");
+            Console.WriteLine($"Failed to deserialize file ({fileName}): {ex.Message}");
             return null;
         }
     }

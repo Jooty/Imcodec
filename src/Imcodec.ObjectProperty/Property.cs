@@ -132,26 +132,7 @@ public sealed class Property<T>(uint hash,
                 return false;
             }
 
-            // Cast the value to the appropriate type and set the value.
-            if (val is null) {
-                _ = Setter?.Invoke(TargetObject, [null]);
-            }
-            else {
-                if (InnerType.IsPrimitive) {
-                    _ = Setter?.Invoke(TargetObject, [Convert.ChangeType(val, InnerType)]);
-                }
-                else if (InnerType.IsEnum) {
-                    _ = Setter?.Invoke(TargetObject, [Enum.ToObject(InnerType, val)]);
-                }
-                else if (InnerType.IsAssignableFrom(val.GetType())) {
-                    _ = Setter?.Invoke(TargetObject, [val]);
-                }
-                else {
-                    // Call the constructor of the type and set the value.
-                    var instance = Activator.CreateInstance(InnerType, val);
-                    _ = Setter?.Invoke(TargetObject, [instance]);
-                }
-            }
+            _ = Setter?.Invoke(TargetObject, [val]);
         }
 
         return true;
@@ -297,6 +278,7 @@ public sealed class Property<T>(uint hash,
         }
         else if (StreamPropertyCodec.TryGetReader(InnerType, out var codec)) {
             val = codec.Invoke(reader);
+            val = CastDecodedValue(val);
 
             return true;
         }
@@ -335,6 +317,28 @@ public sealed class Property<T>(uint hash,
         propertyClass = (PropertyClass) Activator.CreateInstance(fetchedType)!;
 
         return propertyClass.Decode(reader, serializer);
+    }
+
+    private static object? CastDecodedValue(object? value) {
+        if (value is null) {
+            return null;
+        }
+        else if (InnerType.IsPrimitive) {
+            var changedType = Convert.ChangeType(value, InnerType);
+            return changedType;
+        }
+        else if (InnerType.IsEnum) {
+            var castedEnum = Enum.ToObject(InnerType, value);
+            return castedEnum;
+        }
+        else if (InnerType.IsAssignableFrom(value.GetType())) {
+            return value;
+        }
+        else {
+            // Call the constructor of the type and set the value.
+            var instance = Activator.CreateInstance(InnerType, value);
+            return instance;
+        }
     }
 
     private static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer) {
