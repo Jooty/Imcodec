@@ -20,11 +20,16 @@ modification, are permitted provided that the following conditions are met:
 
 using System;
 using Cocona;
+using Imcodec.ObjectProperty;
 using Imcodec.Wad;
+using Newtonsoft.Json;
 
 namespace Imcodec.Cli;
 
 public sealed class ArchiveCommands {
+
+    private const string DeserializationSuffix = "_deser.json";
+    private static readonly List<string> s_deserExtIncludeList = [ "xml", "bin" ];
 
     /// <summary>
     /// Unpacks the given archive file to the specified output directory.
@@ -35,8 +40,10 @@ public sealed class ArchiveCommands {
     /// If the output path is not specified, the current directory will be used.
     /// </remarks>
     [Command("unpack")]
-    public void UnpackArchive([Argument] string archivePath,
-                              [Argument] string outputPath = ".") {
+    public void UnpackArchive(
+            [Argument(Description = "The path to the archive file.")] string archivePath,
+            [Argument(Description = "The path to the output directory")] string outputPath = ".",
+            [Option("deser", Description = "Attempt deserialization of archive files")] bool attemptDeserialization = false) {
         // Validate that a file exists at the given path. We'll also begin parsing the file as if it was
         // an archive. If at any point we determine that the file is not a valid archive, we'll stop and
         // inform the user.
@@ -45,7 +52,10 @@ public sealed class ArchiveCommands {
             return;
         }
 
-        using var archiveStream = new MemoryStream(File.ReadAllBytes(archivePath));
+        // Read the file data and parse it as an archive. If the file is not a valid archive, we'll inform
+        // the user and stop.
+        var fileData = File.ReadAllBytes(archivePath);
+        using var archiveStream = new MemoryStream(fileData);
         var archive = ArchiveParser.Parse(archiveStream);
         if (archive == null) {
             Console.WriteLine("The specified archive file is not a valid WAD archive.");
@@ -53,35 +63,105 @@ public sealed class ArchiveCommands {
         }
 
         var archiveName = IOUtility.ExtractFileName(archivePath);
-        outputPath = IOUtility.GetOutputDirectory(archivePath, outputPath, archiveName!);
 
+        // If the output directory does not exist, create it.
+        outputPath = GetOutputDirectory(archivePath, outputPath, archiveName!);
         if (!Directory.Exists(outputPath)) {
             Directory.CreateDirectory(outputPath);
         }
 
-        UnpackFiles(archive, outputPath);
+        var files = UnpackArchiveFiles(archive);
+        WriteArchiveFilesToDisk(files, outputPath, attemptDeserialization);
     }
 
-    private static void UnpackFiles(Archive archive, string outputPath) {
+    public static Dictionary<FileEntry, byte[]?> UnpackArchiveFiles(Archive archive) {
+        var files = new Dictionary<FileEntry, byte[]?>();
         foreach (var entry in archive.Files) {
-            // 'entry' is just a record of the file. We need to extract the actual file data.
             var fileData = archive.OpenFile(entry.Key);
+            var fileEntry = entry.Value.Value;
             if (fileData == null) {
                 Console.WriteLine($"Failed to extract file '{entry.Key}'.");
                 continue;
             }
 
-            var actualFileName = IOUtility.ExtractFileName(entry.Key);
-            var actualPath = IOUtility.ExtractDirectoryPath(entry.Key) ?? "";
+            files.Add(fileEntry, fileData.Value.ToArray());
+        }
 
-            var fullPath = Path.Combine(outputPath, actualPath!);
-            var fullOutputPath = Path.Combine(fullPath, actualFileName!);
-            if (!Directory.Exists(fullPath)) {
-                Directory.CreateDirectory(fullPath);
+        return files;
+    }
+
+    public static void WriteArchiveFilesToDisk(Dictionary<FileEntry, byte[]?> files,
+                                               string outputPath,
+                                               bool attemptDeserialization) {
+        foreach (var file in files) {
+            var fileEntry = file.Key;
+            var fileData = file.Value;
+            var fileExt = IOUtility.ExtractFileExtension(fileEntry.FileName!);
+            var fileOutputPath = CreateFileOutputPath(outputPath, fileEntry.FileName!);
+
+            // Either write to the file, or attempt deserialization. If we fail to deserialize, we'll write
+            // the bytes to disk.
+            if (attemptDeserialization && s_deserExtIncludeList.Contains(fileExt)) {
+                var deserializedData = TryDeserializeFile(fileData!);
+                if (deserializedData != null) {
+                    // If we deserialized successfully, remove the existing extension and add the deserialization
+                    // suffix.
+                    fileOutputPath = IOUtility.RemoveExtension(fileOutputPath);
+                    fileOutputPath = $"{fileOutputPath}{DeserializationSuffix}";
+                    File.WriteAllText(fileOutputPath, deserializedData);
+
+                    continue;
+                }
+                else {
+                    Console.WriteLine($"Failed to deserialize file '{fileEntry.FileName}'.");
+                }
             }
 
-            File.WriteAllBytes(fullOutputPath, fileData.Value.ToArray());
+            File.WriteAllBytes(fileOutputPath, fileData!);
         }
+    }
+
+    private static string? TryDeserializeFile(byte[] fileData) {
+        try {
+            var bindSerializer = new FileSerializer();
+            if (bindSerializer.Deserialize<PropertyClass>(fileData, out var propertyClass)) {
+                var jsonSerializerSettings = new JsonSerializerSettings {
+                    Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                };
+
+                return JsonConvert.SerializeObject(propertyClass, Formatting.Indented, jsonSerializerSettings);
+            }
+            else {
+                return null;
+            }
+        }
+        catch (Exception ex) {
+            Console.WriteLine($"Failed to deserialize file: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static string CreateFileOutputPath(string basePath, string fileName) {
+        var actualFileName = IOUtility.ExtractFileName(fileName);
+        var actualPath = IOUtility.ExtractDirectoryPath(fileName);
+
+        var fullPath = Path.Combine(basePath, actualPath!);
+        var fullOutputPath = Path.Combine(fullPath, actualFileName!);
+        if (!Directory.Exists(fullPath)) {
+            Directory.CreateDirectory(fullPath);
+        }
+
+        return fullOutputPath;
+    }
+
+    private static string GetOutputDirectory(string archivePath, string outputPath, string archiveName) {
+        // The character '.' is used to represent the current directory. If the output path is the current
+        // directory, we'll use the archive name as the output directory.
+        if (outputPath == ".") {
+            outputPath = Path.Combine(Path.GetDirectoryName(archivePath)!, IOUtility.RemoveExtension(archiveName));
+        }
+
+        return outputPath;
     }
 
 }

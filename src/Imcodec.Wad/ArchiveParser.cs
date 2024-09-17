@@ -34,13 +34,13 @@ public class ArchiveParser {
     /// <returns>The parsed archive.</returns>
     /// <exception cref="InvalidArchiveFormatException">Thrown when the stream does not contain a valid archive.</exception>
     /// <exception cref="Exception">Thrown when the file name could not be read.</exception>
-    public static Archive Parse(Stream archiveStream) {
+    public static Archive? Parse(Stream archiveStream) {
         var binaryReader = new BitReader(archiveStream);
 
         // Validate that this is a valid Archive by reading the first 5 bytes, which should be "ARCHV".
         Span<byte> headerBuf = binaryReader.ReadBytes(5);
         if (!IsMagicHeader(headerBuf)) {
-            throw new InvalidArchiveFormatException("Stream does not contain a valid archive header.");
+            return null;
         }
 
         var version = binaryReader.ReadUInt32();

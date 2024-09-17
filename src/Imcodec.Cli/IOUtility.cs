@@ -20,49 +20,60 @@ modification, are permitted provided that the following conditions are met:
 
 namespace Imcodec.Cli;
 
+/// <summary>
+/// Provides utility methods for working with files and directories.
+/// </summary>
 internal static class IOUtility {
 
-    internal static string GetOutputDirectory(string archivePath, string outputPath, string archiveName) {
-        // The character '.' is used to represent the current directory. If the output path is the current
-        // directory, we'll use the archive name as the output directory.
-        if (outputPath == ".") {
-            outputPath = Path.Combine(Path.GetDirectoryName(archivePath)!, RemoveExtension(archiveName));
-        }
-
-        return outputPath;
-    }
-
-    internal static string GetOutputFile(string archivePath, string outputPath) {
-        if (outputPath == ".") {
-            outputPath = archivePath;
-        }
-
-        return outputPath;
-    }
-
-    internal static string? ExtractFileName(string path) {
+    /// <summary>
+    /// Extracts the file name from the given path.
+    /// </summary>
+    /// <param name="path">The path to extract the file name from.</param>
+    /// <returns>The file name if it exists; otherwise, an empty string.</returns>
+    internal static string ExtractFileName(string path) {
         // Get the file name after the last directory separator.
         // Verify it's a file name and not a directory.
         var fileName = path.Split(Path.DirectorySeparatorChar).Last();
-        return fileName.Contains('.') ? fileName : null;
+        return fileName.Contains('.') ? fileName : "";
     }
 
-    internal static string? ExtractDirectoryPath(string path) {
+    /// <summary>
+    /// Extracts the directory path from the given path.
+    /// </summary>
+    /// <param name="path">The path to extract the directory path from.</param>
+    /// <returns>The directory path if it exists; otherwise, an empty string.</returns>
+    internal static string ExtractDirectoryPath(string path) {
         // Get the path without the file name.
         // Verify it's a directory path and not a file name.
         var idx = path.LastIndexOf(Path.DirectorySeparatorChar);
         if (idx == -1) {
-            return null;
+            return "";
         }
 
         var pathWithoutFileName = path[..idx];
-        return pathWithoutFileName.Contains('.') ? null : pathWithoutFileName;
+        return pathWithoutFileName.Contains('.') ? "" : pathWithoutFileName;
     }
 
-    internal static string RemoveExtension(string path) {
-        // Remove the file extension from the file name.
+    /// <summary>
+    /// Gets the extension of the file from the given path.
+    /// </summary>
+    /// <param name="path">The path to extract the file extension from.</param>
+    /// <returns>The file extension if it exists; otherwise, an empty string.</returns>
+    internal static string ExtractFileExtension(string path) {
+        // Get the file extension from the file name.
         var fileName = ExtractFileName(path);
-        return fileName?.Split('.').First() ?? path;
+        return fileName?.Split('.').Last() ?? "";
+    }
+
+    /// <summary>
+    /// Gets the extension of the file from the given path.
+    /// </summary>
+    /// <param name="path">The path to extract the file extension from.</param>
+    /// <returns>The file extension if it exists; otherwise, an empty string.</returns>
+    internal static string RemoveExtension(string path) {
+        // Split on the last index of '.'.
+        var idx = path.LastIndexOf('.');
+        return idx == -1 ? path : path[..idx];
     }
 
 }
