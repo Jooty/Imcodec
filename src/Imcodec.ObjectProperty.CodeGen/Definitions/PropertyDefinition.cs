@@ -40,7 +40,6 @@ namespace Imcodec.ObjectProperty.CodeGen.Definitions {
                                     Dictionary<string, object> enumOptions) {
             this.Name = NameSanitizer.SanitizeIdentifier(name);
             this.IsVector = IsContainerDynamic(container);
-            this.CsharpType = NameSanitizer.GetCsharpType(cppType, IsVector);
             this.Flags = flags;
             this.Hash = hash;
 
@@ -48,6 +47,10 @@ namespace Imcodec.ObjectProperty.CodeGen.Definitions {
             this.IsEnum = cppType.StartsWith("enum");
             if (this.IsEnum) {
                 this.EnumOptions = CleanupEnumOptions(enumOptions);
+                this.CsharpType = NameSanitizer.GetCsharpType(cppType, false);
+            }
+            else {
+                this.CsharpType = NameSanitizer.GetCsharpType(cppType, IsVector);
             }
         }
 

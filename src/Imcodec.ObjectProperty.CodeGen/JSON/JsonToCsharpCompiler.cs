@@ -69,7 +69,6 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
                 }
 
                 if (classDefinitions.Any(c => c.Name == classDefinition.Name)) {
-                    // todo: don't continue. we need to know why there was a duplicate.
                     continue;
                 }
 
