@@ -19,17 +19,19 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.IO;
+using Imcodec.ObjectProperty.TypeCache;
 using System.Buffers.Binary;
 
 namespace Imcodec.ObjectProperty;
 
 /// <summary>
+/// Reads the file flags from the provided input buffer.
 /// Defines a class capable of serializing and deserializing objects to and from a file.
 /// </summary>
 public class FileSerializer : ObjectSerializer {
 
-    private const uint BiNDMagic = 0x644E4942;
-    private const uint BiNDDefaultFlags = 0x7;
+    public const uint BiNDMagic = 0x644E4942;
+    public const uint BiNDDefaultFlags = 0x7;
 
     public bool Serialize<T>(T input, out byte[]? output) where T : PropertyClass
         => Serialize(input, (PropertyFlags) BiNDDefaultFlags, out output);

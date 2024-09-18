@@ -38,23 +38,19 @@ public class DeserializeCommands {
 
         // Read the file into a buffer and deserialize it.
         var buffer = File.ReadAllBytes(inputPath);
-        var bindSerializer = new FileSerializer();
-        if (!bindSerializer.Deserialize<PropertyClass>(buffer, out var propertyClass)) {
+        var fileName = IOUtility.ExtractFileName(inputPath);
+        var jsonObj = Deserialization.TryDeserializeFile(fileName, buffer);
+        if (jsonObj == null) {
             Console.WriteLine("Failed to deserialize the buffer.");
             return;
         }
 
+        // Get the output file path. Suffix the file name with '_deser.json' if the output path is the default.
         outputPath = GetOutputFile(inputPath, outputPath);
+        outputPath = IOUtility.RemoveExtension(outputPath) + Deserialization.DeserializationSuffix;
 
-        // Create options to serialize any enums as strings.
-        var jsonSerializerSettings = new JsonSerializerSettings {
-            Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
-        };
-
-        // Serialize the property class to a JSON file.
-        var json = JsonConvert.SerializeObject(propertyClass, Formatting.Indented, jsonSerializerSettings);
-        File.WriteAllText(outputPath, json);
-
+        // Write the deserialized object to the output file.
+        File.WriteAllText(outputPath, jsonObj);
         Console.WriteLine($"Successfully deserialized the buffer to '{outputPath}'.");
     }
 

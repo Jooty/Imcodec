@@ -28,7 +28,6 @@ namespace Imcodec.Cli;
 
 public sealed class ArchiveCommands {
 
-    private const string DeserializationSuffix = "_deser.json";
     private static readonly List<string> s_deserExtIncludeList = [ "xml", "bin" ];
 
     /// <summary>
@@ -75,6 +74,7 @@ public sealed class ArchiveCommands {
     }
 
     public static Dictionary<FileEntry, byte[]?> UnpackArchiveFiles(Archive archive) {
+        // Files within the archive are lazy loaded. We'll iterate through each file and extract the data.
         var files = new Dictionary<FileEntry, byte[]?>();
         foreach (var entry in archive.Files) {
             var fileData = archive.OpenFile(entry.Key);
@@ -102,12 +102,12 @@ public sealed class ArchiveCommands {
             // Either write to the file, or attempt deserialization. If we fail to deserialize, we'll write
             // the bytes to disk.
             if (attemptDeserialization && s_deserExtIncludeList.Contains(fileExt)) {
-                var deserializedData = TryDeserializeFile(fileEntry.FileName!, fileData!);
+                var deserializedData = Deserialization.TryDeserializeFile(fileEntry.FileName!, fileData!);
                 if (deserializedData != null) {
                     // If we deserialized successfully, remove the existing extension and add the deserialization
                     // suffix.
                     fileOutputPath = IOUtility.RemoveExtension(fileOutputPath);
-                    fileOutputPath = $"{fileOutputPath}{DeserializationSuffix}";
+                    fileOutputPath = $"{fileOutputPath}{Deserialization.DeserializationSuffix}";
                     File.WriteAllText(fileOutputPath, deserializedData);
 
                     continue;
@@ -115,26 +115,6 @@ public sealed class ArchiveCommands {
             }
 
             File.WriteAllBytes(fileOutputPath, fileData!);
-        }
-    }
-
-    private static string? TryDeserializeFile(string fileName, byte[] fileData) {
-        try {
-            var bindSerializer = new FileSerializer();
-            if (bindSerializer.Deserialize<PropertyClass>(fileData, out var propertyClass)) {
-                var jsonSerializerSettings = new JsonSerializerSettings {
-                    Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
-                };
-
-                return JsonConvert.SerializeObject(propertyClass, Formatting.Indented, jsonSerializerSettings);
-            }
-            else {
-                return null;
-            }
-        }
-        catch (Exception ex) {
-            Console.WriteLine($"Failed to deserialize file ({fileName}): {ex.Message}");
-            return null;
         }
     }
 
