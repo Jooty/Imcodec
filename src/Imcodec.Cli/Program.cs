@@ -23,7 +23,7 @@ using Cocona;
 namespace Imcodec.Cli;
 
 [HasSubCommands(typeof(ArchiveCommands), commandName: "wad", Description = "Archive related commands.")]
-[HasSubCommands(typeof(DeserializeCommands), commandName: "op", Description = "Serialization related commands.")]
+[HasSubCommands(typeof(ObjectPropertyCommands), commandName: "op", Description = "Serialization related commands.")]
 public class Program {
 
     public static void Main(string[] args)

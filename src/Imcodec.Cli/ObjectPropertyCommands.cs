@@ -25,7 +25,7 @@ using Imcodec.ObjectProperty;
 
 namespace Imcodec.Cli;
 
-public class DeserializeCommands {
+public class ObjectPropertyCommands {
 
     [Command("deser", Description = "Deserialize a BiND buffer to a JSON file.")]
     public void Deserialize([Argument] string inputPath,
