@@ -288,7 +288,10 @@ public sealed class Property<T>(uint hash,
 
     private static bool DecodeEnum(BitReader reader, out object val, ObjectSerializer serializer) {
         if (serializer.SerializerFlags.HasFlag(SerializerFlags.StringEnums)) {
-            val = Enum.Parse(InnerType, reader.ReadString(), true);
+            // Clean the enum string before parsing.
+            var rawEnumString = reader.ReadString();
+            var enumString = SanitizeStringEnum(rawEnumString);
+            val = Enum.Parse(InnerType, enumString, true);
 
             return true;
         }
@@ -360,6 +363,19 @@ public sealed class Property<T>(uint hash,
         else {
             return reader.ReadUInt32();
         }
+    }
+
+    private static string SanitizeStringEnum(string enumString) {
+        // Client inconsistency: The client will sometimes use '-' and '_' interchangably. We'll
+        // convert all '-' to '_' to ensure that the enum is parsed correctly.
+        enumString = enumString.Replace('-', '_');
+
+        // The client is written with C++. We'll replace the scope operator with the C# namespace, then scope
+        // down to the enum value.
+        enumString = enumString.Replace("::", ".");
+        enumString = enumString.Substring(enumString.LastIndexOf('.') + 1);
+
+        return enumString;
     }
 
 }
