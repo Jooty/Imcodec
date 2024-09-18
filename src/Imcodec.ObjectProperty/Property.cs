@@ -91,7 +91,7 @@ public sealed class Property<T>(uint hash,
     private static bool IsVector
         => typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(List<>);
     private static bool IsEnum
-        => typeof(T).IsEnum;
+        => InnerType.IsEnum;
     private static Type InnerType
         => IsVector ? typeof(T).GetGenericArguments()[0] : typeof(T);
 
@@ -235,11 +235,7 @@ public sealed class Property<T>(uint hash,
             val = list;
 
             if (DecodeElement(reader, serializer, out var element)) {
-                var index = list.Add(element!);
-                if (index < 0) {
-                    throw new Exception("Failed to add element to list.");
-                }
-
+                list.Add(element!);
                 continue;
             }
 
