@@ -27,7 +27,9 @@ public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
 
-    private static readonly string s_nameSpace = typeof(ArchiveCommands).Namespace!.Split('.')[0];
+    private static readonly string s_nameSpace = typeof(ArchiveCommands).Namespace!
+        .Split('.')[0]
+        .Replace("$", "");
     private static readonly string s_deserFileHeaderStart
         = $"//------------------------------------------------------------------------------\n"
         + $"// This file was deserialized by ${s_nameSpace}.\n"
