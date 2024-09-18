@@ -28,7 +28,7 @@ namespace Imcodec.Cli;
 
 public sealed class ArchiveCommands {
 
-    private static readonly List<string> s_deserExtIncludeList = [ "xml", "bin" ];
+    private static readonly List<string> s_deserExtIncludeList = ["xml", "bin"];
 
     /// <summary>
     /// Unpacks the given archive file to the specified output directory.
@@ -56,9 +56,16 @@ public sealed class ArchiveCommands {
         // Read the file data and parse it as an archive. If the file is not a valid archive, we'll inform
         // the user and stop.
         var fileData = File.ReadAllBytes(archivePath);
+        Archive archive;
         using var archiveStream = new MemoryStream(fileData);
-        var archive = ArchiveParser.Parse(archiveStream);
-        if (archive == null) {
+        try {
+            archive = ArchiveParser.Parse(archiveStream)!;
+            if (archive == null) {
+                Console.WriteLine("The specified archive file is not a valid WAD archive.");
+                return;
+            }
+        }
+        catch (InvalidArchiveFormatException) {
             Console.WriteLine("The specified archive file is not a valid WAD archive.");
             return;
         }

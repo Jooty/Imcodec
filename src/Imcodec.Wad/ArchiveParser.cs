@@ -37,10 +37,10 @@ public class ArchiveParser {
     public static Archive? Parse(Stream archiveStream) {
         var binaryReader = new BitReader(archiveStream);
 
-        // Validate that this is a valid Archive by reading the first 5 bytes, which should be "ARCHV".
+        // Validate that this is a valid Archive by reading the first 5 bytes.
         Span<byte> headerBuf = binaryReader.ReadBytes(5);
         if (!IsMagicHeader(headerBuf)) {
-            return null;
+            throw new InvalidArchiveFormatException("Invalid magic header.");
         }
 
         var version = binaryReader.ReadUInt32();
