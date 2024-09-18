@@ -18,26 +18,21 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.IO;
+namespace Imcodec.ObjectProperty.TypeCache;
 
-namespace Imcodec.Wad;
+// This class is empty on purpose; it is meant to be populated by the code generator.
+// It exists here, partially, to allow the object serializer to by default use this registry.
 
-public sealed class FileEntry {
+public partial class ClientGeneratedTypeRegistry : TypeRegistry {
 
-    public uint Offset { get; init; }
-    public uint UncompressedSize { get; init; }
-    public uint CompressedSize { get; init; }
-    public bool IsCompressed { get; init; }
-    public uint Crc32 { get; init; }
-    public string? FileName { get; init; }
+    private readonly Dictionary<uint, System.Type> _typeMap = [];
 
-    public void PackToStream(BitWriter writer) {
-        writer.WriteUInt32(Offset);
-        writer.WriteUInt32(UncompressedSize);
-        writer.WriteUInt32(CompressedSize);
-        writer.WriteBit(IsCompressed);
-        writer.WriteUInt32(Crc32);
-        writer.WriteBigString(FileName!);
+    public override void RegisterType(uint hash, System.Type type)
+        => _typeMap[hash] = type;
+
+    public override System.Type? LookupType(uint hash) {
+        _typeMap.TryGetValue(hash, out var type);
+        return type;
     }
 
 }

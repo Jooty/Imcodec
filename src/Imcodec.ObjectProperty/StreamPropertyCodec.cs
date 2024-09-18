@@ -30,7 +30,7 @@ namespace Imcodec.ObjectProperty;
 /// </summary>
 internal static class StreamPropertyCodec {
 
-    private static readonly Dictionary<System.Type, Func<BitReader, object>> s_primitiveReaders = new () {
+    private static readonly Dictionary<Type, Func<BitReader, object>> s_primitiveReaders = new () {
         { typeof(byte),           (r) => r.ReadUInt8()                     },
         { typeof(char),           (r) => r.ReadUInt8()                     },
         { typeof(bool),           (r) => r.ReadBit()                       },
@@ -42,6 +42,7 @@ internal static class StreamPropertyCodec {
         { typeof(double),         (r) => r.ReadDouble()                    },
         { typeof(ulong),          (r) => r.ReadUInt64()                    },
         { typeof(ByteString),     (r) => r.ReadString()                    },
+        { typeof(string),         (r) => r.ReadString()                    },
         { typeof(WideByteString), (r) => r.ReadWString()                   },
         { typeof(float),          (r) => r.ReadFloat()                     },
         { typeof(Vector3),        (r) => r.ReadVector3()                   },
@@ -61,7 +62,7 @@ internal static class StreamPropertyCodec {
         { typeof(U24),            (r) => r.ReadBits<U24>(24)               },
     };
 
-    private static readonly Dictionary<System.Type, Action<BitWriter, object>> s_primitiveWriters = new() {
+    private static readonly Dictionary<Type, Action<BitWriter, object>> s_primitiveWriters = new() {
         { typeof(byte),           (r, v) => r.WriteUInt8((byte)v)                },
         { typeof(char),           (r, v) => r.WriteUInt8(Convert.ToByte(v))      },
         { typeof(bool),           (r, v) => r.WriteBit((bool)v)                  },
@@ -73,6 +74,7 @@ internal static class StreamPropertyCodec {
         { typeof(ulong),          (r, v) => r.WriteUInt64((ulong)v)              },
         { typeof(double),         (r, v) => r.WriteDouble((double)v)             },
         { typeof(ByteString),     (r, v) => r.WriteString((ByteString)v)         },
+        { typeof(string),         (r, v) => r.WriteString((string)v)             },
         { typeof(WideByteString), (r, v) => r.WriteWString((WideByteString)v)    },
         { typeof(float),          (r, v) => r.WriteFloat((float)v)               },
         { typeof(Vector3),        (r, v) => r.WriteVector3((Vector3)v)           },
@@ -95,13 +97,13 @@ internal static class StreamPropertyCodec {
     /// <summary>
     /// Tries to get the reader for the specified type.
     /// </summary>
-    /// <typeparam name="T">The type for which to get the reader.</typeparam>
+    /// <param name="type">The type for which to get the reader.</param>
     /// <param name="codec">The reader function for the specified type, if found;
     /// otherwise, <c>null</c>.</param>
     /// <returns><c>true</c> if the reader for the specified type is found;
     /// otherwise, <c>false</c>.</returns>
-    internal static bool TryGetReader<T>(out Func<BitReader, object> codec) {
-        if (s_primitiveReaders.TryGetValue(typeof(T), out var func)) {
+    internal static bool TryGetReader(Type type, out Func<BitReader, object> codec) {
+        if (s_primitiveReaders.TryGetValue(type, out var func)) {
             codec = func;
             return true;
         }
@@ -113,13 +115,13 @@ internal static class StreamPropertyCodec {
     /// <summary>
     /// Tries to get the writer for a specified type.
     /// </summary>
-    /// <typeparam name="T">The type for which to get the writer.</typeparam>
+    /// <param name="type">The type for which to get the writer.</param>
     /// <param name="codec">The writer for the specified type, if found;
     /// otherwise, null.</param>
     /// <returns>true if the writer for the specified type is found;
     /// otherwise, false.</returns>
-    internal static bool TryGetWriter<T>(out Action<BitWriter, object> codec) {
-        if (s_primitiveWriters.TryGetValue(typeof(T), out var func)) {
+    internal static bool TryGetWriter(Type type, out Action<BitWriter, object> codec) {
+        if (s_primitiveWriters.TryGetValue(type, out var func)) {
             codec = func;
             return true;
         }

@@ -1,4 +1,4 @@
-/*
+﻿/*
 BSD 3-Clause License
 
 Copyright (c) 2024, Jooty
@@ -18,21 +18,15 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-namespace Imcodec.ObjectProperty;
+using Cocona;
 
-// This class is empty on purpose; it is meant to be populated by the code generator.
-// It exists here, partially, to allow the object serializer to by default use this registry.
+namespace Imcodec.Cli;
 
-public partial class ClientGeneratedTypeRegistry : TypeRegistry {
+[HasSubCommands(typeof(ArchiveCommands), commandName: "wad", Description = "Archive related commands.")]
+[HasSubCommands(typeof(ObjectPropertyCommands), commandName: "op", Description = "Serialization related commands.")]
+public class Program {
 
-    private readonly Dictionary<uint, System.Type> _typeMap = [];
-
-    public override void RegisterType(uint hash, System.Type type)
-        => _typeMap[hash] = type;
-
-    public override System.Type? LookupType(uint hash) {
-        _typeMap.TryGetValue(hash, out var type);
-        return type;
-    }
+    public static void Main(string[] args)
+        => CoconaApp.Run<Program>(args);
 
 }

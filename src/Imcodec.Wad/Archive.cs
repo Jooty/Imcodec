@@ -94,7 +94,7 @@ public sealed class Archive {
         // Get the last file entry. Add the offset and size to get the end of the file.
         var lastFileEntry = Files.Last().Value.Value;
 
-        return lastFileEntry.Offset + lastFileEntry.Size;
+        return lastFileEntry.Offset + lastFileEntry.UncompressedSize;
     }
 
     /// <summary>
@@ -120,22 +120,23 @@ public sealed class Archive {
 
     private Memory<byte> ReadFileData(FileEntry fileEntry) {
         _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
-        var fileSpan = ReadFromStream(_archiveStream, fileEntry.Size);
+        var readLen = fileEntry.IsCompressed ? fileEntry.CompressedSize : fileEntry.UncompressedSize;
+        var fileSpan = ReadFromStream(_archiveStream, readLen);
 
         if (fileEntry.IsCompressed) {
-            return ZLibCompressionService.Inflate(fileSpan, (int) fileEntry.CompressedSize);
+            return ZLibUtility.Inflate(fileSpan, (int) fileEntry.UncompressedSize);
         }
 
-        return new Memory<byte>(fileSpan.ToArray());
+        return fileSpan;
     }
 
     private async Task<Memory<byte>> ReadFileDataAsync(FileEntry fileEntry) {
         _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
-        var buffer = new byte[fileEntry.Size];
+        var buffer = new byte[fileEntry.UncompressedSize];
         await _archiveStream.ReadAsync(buffer, 0, buffer.Length);
 
         if (fileEntry.IsCompressed) {
-            return await ZLibCompressionService.InflateAsync(buffer, (int) fileEntry.CompressedSize);
+            return await ZLibUtility.InflateAsync(buffer, (int) fileEntry.CompressedSize);
         }
 
         return buffer;

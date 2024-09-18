@@ -43,7 +43,7 @@ public struct GID(ulong full) : IConvertible {
         public ushort ServerProc;
     }
 
-    public static explicit operator GID(ulong value) => new GID(value);
+    public static explicit operator GID(ulong value) => new(value);
     public static implicit operator ulong(GID gid) => gid.Full;
 
     public readonly TypeCode GetTypeCode() => TypeCode.UInt64;

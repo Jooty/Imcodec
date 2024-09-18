@@ -96,6 +96,7 @@ public abstract record PropertyClass {
         }
 
         OnPostEncode();
+
         return true;
     }
 
@@ -126,6 +127,7 @@ public abstract record PropertyClass {
         }
 
         OnPostDecode();
+
         return true;
     }
 
@@ -143,31 +145,16 @@ public abstract record PropertyClass {
             var propertySize = reader.ReadUInt32();
             var propertyHash = reader.ReadUInt32();
 
-            // Ensure that the property exists.
-            if (!propMap.TryGetValue(propertyHash, out var property)) {
-                // We didn't find this property hash in the map.
-                // Something totally failed,
-                // and we have no choice but to return false.
-                return false;
+            // Ensure that the property exists. If it does, decode it.
+            if (propMap.TryGetValue(propertyHash, out var property)) {
+                property.Decode(reader, serializer);
             }
-
-            // Decode the property.
-            if (!property.Decode(reader, serializer)) {
-                return false;
-            }
-
-            // Ensure that the property size is correct.
-            if (reader.BitPos() - propertyStart != propertySize) {
-                return false;
+            else {
+                throw new Exception($"Failed to find property with hash {propertyHash}");
             }
 
             // Seek bit to the end of this property.
             reader.SeekBit((int) (propertyStart + propertySize));
-        }
-
-        // Ensure that the object size is correct.
-        if (reader.BitPos() - objectStart != objectSize) {
-            return false;
         }
 
         // Seek bit to the end of this object.
@@ -206,6 +193,7 @@ public abstract record PropertyClass {
         writer.SeekBit(0);
         writer.WriteUInt32((uint)objectSize);
         writer.SeekBit(objectSize);
+
         return true;
     }
 
@@ -246,8 +234,7 @@ public abstract record PropertyClass {
         }
     }
 
-    private static bool IsPropertyEligibleForProcessing(IProperty property,
-                                                        ObjectSerializer serializer) {
+    private static bool IsPropertyEligibleForProcessing(IProperty property, ObjectSerializer serializer) {
         var serializerFlags = serializer.SerializerFlags;
         var serializerMask = serializer.PropertyMask;
         var propertyFlags = property.Flags;

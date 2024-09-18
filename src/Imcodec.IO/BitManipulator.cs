@@ -152,6 +152,45 @@ public abstract class BitManipulator : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Gets a window of bytes from the stream.
+    /// </summary>
+    /// <param name="beforeLen">The length of the bytes before the current position.</param>
+    /// <param name="afterLen">The length of the bytes after the current position.</param>
+    /// <returns>The window of bytes.</returns>
+    public byte[] GetWindow(int beforeLen, int afterLen) {
+        var pos = Stream.Position;
+        var before = new byte[beforeLen];
+        var after = new byte[afterLen];
+
+        // Adjust beforeLen if it goes out of bounds
+        if (pos < beforeLen) {
+            beforeLen = (int)pos;
+        }
+
+        // Read before bytes
+        Stream.Seek(-beforeLen, SeekOrigin.Current);
+        Stream.Read(before, beforeLen - beforeLen, beforeLen);
+
+        // Adjust afterLen if it goes out of bounds
+        if (pos + afterLen > Stream.Length) {
+            afterLen = (int)(Stream.Length - pos);
+        }
+
+        // Read after bytes
+        Stream.Seek(pos, SeekOrigin.Begin);
+        Stream.Read(after, 0, afterLen);
+
+        // Seek back to the original position
+        Stream.Seek(pos, SeekOrigin.Begin);
+
+        var window = new byte[beforeLen + afterLen];
+        Array.Copy(before, before.Length - beforeLen, window, 0, beforeLen);
+        Array.Copy(after, 0, window, beforeLen, afterLen);
+
+        return window;
+    }
+
     public void Dispose() {
         Stream.Dispose();
     }

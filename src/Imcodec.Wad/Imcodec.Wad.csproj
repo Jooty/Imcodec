@@ -13,6 +13,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Imcodec.IO\Imcodec.IO.csproj" />
     </ItemGroup>
 

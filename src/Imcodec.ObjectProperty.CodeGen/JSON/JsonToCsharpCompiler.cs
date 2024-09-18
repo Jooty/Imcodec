@@ -80,7 +80,7 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
 
         private PropertyClassDefinition? GetDefinition(JsonDumpClass dumpedClass) {
             // Anything containing a '<' is usually client jargon. We don't want to generate code for it.
-            if (dumpedClass.Name.Contains('<')) {
+            if (dumpedClass.Name.Contains('<') || dumpedClass.Name.Contains('*')) {
                 return null;
             }
 
@@ -109,7 +109,9 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
 
                 // If the PropertyDefinition is an enum, we need to add it to the enum definitions.
                 if (propertyDefinition.IsEnum) {
-                    var enumDefinition = new EnumDefinition(propertyDefinition.CsharpType!, propertyDefinition.EnumOptions);
+                    // The C# type may contain 'List<>'. We want to remove this.
+                    var abstractType = propertyDefinition.CsharpType!.Replace("List<", "").Replace(">", "");
+                    var enumDefinition = new EnumDefinition(abstractType, propertyDefinition.EnumOptions);
                     _enumDefinitions.Add(enumDefinition);
                 }
 
