@@ -43,7 +43,8 @@ public sealed class ArchiveCommands {
             [Argument(Description = "The path to the archive file.")] string archivePath,
             [Argument(Description = "The path to the output directory")] string outputPath = ".",
             [Option("deser", Description = "Attempt deserialization of archive files")] bool attemptDeserialization = false,
-            [Option("verbose", Description = "Enable verbose output")] bool verbose = false) {
+            [Option("verbose", Description = "Enable verbose output. Note that for larger archives, "
+                + "this can tremendously decrease performance.")] bool verbose = false) {
         // Validate that a file exists at the given path. We'll also begin parsing the file as if it was
         // an archive. If at any point we determine that the file is not a valid archive, we'll stop and
         // inform the user.
@@ -72,6 +73,8 @@ public sealed class ArchiveCommands {
 
         var files = UnpackArchiveFiles(archive);
         WriteArchiveFilesToDisk(files, outputPath, attemptDeserialization, verbose);
+
+        Console.WriteLine($"Successfully extracted '{archiveName}' to '{outputPath}'.");
     }
 
     public static Dictionary<FileEntry, byte[]?> UnpackArchiveFiles(Archive archive) {
