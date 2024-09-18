@@ -32,7 +32,7 @@ namespace Imcodec.Math;
 /// <param name="x">The x.</param>
 /// <param name="y">The y.</param>
 [StructLayout(LayoutKind.Sequential)]
-public struct Point(int x, int y) : IEquatable<Point> {
+public struct Point : IEquatable<Point> {
 
     /// <summary>
     /// A point with (0,0) coordinates.
@@ -42,12 +42,24 @@ public struct Point(int x, int y) : IEquatable<Point> {
     /// <summary>
     /// Left coordinate.
     /// </summary>
-    public int X = x;
+    public int X;
 
     /// <summary>
     /// Top coordinate.
     /// </summary>
-    public int Y = y;
+    public int Y;
+
+    // ctor
+    public Point(Vector2 vector2) {
+        X = (int) vector2.X;
+        Y = (int) vector2.Y;
+    }
+
+    // ctor
+    public Point(int x, int y) {
+        X = x;
+        Y = y;
+    }
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.

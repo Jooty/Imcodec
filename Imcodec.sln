@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{44F69016-FBB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Wad", "src\Imcodec.Wad\Imcodec.Wad.csproj", "{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Cli", "src\Imcodec.Cli\Imcodec.Cli.csproj", "{803847F5-F328-4625-8B4C-752A9399F98E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696}.Release|Any CPU.Build.0 = Release|Any CPU
+		{803847F5-F328-4625-8B4C-752A9399F98E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{803847F5-F328-4625-8B4C-752A9399F98E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{803847F5-F328-4625-8B4C-752A9399F98E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{803847F5-F328-4625-8B4C-752A9399F98E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -68,5 +74,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{F88B8F6F-3BFB-49BA-A464-F3B8CE374696} = {44F69016-FBB3-4E28-A2A7-56156606C2E4}
+		{803847F5-F328-4625-8B4C-752A9399F98E} = {44F69016-FBB3-4E28-A2A7-56156606C2E4}
 	EndGlobalSection
 EndGlobal
