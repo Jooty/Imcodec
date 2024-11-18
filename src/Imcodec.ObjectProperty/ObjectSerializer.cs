@@ -61,12 +61,12 @@ public enum SerializerFlags {
 /// <summary>
 /// An object serializer that serializes and deserializes
 /// <see cref="PropertyClass"/> objects.
-public class ObjectSerializer {
+public partial class ObjectSerializer {
 
     /// <summary>
     /// States whether the object is versionable. If true, <see cref="Property"/>
-    /// hashes and sizes are stored in the binary stream.
-    /// Otherwise, the data is serialized in order of declaration.
+    /// data is prefixed with a hash of the <see cref="PropertyClass"/> type as
+    /// well as the size of the data in bits.
     /// </summary>
     public bool Versionable { get; set; }
 
