@@ -35,7 +35,6 @@ public class ZLibTest {
         var compressedData = ZLibUtility.Deflate(data);
 
         // Assert
-        Assert.NotNull(compressedData);
         Assert.NotEqual(originalData.Length, compressedData.Length);
     }
 
