@@ -142,11 +142,7 @@ public partial class ObjectSerializer {
         writer.WriteUInt32(input.GetHash());
 
         // Tell the property class to encode its properties.
-        input.OnPreEncode();
-        var encodeSuccess = input.Encode(writer, this);
-        input.OnPostEncode();
-
-        if (!encodeSuccess) {
+        if (!input.Encode(writer, this)) {
             return false;
         }
 
@@ -210,9 +206,7 @@ public partial class ObjectSerializer {
             return false;
         }
 
-        propertyClass?.OnPreDecode();
         propertyClass?.Decode(reader, this);
-        propertyClass?.OnPostDecode();
 
         output = (T)propertyClass!;
         return true;
