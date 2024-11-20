@@ -23,19 +23,21 @@ using Newtonsoft.Json;
 
 namespace Imcodec.Cli;
 
+internal class DeserializedObjectInfo {
+
+    internal required string _fileName;
+    internal uint _flags;
+    internal required string _className;
+    internal uint _hash;
+    internal required string _deserializedOn;
+    internal required string _imcodecVersion;
+    internal required PropertyClass _object;
+
+}
+
 public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
-
-    private static readonly string s_nameSpace = typeof(ArchiveCommands).Namespace!
-        .Split('.')[0]
-        .Replace("$", "");
-    private static readonly string s_deserFileHeaderStart
-        = $"//------------------------------------------------------------------------------\n"
-        + $"// This file was deserialized by ${s_nameSpace}.\n"
-        + $"//";
-    private static readonly string s_deserFileHeaderEnd
-        = $"//------------------------------------------------------------------------------";
 
     /// <summary>
     /// Attempts to deserialize the given file data into a PropertyClass object. If successful, the
@@ -48,25 +50,24 @@ public static class Deserialization {
         try {
             var bindSerializer = new FileSerializer();
             if (bindSerializer.Deserialize<PropertyClass>(fileData, out var propertyClass)) {
+                // Wrap the deserialized object with additional information.
+                var deserializedObjectInfo = new DeserializedObjectInfo {
+                    _fileName = fileName,
+                    _flags = (uint) bindSerializer.SerializerFlags,
+                    _className = propertyClass.GetType().Name,
+                    _hash = propertyClass.GetHash(),
+                    _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
+                    _object = propertyClass
+                };
+
                 // Ensure that enums are written as strings.
                 var jsonSerializerSettings = new JsonSerializerSettings {
                     Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
                 };
-                var jsonObj = JsonConvert.SerializeObject(propertyClass, Formatting.Indented, jsonSerializerSettings);
+                var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
 
-                // Prefix the file with the Imcodec header.
-                var flags = bindSerializer.SerializerFlags;
-                var fancyFlags = FormatFlagsToString(flags);
-                var header = BuildDeserializationHeader(
-                    $"File: {fileName}",
-                    $"Serializer Flags: {fancyFlags}",
-                    $"PropertyClass: {propertyClass.GetType().Name}",
-                    $"PropertyClass Hash: {propertyClass.GetHash()}\n",
-                    $"Deserialized on: {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
-                    $"Imcodec Version: {typeof(ArchiveCommands).Assembly.GetName().Version}"
-                );
-
-                return $"{header}\n\n{jsonObj}";
+                return jsonObj;
             }
             else {
                 return null;
@@ -76,34 +77,6 @@ public static class Deserialization {
             Console.WriteLine($"Failed to deserialize file ({fileName}): {ex.Message} {ex.StackTrace}");
             return null;
         }
-    }
-
-    private static string FormatFlagsToString(SerializerFlags flags) {
-        // Return the flags split apart as their string name, separated by a wall '|'.
-        var flagNames = Enum.GetNames(flags.GetType());
-        var flagValues = Enum.GetValues(flags.GetType());
-        var flagString = string.Empty;
-        for (var i = 0; i < flagValues.Length; i++) {
-            if ((flags & (SerializerFlags) flagValues.GetValue(i)!) != 0) {
-                flagString += flagNames[i] + " | ";
-            }
-        }
-
-        return flagString.TrimEnd('|', ' ');
-    }
-
-    private static string BuildDeserializationHeader(params string[] headerLines) {
-        var header = $"{s_deserFileHeaderStart}\n";
-        foreach (var line in headerLines) {
-            var splitLines = line.Split('\n');
-            foreach (var splitLine in splitLines) {
-                header += $"// {splitLine}\n";
-            }
-        }
-
-        header += $"{s_deserFileHeaderEnd}";
-
-        return header;
     }
 
 }
