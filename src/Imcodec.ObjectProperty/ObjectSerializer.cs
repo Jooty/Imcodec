@@ -138,9 +138,6 @@ public partial class ObjectSerializer {
             writer.WithCompactLengths();
         }
 
-        // Write the property class hash.
-        writer.WriteUInt32(input.GetHash());
-
         // Tell the property class to encode its properties.
         if (!input.Encode(writer, this)) {
             return false;
