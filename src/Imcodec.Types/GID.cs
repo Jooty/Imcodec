@@ -37,10 +37,10 @@ public struct GID(ulong full) : IConvertible {
     }
 
     public struct PartsStruct {
-        public uint Id;
+        public uint TemplateId;
         public byte Block;
         public byte Type;
-        public ushort ServerProc;
+        public ushort Unknown;
     }
 
     public static explicit operator GID(ulong value) => new(value);
