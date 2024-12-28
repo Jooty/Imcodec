@@ -194,8 +194,6 @@ public sealed class Property<T>(uint hash,
             return true;
         }
 
-        writer.WriteUInt32(propertyClass.GetHash());
-
         return propertyClass.Encode(writer, serializer);
     }
 

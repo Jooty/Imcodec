@@ -61,19 +61,27 @@ public enum SerializerFlags {
 /// <summary>
 /// An object serializer that serializes and deserializes
 /// <see cref="PropertyClass"/> objects.
-public partial class ObjectSerializer {
+/// <remarks>
+/// Initializes a new instance of the <see cref="ObjectSerializer"/> class.
+/// </remarks>
+/// <param name="Versionable">States whether the object is versionable.</param>
+/// <param name="Behaviors">States the behaviors of the serializer.</param>
+/// <param name="typeRegistry">The type registry to use for serialization.</param>
+public partial class ObjectSerializer(bool Versionable = true,
+                        SerializerFlags Behaviors = SerializerFlags.None,
+                        TypeRegistry? typeRegistry = null) {
 
     /// <summary>
     /// States whether the object is versionable. If true, <see cref="Property"/>
     /// data is prefixed with a hash of the <see cref="PropertyClass"/> type as
     /// well as the size of the data in bits.
     /// </summary>
-    public bool Versionable { get; set; }
+    public bool Versionable { get; set; } = Versionable;
 
     /// <summary>
     /// States the behaviors of the serializer.
     /// </summary>
-    public SerializerFlags SerializerFlags { get; set; }
+    public SerializerFlags SerializerFlags { get; set; } = Behaviors;
 
     /// <summary>
     /// The property flags to use for serialization.
@@ -84,24 +92,9 @@ public partial class ObjectSerializer {
     /// <summary>
     /// The type registry to dispatch types from.
     /// </summary>
-    public TypeRegistry TypeRegistry { get; set; }
+    public TypeRegistry TypeRegistry { get; set; } = typeRegistry ?? s_defaultTypeRegistry;
 
     private static readonly ClientGeneratedTypeRegistry s_defaultTypeRegistry = new();
-
-    // ctor
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ObjectSerializer"/> class.
-    /// </summary>
-    /// <param name="Versionable">States whether the object is versionable.</param>
-    /// <param name="Behaviors">States the behaviors of the serializer.</param>
-    /// <param name="typeRegistry">The type registry to use for serialization.</param>
-    public ObjectSerializer(bool Versionable = true,
-                            SerializerFlags Behaviors = SerializerFlags.None,
-                            TypeRegistry? typeRegistry = null) {
-        this.Versionable = Versionable;
-        this.SerializerFlags = Behaviors;
-        this.TypeRegistry = typeRegistry ?? s_defaultTypeRegistry;
-    }
 
     /// <summary>
     /// Serializes the specified <see cref="PropertyClass"/> object using
@@ -111,9 +104,9 @@ public partial class ObjectSerializer {
     /// <param name="propertyMask">The property mask to use for serialization.</param>
     /// <param name="output">The serialized byte array output.</param>
     /// <returns><c>true</c> if the serialization is successful; otherwise, <c>false</c>.</returns>
-    public virtual bool Serializer(PropertyClass input,
-                           uint propertyMask,
-                           out byte[]? output) {
+    public virtual bool Serialize(PropertyClass input,
+                                  uint propertyMask,
+                                  out byte[]? output) {
         var castedFlags = (PropertyFlags) propertyMask;
         return Serialize(input, castedFlags, out output);
     }
@@ -127,8 +120,8 @@ public partial class ObjectSerializer {
     /// apply during serialization.</param>
     /// <param name="output">The serialized byte array output.</param>
     public virtual bool Serialize(PropertyClass input,
-                          PropertyFlags propertyMask,
-                          out byte[]? output) {
+                                  PropertyFlags propertyMask,
+                                  out byte[]? output) {
         output = default;
         this.PropertyMask = propertyMask;
         var writer = new BitWriter();
@@ -138,8 +131,9 @@ public partial class ObjectSerializer {
             writer.WithCompactLengths();
         }
 
-        // Write the property class hash.
-        writer.WriteUInt32(input.GetHash());
+        if (!PreWriteObject(writer, input)) {
+            return false;
+        }
 
         // Tell the property class to encode its properties.
         if (!input.Encode(writer, this)) {
@@ -166,8 +160,8 @@ public partial class ObjectSerializer {
     /// object of type <typeparamref name="T"/>.</param>
     /// <returns><c>true</c> if the deserialization is successful; otherwise,
     public virtual bool Deserialize<T>(byte[] inputBuffer,
-                               uint propertyMask,
-                               out T? output) where T : PropertyClass {
+                                       uint propertyMask,
+                                       out T? output) where T : PropertyClass {
         var castedFlags = (PropertyFlags) propertyMask;
         return Deserialize(inputBuffer, castedFlags, out output);
     }
@@ -183,8 +177,8 @@ public partial class ObjectSerializer {
     /// <returns><c>true</c> if the deserialization is successful; otherwise,
     /// <c>false</c>.</returns>
     public virtual bool Deserialize<T>(byte[] inputBuffer,
-                               PropertyFlags propertyMask,
-                               out T? output) where T : PropertyClass {
+                                       PropertyFlags propertyMask,
+                                       out T? output) where T : PropertyClass {
         output = default;
         this.PropertyMask = propertyMask;
         var reader = new BitReader(inputBuffer);
@@ -261,29 +255,37 @@ public partial class ObjectSerializer {
     /// <returns><c>true</c> if the object was preloaded successfully; otherwise, <c>false</c>.</returns>
     protected virtual bool PreloadObject(BitReader inputBuffer,
                                          out PropertyClass? propertyClass) {
-        propertyClass = null;
         var hash = inputBuffer.ReadUInt32();
-        if (hash == 0) {
-            return false;
-        }
-
-        var lookupType = TypeRegistry.LookupType(hash);
-        if (lookupType == null) {
-            return false;
-        }
-
-        // Create a new instance of the property class.
-        propertyClass = (PropertyClass)Activator.CreateInstance(lookupType)!;
+        propertyClass = DispatchType(hash);
 
         return propertyClass != null;
     }
 
     /// <summary>
-    /// Writes the prewrite object to the specified <see cref="BitWriter"/>.
+    /// Writes the object identifier to the specified <see cref="BitWriter"/>.
     /// </summary>
-    /// <param name="writer">The <see cref="BitWriter"/> to write the object to.</param>
-    /// <param name="propertyClass">The <see cref="PropertyClass"/> to prewrite.</param>
-    protected virtual void PrewriteObject(BitWriter writer, PropertyClass propertyClass)
-        => writer.WriteUInt32(propertyClass.GetHash());
+    /// <param name="writer">The <see cref="BitWriter"/> to write to.</param>
+    /// <param name="propertyClass">The <see cref="PropertyClass"/> to write.</param>
+    /// <returns><c>true</c> if the object identifier was written successfully; otherwise, <c>false</c>.</returns>
+    protected virtual bool PreWriteObject(BitWriter writer,
+                                          PropertyClass propertyClass) {
+        propertyClass.EncodeIdentifier(writer);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Dispatches the type based on the provided hash value.
+    /// </summary>
+    /// <param name="hash">The hash value to dispatch.</param>
+    /// <returns>The dispatched <see cref="PropertyClass"/> type, if found; otherwise, <c>null</c>.</returns>
+    protected PropertyClass? DispatchType(uint hash) {
+        var lookupType = TypeRegistry.LookupType(hash);
+        if (lookupType == null) {
+            return null;
+        }
+
+        return (PropertyClass)Activator.CreateInstance(lookupType)!;
+    }
 
 }

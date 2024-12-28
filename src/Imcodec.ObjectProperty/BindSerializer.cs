@@ -24,18 +24,47 @@ using System.Buffers.Binary;
 namespace Imcodec.ObjectProperty;
 
 /// <summary>
-/// Reads the file flags from the provided input buffer.
-/// Defines a class capable of serializing and deserializing objects to and from a file.
-/// </summary>
-[Obsolete("Use the BindSerializer instead.")]
-public class FileSerializer : ObjectSerializer {
+/// A Bind serializer that serializes and deserializes
+/// <see cref="PropertyClass"/> objects. The key distinction
+/// between this and the <see cref="ObjectSerializer"/> is that
+/// this serializer appends a magic header to the serialized
+/// buffer. This is used for serializing a <see cref="PropertyClass"/>
+/// object to a file.
+/// <param name="Versionable">States whether the object is versionable.</param>
+/// <param name="Behaviors">States the behaviors of the serializer.</param>
+/// <param name="typeRegistry">The type registry to use for serialization.</param>
+public class BindSerializer : ObjectSerializer {
 
+    public BindSerializer() : base(true, SerializerFlags.None, null) { }
+
+    /// <summary>
+    /// The magic header for the BiND serializer.
+    /// </summary>
     public const uint BiNDMagic = 0x644E4942;
+
+    /// <summary>
+    /// The default flags for the BiND serializer.
+    /// </summary>
     public const uint BiNDDefaultFlags = 0x7;
 
+    /// <summary>
+    /// Serializes a <see cref="PropertyClass"/> object to a buffer.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to serialize.</typeparam>
+    /// <param name="input">The object to serialize.</param>
+    /// <param name="output">The buffer to write the serialized object to.</param>
+    /// <returns>True if the object was successfully serialized, false otherwise.</returns>
     public bool Serialize<T>(T input, out byte[]? output) where T : PropertyClass
         => Serialize(input, (PropertyFlags) BiNDDefaultFlags, out output);
 
+    /// <summary>
+    /// Serializes a <see cref="PropertyClass"/> object to a buffer.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to serialize.</typeparam>
+    /// <param name="input">The object to serialize.</param>
+    /// <param name="propertyMask">The property mask to use for serialization.</param>
+    /// <param name="output">The buffer to write the serialized object to.</param>
+    /// <returns>True if the object was successfully serialized, false otherwise.</returns>
     public override bool Serialize(PropertyClass input, PropertyFlags propertyMask, out byte[]? output) {
         output = default;
 
@@ -61,9 +90,24 @@ public class FileSerializer : ObjectSerializer {
         return true;
     }
 
+    /// <summary>
+    /// Deserializes a buffer to a <see cref="PropertyClass"/> object.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to deserialize.</typeparam>
+    /// <param name="inputBuffer">The buffer to deserialize.</param>
+    /// <param name="output">The object to write the deserialized object to.</param>
+    /// <returns>True if the buffer was successfully deserialized, false otherwise.</returns>
     public bool Deserialize<T>(byte[] inputBuffer, out T output) where T : PropertyClass
         => Deserialize(inputBuffer, (PropertyFlags) BiNDDefaultFlags, out output);
 
+    /// <summary>
+    /// Deserializes a buffer to a <see cref="PropertyClass"/> object.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to deserialize.</typeparam>
+    /// <param name="inputBuffer">The buffer to deserialize.</param>
+    /// <param name="propertyMask">The property mask to use for deserialization.</param>
+    /// <param name="output">The object to write the deserialized object to.</param>
+    /// <returns>True if the buffer was successfully deserialized, false otherwise.</returns>
     public override bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) {
         output = default!;
 

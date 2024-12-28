@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Reflection;
+using System.Runtime.InteropServices.Marshalling;
 using Imcodec.IO;
 
 namespace Imcodec.ObjectProperty;
@@ -131,40 +132,16 @@ public abstract record PropertyClass {
         return true;
     }
 
-    private bool DecodeVersionable(BitReader reader, ObjectSerializer serializer) {
-        // Properties may be out of order in the binary stream.
-        // Read the hash and size of the first property, which we know is at the
-        // beginning of the stream.
-        // From there, we can tell how the properties are laid out.
-        var propMap = Properties.ToDictionary(static p => p.Hash, p => p);
-        var objectStart = reader.BitPos();
-        var objectSize = reader.ReadUInt32();
-
-        while (reader.BitPos() - objectStart < objectSize) {
-            var propertyStart = reader.BitPos();
-            var propertySize = reader.ReadUInt32();
-            var propertyHash = reader.ReadUInt32();
-
-            // Ensure that the property exists. If it does, decode it.
-            if (propMap.TryGetValue(propertyHash, out var property)) {
-                property.Decode(reader, serializer);
-            }
-            else {
-                throw new Exception($"Failed to find property with hash {propertyHash}");
-            }
-
-            // Seek bit to the end of this property.
-            reader.SeekBit((int) (propertyStart + propertySize));
-        }
-
-        // Seek bit to the end of this object.
-        reader.SeekBit((int) (objectStart + objectSize));
-        return true;
-    }
+    /// <summary>
+    /// Encodes the object identifier using the specified <see cref="BitWriter"/>.
+    /// </summary>
+    /// <param name="writer">The <see cref="BitWriter"/> used to write the
+    /// encoded identifier.</param>
+    public virtual void EncodeIdentifier(BitWriter writer) 
+        => writer.WriteUInt32(GetHash());
 
     private bool EncodeVersionable(BitWriter writer, ObjectSerializer serializer) {
         writer.WriteUInt32(0); // Placeholder for the size.
-        writer.WriteUInt32(GetHash());
 
         foreach (var property in Properties) {
             if (!IsPropertyEligibleForProcessing(property, serializer)) {
@@ -194,6 +171,37 @@ public abstract record PropertyClass {
         writer.WriteUInt32((uint)objectSize);
         writer.SeekBit(objectSize);
 
+        return true;
+    }
+
+    private bool DecodeVersionable(BitReader reader, ObjectSerializer serializer) {
+        // Properties may be out of order in the binary stream.
+        // Read the hash and size of the first property, which we know is at the
+        // beginning of the stream.
+        // From there, we can tell how the properties are laid out.
+        var propMap = Properties.ToDictionary(static p => p.Hash, p => p);
+        var objectStart = reader.BitPos();
+        var objectSize = reader.ReadUInt32();
+
+        while (reader.BitPos() - objectStart < objectSize) {
+            var propertyStart = reader.BitPos();
+            var propertySize = reader.ReadUInt32();
+            var propertyHash = reader.ReadUInt32();
+
+            // Ensure that the property exists. If it does, decode it.
+            if (propMap.TryGetValue(propertyHash, out var property)) {
+                property.Decode(reader, serializer);
+            }
+            else {
+                throw new Exception($"Failed to find property with hash {propertyHash}");
+            }
+
+            // Seek bit to the end of this property.
+            reader.SeekBit((int) (propertyStart + propertySize));
+        }
+
+        // Seek bit to the end of this object.
+        reader.SeekBit((int) (objectStart + objectSize));
         return true;
     }
 

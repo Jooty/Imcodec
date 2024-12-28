@@ -133,7 +133,7 @@ public sealed class Archive {
     private async Task<Memory<byte>> ReadFileDataAsync(FileEntry fileEntry) {
         _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
         var buffer = new byte[fileEntry.UncompressedSize];
-        await _archiveStream.ReadAsync(buffer, 0, buffer.Length);
+        await _archiveStream.ReadExactlyAsync(buffer);
 
         if (fileEntry.IsCompressed) {
             return await ZLibUtility.InflateAsync(buffer, (int) fileEntry.CompressedSize);

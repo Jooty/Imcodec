@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <InternalsVisibleTo>Imcodec.Test</InternalsVisibleTo>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,7 +15,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Imcodec.Math\Imcodec.Math.csproj" />
+        <ProjectReference Include="..\Imcodec.ObjectProperty\Imcodec.ObjectProperty.csproj" />
+        <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
+        <ProjectReference Include="..\Imcodec.IO\Imcodec.IO.csproj" />
     </ItemGroup>
 
 </Project>

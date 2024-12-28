@@ -170,7 +170,7 @@ public abstract class BitManipulator : IDisposable {
 
         // Read before bytes
         Stream.Seek(-beforeLen, SeekOrigin.Current);
-        Stream.Read(before, beforeLen - beforeLen, beforeLen);
+        Stream.ReadExactly(before, beforeLen - beforeLen, beforeLen);
 
         // Adjust afterLen if it goes out of bounds
         if (pos + afterLen > Stream.Length) {
@@ -179,7 +179,7 @@ public abstract class BitManipulator : IDisposable {
 
         // Read after bytes
         Stream.Seek(pos, SeekOrigin.Begin);
-        Stream.Read(after, 0, afterLen);
+        Stream.ReadExactly(after, 0, afterLen);
 
         // Seek back to the original position
         Stream.Seek(pos, SeekOrigin.Begin);

@@ -48,7 +48,7 @@ public static class Deserialization {
     /// <returns>The deserialized object as a JSON string, or null if deserialization failed.</returns>
     public static string? TryDeserializeFile(string fileName, byte[] fileData) {
         try {
-            var bindSerializer = new FileSerializer();
+            var bindSerializer = new BindSerializer();
             if (bindSerializer.Deserialize<PropertyClass>(fileData, out var propertyClass)) {
                 // Wrap the deserialized object with additional information.
                 var deserializedObjectInfo = new DeserializedObjectInfo {
