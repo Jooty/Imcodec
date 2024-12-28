@@ -18,10 +18,12 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Imcodec.ObjectProperty;
+
 namespace Imcodec.CoreObject;
 
-public partial record BehaviorTemplate {
+public partial record BehaviorTemplate : PropertyClass {
 
-    
+   public override uint GetHash() => 360231646;
 
 }
