@@ -21,7 +21,7 @@ using Imcodec.Types;
 
 namespace Imcodec.CoreObject;
 
-public class CoreTemplate {
+public partial record CoreTemplate {
 
    public GID m_templateID { get; init; }
 

@@ -22,7 +22,7 @@ using Imcodec.IO;
 
 namespace Imcodec.CoreObject;
 
-public record CoreObject : PropertyClass {
+public partial record CoreObject : PropertyClass {
 
     public CoreTemplate m_coreTemplate { get; init; }
 

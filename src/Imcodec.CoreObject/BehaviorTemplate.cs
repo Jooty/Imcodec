@@ -20,7 +20,7 @@ modification, are permitted provided that the following conditions are met:
 
 namespace Imcodec.CoreObject;
 
-public class BehaviorTemplate {
+public partial record BehaviorTemplate {
 
     
 
