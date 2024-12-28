@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Generators": {
+    "CodeGen": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "..\\Imcodec.ObjectProperty\\Imcodec.ObjectProperty.csproj"
     }
