@@ -70,7 +70,7 @@ namespace Imcodec.ObjectProperty.CodeGen {
 
             var topBaseClass = classDefinition.BaseClassNames[0];
 
-            classBuilder.AppendLine($"public record {classDefinition.Name} : {topBaseClass} {{\n");
+            classBuilder.AppendLine($"public partial record {classDefinition.Name} : {topBaseClass} {{\n");
             classBuilder.AppendLine($"\tpublic override uint GetHash() => {classDefinition.Hash};\n");
             foreach (var property in classDefinition.Properties) {
                 classBuilder.AppendLine($"\t{WritePropertyAsString(property)}\n");
@@ -118,10 +118,8 @@ namespace Imcodec.ObjectProperty.CodeGen {
             // Flags is an integer. Cast it to the enum type, and write it as a string.
             var flagsStr = GetFlagsString((int) flags);
 
-            // New with C# 13.0: we can define partial properties. This will be useful for defining
-            // our own type on Imcodec, while still getting the most recent properties in CodeGen.
             var endStr = $"// {flagsStr}"
-                + $"\n\t[AutoProperty({hash}, {flags})] public partial {propertyType} {propertyName} {{ get; set; }}";
+                + $"\n\t[AutoProperty({hash}, {flags})] public {propertyType} {propertyName} {{ get; set; }}";
 
             return endStr;
         }

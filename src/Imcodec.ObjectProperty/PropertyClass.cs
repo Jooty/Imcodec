@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Reflection;
+using System.Runtime.InteropServices.Marshalling;
 using Imcodec.IO;
 
 namespace Imcodec.ObjectProperty;
@@ -79,7 +80,6 @@ public abstract record PropertyClass {
     /// otherwise, <c>false</c>.</returns>
     internal bool Encode(BitWriter writer, ObjectSerializer serializer) {
         OnPreEncode();
-        EncodeIdentifier(writer);
 
         if (serializer.Versionable) {
             return EncodeVersionable(writer, serializer);
@@ -132,7 +132,12 @@ public abstract record PropertyClass {
         return true;
     }
 
-    protected virtual void EncodeIdentifier(BitWriter writer) 
+    /// <summary>
+    /// Encodes the object identifier using the specified <see cref="BitWriter"/>.
+    /// </summary>
+    /// <param name="writer">The <see cref="BitWriter"/> used to write the
+    /// encoded identifier.</param>
+    public virtual void EncodeIdentifier(BitWriter writer) 
         => writer.WriteUInt32(GetHash());
 
     private bool EncodeVersionable(BitWriter writer, ObjectSerializer serializer) {

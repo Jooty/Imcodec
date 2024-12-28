@@ -28,11 +28,10 @@ public record CoreObject : PropertyClass {
 
     public override uint GetHash() => 1152306685;
 
-    public CoreObject(CoreTemplate coreTemplate) {
-        CoreTemplate = coreTemplate;
-    }
+    public CoreObject(CoreTemplate coreTemplate) 
+        => CoreTemplate = coreTemplate;
 
-    protected override void EncodeIdentifier(BitWriter writer) {
+    public override void EncodeIdentifier(BitWriter writer) {
         var id = CoreTemplate.TemplateID;
 
         writer.WriteUInt8(id.MParts.Block);
