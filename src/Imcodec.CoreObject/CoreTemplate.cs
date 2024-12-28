@@ -23,6 +23,6 @@ namespace Imcodec.CoreObject;
 
 public class CoreTemplate {
 
-   public GID TemplateID { get; init; }
+   public GID m_templateID { get; init; }
 
 }

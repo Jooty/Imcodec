@@ -24,15 +24,15 @@ namespace Imcodec.CoreObject;
 
 public record CoreObject : PropertyClass {
 
-    public CoreTemplate CoreTemplate { get; init; }
+    public CoreTemplate m_coreTemplate { get; init; }
 
     public override uint GetHash() => 1152306685;
 
     public CoreObject(CoreTemplate coreTemplate) 
-        => CoreTemplate = coreTemplate;
+        => m_coreTemplate = coreTemplate;
 
     public override void EncodeIdentifier(BitWriter writer) {
-        var id = CoreTemplate.TemplateID;
+        var id = m_coreTemplate.m_templateID;
 
         writer.WriteUInt8(id.MParts.Block);
         writer.WriteUInt8(id.MParts.Type);
