@@ -48,7 +48,7 @@ public sealed class CoreObjectSerializer(
       { 958775582, (131, 131) } // ClientRecipe
    };
 
-   protected override bool PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
+   public override bool PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
       propertyClass = null;
       var block = inputBuffer.ReadUInt8();
       var type = inputBuffer.ReadUInt8();
@@ -68,13 +68,13 @@ public sealed class CoreObjectSerializer(
       return propertyClass != null;
    }
 
-   protected override bool PreWriteObject(BitWriter writer, PropertyClass propertyClass) {
+   public override bool PreWriteObject(BitWriter writer, PropertyClass propertyClass) {
       if (propertyClass is null) {
          writer.WriteUInt8(0);
          writer.WriteUInt8(0);
          writer.WriteUInt32(0);
 
-         return true;
+         return false;
       }
 
       var (block, type) = GetBlockAndType(propertyClass);

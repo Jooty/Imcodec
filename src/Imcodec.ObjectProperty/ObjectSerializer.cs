@@ -203,6 +203,7 @@ public partial class ObjectSerializer(bool Versionable = true,
         propertyClass?.Decode(reader, this);
 
         output = (T) propertyClass!;
+        
         return true;
     }
 
@@ -215,6 +216,12 @@ public partial class ObjectSerializer(bool Versionable = true,
     public virtual bool PreloadObject(BitReader inputBuffer,
                                          out PropertyClass? propertyClass) {
         var hash = inputBuffer.ReadUInt32();
+        if (hash == 0) {
+            propertyClass = null;
+
+            return false;
+        }
+
         propertyClass = DispatchType(hash);
 
         return propertyClass != null;

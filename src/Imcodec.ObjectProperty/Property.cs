@@ -289,23 +289,11 @@ public sealed class Property<T>(uint hash,
     private static bool DecodePropertyClass(BitReader reader,
                                             ObjectSerializer serializer,
                                             out PropertyClass? propertyClass) {
-        propertyClass = null;
-
-        var hash = reader.ReadUInt32();
-        if (hash == 0) {
-            return true;
-        }
-
-        // Dispatch this hash and see what property class we need to create.
-        var fetchedType = serializer.TypeRegistry.LookupType(hash);
-        if (fetchedType == null) {
+        if (!serializer.PreloadObject(reader, out propertyClass)) {
             return false;
         }
 
-        // Create a new instance of the property class.
-        propertyClass = (PropertyClass) Activator.CreateInstance(fetchedType)!;
-
-        return propertyClass.Decode(reader, serializer);
+        return propertyClass!.Decode(reader, serializer);
     }
 
     private static object? CastDecodedValue(object? value) {
