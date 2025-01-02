@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Wad", "src\Imcodec.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Test", "test\Imcodec.Test.csproj", "{B300DC3E-5729-46E4-8ADB-F3A1DA71B207}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Benchmarks", "src\Imcodec.Benchmarks\Imcodec.Benchmarks.csproj", "{79017121-CEF1-42FD-BF99-5A51C3FB33E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{B300DC3E-5729-46E4-8ADB-F3A1DA71B207}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B300DC3E-5729-46E4-8ADB-F3A1DA71B207}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B300DC3E-5729-46E4-8ADB-F3A1DA71B207}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79017121-CEF1-42FD-BF99-5A51C3FB33E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79017121-CEF1-42FD-BF99-5A51C3FB33E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79017121-CEF1-42FD-BF99-5A51C3FB33E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79017121-CEF1-42FD-BF99-5A51C3FB33E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,5 +95,6 @@ Global
 		{FD4FFFAE-ED30-4147-A43B-F6E6A72DA6E5} = {004073B3-1EBA-4C41-B17B-FC81C3E35ED1}
 		{BA5B1EC8-E83D-4BB8-9460-F5333A65784E} = {004073B3-1EBA-4C41-B17B-FC81C3E35ED1}
 		{B300DC3E-5729-46E4-8ADB-F3A1DA71B207} = {004073B3-1EBA-4C41-B17B-FC81C3E35ED1}
+		{79017121-CEF1-42FD-BF99-5A51C3FB33E8} = {004073B3-1EBA-4C41-B17B-FC81C3E35ED1}
 	EndGlobalSection
 EndGlobal
