@@ -35,6 +35,11 @@ public class CodeGenTest {
         var classDefinitions = compiler.Compile(jsonDump);
 
         Assert.NotEmpty(classDefinitions);
+        Assert.Equal(2239, classDefinitions.Length);
+
+        var classDefinition = classDefinitions[23];
+        Assert.Equal("PetSnackBehaviorTemplate", classDefinition.Name);
+        Assert.Equal((double) 1956226406, classDefinition.Hash);
     }
 
     private static string? GetJsonDump() {
