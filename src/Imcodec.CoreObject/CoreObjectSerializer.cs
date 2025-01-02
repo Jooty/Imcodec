@@ -32,11 +32,23 @@ namespace Imcodec.CoreObject;
 /// <param name="Versionable">States whether the object is versionable.</param>
 /// <param name="Behaviors">States the behaviors of the serializer.</param>
 /// <param name="typeRegistry">The type registry to use for serialization.</param>
-public sealed class CoreObjectSerializer(bool Versionable = false,
-                    SerializerFlags Behaviors = SerializerFlags.UseFlags | SerializerFlags.Compress,
-                    TypeRegistry? typeRegistry = null) : ObjectSerializer(Versionable, Behaviors, typeRegistry) {
+public sealed class CoreObjectSerializer(
+    bool versionable = false,
+    SerializerFlags behaviors = SerializerFlags.UseFlags | SerializerFlags.Compress,
+    TypeRegistry? typeRegistry = null
+) : ObjectSerializer(versionable, behaviors, typeRegistry) {
 
-   protected override bool PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
+   private static readonly Dictionary<int, (byte, byte)> s_blockAndTypeMap = new() {
+      { 350837933, (2, 2) }, // ClientObject
+      { 766500222, (104, 2) }, // WizClientObject
+      { 1653772158, (115, 9) }, // WizClientObjectItem
+      { 1167581154, (106, 2) }, // WizClientPet
+      { 2109552587, (108, 2) }, // WizClientMount
+      { 398229815, (132, 9) }, // ClientReagentItem
+      { 958775582, (131, 131) } // ClientRecipe
+   };
+
+   public override bool PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
       propertyClass = null;
       var block = inputBuffer.ReadUInt8();
       var type = inputBuffer.ReadUInt8();
@@ -49,18 +61,20 @@ public sealed class CoreObjectSerializer(bool Versionable = false,
          return propertyClass != null;
       }
 
-      // Otherwise, treat it as a CoreObject.
       // We can dispatch the type based on the template ID.
-      return false; // todo: fixme
+      var hash = GetHashFromBlockAndType(block, type);
+      propertyClass = DispatchType(hash);
+
+      return propertyClass != null;
    }
 
-   protected override bool PreWriteObject(BitWriter writer, PropertyClass propertyClass) {
+   public override bool PreWriteObject(BitWriter writer, PropertyClass propertyClass) {
       if (propertyClass is null) {
          writer.WriteUInt8(0);
          writer.WriteUInt8(0);
          writer.WriteUInt32(0);
 
-         return true;
+         return false;
       }
 
       var (block, type) = GetBlockAndType(propertyClass);
@@ -84,23 +98,17 @@ public sealed class CoreObjectSerializer(bool Versionable = false,
          return (0, 0);
       }
 
-      return propClass.GetHash() switch {
-         350837933 => // ClientObject
-             (2, 2),
-         766500222 => // WizClientObject
-             (104, 2),
-         1653772158 => // WizClientObjectItem
-             (115, 9),
-         1167581154 => // WizClientPet
-             (106, 2),
-         2109552587 => // WizClientMount
-             (108, 2),
-         398229815 => // ClientReagentItem
-             (132, 9),
-         958775582 => // ClientRecipe
-             (131, 131),
-         _ => (0, 0)
-      };
+      return ((byte, byte)) (s_blockAndTypeMap.TryGetValue((int) propClass.GetHash(), out var blockAndType) ? blockAndType : (0, 0));
+   }
+
+   private static uint GetHashFromBlockAndType(byte block, byte type) {
+      foreach (var (key, value) in s_blockAndTypeMap) {
+         if (value == (block, type)) {
+            return (uint) key;
+         }
+      }
+
+      return 0;
    }
 
 }

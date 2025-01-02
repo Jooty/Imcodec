@@ -31,12 +31,4 @@ public partial record CoreObject : PropertyClass {
     public CoreObject(CoreTemplate coreTemplate) 
         => m_coreTemplate = coreTemplate;
 
-    public override void EncodeIdentifier(BitWriter writer) {
-        var id = m_coreTemplate.m_templateID;
-
-        writer.WriteUInt8(id.MParts.Block);
-        writer.WriteUInt8(id.MParts.Type);
-        writer.WriteUInt32(id.MParts.TemplateId);
-    }
-
 }

@@ -82,8 +82,7 @@ public partial record LootInfoBase : PropertyClass {
 
 }
 
-public enum LOOT_TYPE
-{
+public enum LOOT_TYPE {
 
     LOOT_TYPE_NONE = 0,
     LOOT_TYPE_GOLD = 1,

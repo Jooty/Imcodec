@@ -105,17 +105,11 @@ public sealed class Property<T>(uint hash,
     bool IProperty.Encode(BitWriter writer, ObjectSerializer serializer) {
         if (IsVector) {
             var list = Getter?.Invoke(TargetObject, null);
-            if (!EncodeVector(writer, list, serializer)) {
-                return false;
-            }
+            return EncodeVector(writer, list, serializer);
         }
         else {
-            if (!EncodeElement(writer, serializer, Getter?.Invoke(TargetObject, null))) {
-                return false;
-            }
+            return EncodeElement(writer, serializer, Getter?.Invoke(TargetObject, null));
         }
-
-        return true;
     }
 
     bool IProperty.Decode(BitReader reader, ObjectSerializer serializer) {
@@ -159,7 +153,7 @@ public sealed class Property<T>(uint hash,
 
     private static bool EncodeElement(BitWriter writer, ObjectSerializer serializer, object? val) {
         if (InnerType.IsSubclassOf(typeof(PropertyClass))) {
-            return Property<T>.EncodePropertyClass(writer,(PropertyClass) val!, serializer);
+            return Property<T>.EncodePropertyClass(writer, (PropertyClass) val!, serializer);
         }
         else if (IsEnum) {
             return Property<T>.EncodeEnum(writer, val!, serializer);
@@ -188,10 +182,8 @@ public sealed class Property<T>(uint hash,
     private static bool EncodePropertyClass(BitWriter writer,
                                             PropertyClass propertyClass,
                                             ObjectSerializer serializer) {
-        if (propertyClass == null) {
-            writer.WriteUInt32(0);
-
-            return true;
+        if (!serializer.PreWriteObject(writer, propertyClass)) {
+            return false;
         }
 
         return propertyClass.Encode(writer, serializer);
@@ -297,23 +289,11 @@ public sealed class Property<T>(uint hash,
     private static bool DecodePropertyClass(BitReader reader,
                                             ObjectSerializer serializer,
                                             out PropertyClass? propertyClass) {
-        propertyClass = null;
-
-        var hash = reader.ReadUInt32();
-        if (hash == 0) {
-            return true;
-        }
-
-        // Dispatch this hash and see what property class we need to create.
-        var fetchedType = serializer.TypeRegistry.LookupType(hash);
-        if (fetchedType == null) {
+        if (!serializer.PreloadObject(reader, out propertyClass)) {
             return false;
         }
 
-        // Create a new instance of the property class.
-        propertyClass = (PropertyClass) Activator.CreateInstance(fetchedType)!;
-
-        return propertyClass.Decode(reader, serializer);
+        return propertyClass!.Decode(reader, serializer);
     }
 
     private static object? CastDecodedValue(object? value) {

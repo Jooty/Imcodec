@@ -132,14 +132,6 @@ public abstract record PropertyClass {
         return true;
     }
 
-    /// <summary>
-    /// Encodes the object identifier using the specified <see cref="BitWriter"/>.
-    /// </summary>
-    /// <param name="writer">The <see cref="BitWriter"/> used to write the
-    /// encoded identifier.</param>
-    public virtual void EncodeIdentifier(BitWriter writer) 
-        => writer.WriteUInt32(GetHash());
-
     private bool EncodeVersionable(BitWriter writer, ObjectSerializer serializer) {
         writer.WriteUInt32(0); // Placeholder for the size.
 

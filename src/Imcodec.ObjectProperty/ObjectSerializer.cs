@@ -34,7 +34,7 @@ public enum SerializerFlags {
     /// <summary>
     /// States the serializer should use these flags for deserialization.
     /// </summary>
-    UseFlags      = 1 << 0,
+    UseFlags = 1 << 0,
 
     /// <summary>
     /// States the serializer should use compact length prefixes.
@@ -44,17 +44,17 @@ public enum SerializerFlags {
     /// <summary>
     /// States the serializer should use string enums.
     /// </summary>
-    StringEnums   = 1 << 2,
+    StringEnums = 1 << 2,
 
     /// <summary>
     /// States the serializer should use ZLib compression.
     /// </summary>
-    Compress      = 1 << 3,
+    Compress = 1 << 3,
 
     /// <summary>
     /// Properties are dirty encoded.
     /// </summary>
-    DirtyEncode  = 1 << 4,
+    DirtyEncode = 1 << 4,
 
 }
 
@@ -202,7 +202,47 @@ public partial class ObjectSerializer(bool Versionable = true,
 
         propertyClass?.Decode(reader, this);
 
-        output = (T)propertyClass!;
+        output = (T) propertyClass!;
+        
+        return true;
+    }
+
+    /// <summary>
+    /// Preloads an object from the input buffer based on the provided hash value.
+    /// </summary>
+    /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
+    /// <param name="propertyClass">The loaded property class, if found.</param>
+    /// <returns><c>true</c> if the object was preloaded successfully; otherwise, <c>false</c>.</returns>
+    public virtual bool PreloadObject(BitReader inputBuffer,
+                                         out PropertyClass? propertyClass) {
+        var hash = inputBuffer.ReadUInt32();
+        if (hash == 0) {
+            propertyClass = null;
+
+            return false;
+        }
+
+        propertyClass = DispatchType(hash);
+
+        return propertyClass != null;
+    }
+
+    /// <summary>
+    /// Writes the object identifier to the specified <see cref="BitWriter"/>.
+    /// </summary>
+    /// <param name="writer">The <see cref="BitWriter"/> to write to.</param>
+    /// <param name="propertyClass">The <see cref="PropertyClass"/> to write.</param>
+    /// <returns><c>true</c> if the object identifier was written successfully; otherwise, <c>false</c>.</returns>
+    public virtual bool PreWriteObject(BitWriter writer,
+                                          PropertyClass propertyClass) {
+        if (propertyClass == null) {
+            writer.WriteUInt32(0);
+
+            return false;
+        }
+
+        writer.WriteUInt32(propertyClass.GetHash());
+
         return true;
     }
 
@@ -248,33 +288,6 @@ public partial class ObjectSerializer(bool Versionable = true,
     }
 
     /// <summary>
-    /// Preloads an object from the input buffer based on the provided hash value.
-    /// </summary>
-    /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
-    /// <param name="propertyClass">The loaded property class, if found.</param>
-    /// <returns><c>true</c> if the object was preloaded successfully; otherwise, <c>false</c>.</returns>
-    protected virtual bool PreloadObject(BitReader inputBuffer,
-                                         out PropertyClass? propertyClass) {
-        var hash = inputBuffer.ReadUInt32();
-        propertyClass = DispatchType(hash);
-
-        return propertyClass != null;
-    }
-
-    /// <summary>
-    /// Writes the object identifier to the specified <see cref="BitWriter"/>.
-    /// </summary>
-    /// <param name="writer">The <see cref="BitWriter"/> to write to.</param>
-    /// <param name="propertyClass">The <see cref="PropertyClass"/> to write.</param>
-    /// <returns><c>true</c> if the object identifier was written successfully; otherwise, <c>false</c>.</returns>
-    protected virtual bool PreWriteObject(BitWriter writer,
-                                          PropertyClass propertyClass) {
-        propertyClass.EncodeIdentifier(writer);
-
-        return true;
-    }
-
-    /// <summary>
     /// Dispatches the type based on the provided hash value.
     /// </summary>
     /// <param name="hash">The hash value to dispatch.</param>
@@ -285,7 +298,7 @@ public partial class ObjectSerializer(bool Versionable = true,
             return null;
         }
 
-        return (PropertyClass)Activator.CreateInstance(lookupType)!;
+        return (PropertyClass) Activator.CreateInstance(lookupType)!;
     }
 
 }

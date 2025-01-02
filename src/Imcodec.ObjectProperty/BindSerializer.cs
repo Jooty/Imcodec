@@ -74,8 +74,8 @@ public class BindSerializer : ObjectSerializer {
             return false;
         }
 
-        // Create a new buffer with the size of the output buffer plus the size of the magic.
-        var buffer = new byte[baseOutput!.Length + sizeof(uint)];
+        // Create a new buffer with the size of the output buffer plus the size of the magic and flags.
+        var buffer = new byte[baseOutput!.Length + sizeof(uint) * 2];
 
         // Write the magic header and serializer flags.
         BinaryPrimitives.WriteUInt32LittleEndian(buffer, BiNDMagic);
@@ -114,7 +114,7 @@ public class BindSerializer : ObjectSerializer {
         var reader = new BitReader(inputBuffer);
 
         // Check if the input buffer is too small to contain the magic header.
-        if (inputBuffer.Length < sizeof(uint)) {
+        if (inputBuffer.Length < sizeof(uint) * 2) {
             return false;
         }
 
