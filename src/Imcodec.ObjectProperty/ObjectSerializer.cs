@@ -253,19 +253,22 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// to compress.</param>
     /// <returns>A <see cref="BitWriter"/> containing the compressed data.</returns>
     protected virtual BitWriter Compress(BitWriter writer) {
-        var uncompressedSize = writer.GetData().Length;
-        var compressedData = Compression.Compress(writer.GetData());
+        // Compress the data and at the start of the buffer, write the uncompressed size.
+        var writerData = writer.GetData();
+        var uncompressedSize = writerData.Length;
+        var compressedData = Compression.Compress(writerData);
 
-        var bufferSize = compressedData.Length + 4;
-        var tempBuffer = new byte[bufferSize];
+        var uncompressedSizeWriteLength = sizeof(int);
+        var deflatedBufferSize = uncompressedSizeWriteLength + compressedData.Length;
+        var deflatedBuffer = new byte[deflatedBufferSize];
 
-        using var memoryStream = new MemoryStream(tempBuffer);
+        using var memoryStream = new MemoryStream(deflatedBuffer);
         using var binaryWriter = new BinaryWriter(memoryStream);
 
         binaryWriter.Write(uncompressedSize);
         binaryWriter.Write(compressedData);
 
-        return new BitWriter(tempBuffer);
+        return new BitWriter(deflatedBuffer);
     }
 
     /// <summary>

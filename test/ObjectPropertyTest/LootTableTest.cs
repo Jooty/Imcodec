@@ -30,7 +30,7 @@ public class LootTableTest {
     */
 
     private const string LootTableBlob = "2A0367480100000089876B65050000000000050000005E39841B0100000002000000";
-    private const string LootTableBlobCompressed = "2600000078DAD3624EF760646060E86CCF4E65650001101967D9220D12656280000067CB0401";
+    private const string LootTableBlobCompressed = "2200000078DAD3624EF760646060E86CCF4E65650001101967D9220D126502620057C70401";
 
     [Fact]
     public void TryDeserializeLootTableBlob() {
