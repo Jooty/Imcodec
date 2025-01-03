@@ -203,7 +203,7 @@ public partial class ObjectSerializer(bool Versionable = true,
         propertyClass?.Decode(reader, this);
 
         output = (T) propertyClass!;
-        
+
         return true;
     }
 
@@ -253,20 +253,16 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// to compress.</param>
     /// <returns>A <see cref="BitWriter"/> containing the compressed data.</returns>
     protected virtual BitWriter Compress(BitWriter writer) {
-        // Compress the data and at the start of the buffer, write the uncompressed size.
         var writerData = writer.GetData();
         var uncompressedSize = writerData.Length;
         var compressedData = Compression.Compress(writerData);
 
-        var uncompressedSizeWriteLength = sizeof(int);
-        var deflatedBufferSize = uncompressedSizeWriteLength + compressedData.Length;
-        var deflatedBuffer = new byte[deflatedBufferSize];
+        var deflatedBuffer = new byte[sizeof(int) + compressedData.Length];
 
-        using var memoryStream = new MemoryStream(deflatedBuffer);
-        using var binaryWriter = new BinaryWriter(memoryStream);
-
-        binaryWriter.Write(uncompressedSize);
-        binaryWriter.Write(compressedData);
+        var sizeSpan = new Span<byte>(deflatedBuffer, 0, sizeof(int));
+        BitConverter.TryWriteBytes(sizeSpan, uncompressedSize);
+        
+        compressedData.CopyTo(new Span<byte>(deflatedBuffer, sizeof(int), compressedData.Length));
 
         return new BitWriter(deflatedBuffer);
     }

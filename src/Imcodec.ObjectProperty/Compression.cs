@@ -32,23 +32,23 @@ public static class Compression {
     /// <param name="_bytes">The byte array to compress.</param>
     /// <returns>The compressed byte array.</returns>
     public static byte[] Compress(byte[] _bytes) {
-        Deflater deflater = new(Deflater.BEST_COMPRESSION, false);
+        var maxCompressedLength = _bytes.Length;
+        var outputBuffer = new byte[maxCompressedLength];
+
+        var deflater = new Deflater(Deflater.BEST_COMPRESSION, false);
         deflater.SetInput(_bytes);
         deflater.Finish();
 
-        using MemoryStream ms = new();
-        byte[] outputBuffer = new byte[65536 * 4];
-        while (deflater.IsNeedingInput == false) {
-            ms.Write(outputBuffer, 0, deflater.Deflate(outputBuffer));
+        var compressedLength = deflater.Deflate(outputBuffer);
 
-            if (deflater.IsFinished == true) {
-                break;
-            }
+        // If compressed data is smaller, copy to right-sized array
+        if (compressedLength < maxCompressedLength) {
+            var final = new byte[compressedLength];
+            Buffer.BlockCopy(outputBuffer, 0, final, 0, compressedLength);
+            return final;
         }
 
-        deflater.Reset();
-
-        return ms.ToArray();
+        return outputBuffer;
     }
 
     /// <summary>
