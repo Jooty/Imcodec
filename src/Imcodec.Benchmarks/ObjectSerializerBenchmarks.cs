@@ -80,7 +80,7 @@ public class ObjectSerializerBenchmarks {
     [Benchmark]
     public void DeserializeWithCompression() {
         var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
-        compressedSerializer.Deserialize<LootInfoList>(_serializedData, (PropertyFlags) 31, out var _);
+        compressedSerializer.Deserialize<LootInfoList>(_compressedData, (PropertyFlags) 31, out var _);
     }
 
 }
