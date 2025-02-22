@@ -25,18 +25,18 @@ namespace Imcodec.ObjectProperty;
 /// </summary>
 public abstract class TypeRegistry {
 
-    /// <summary>
-    /// Register a type to be used in serialization and deserialization.
-    /// </summary>
-    /// <param name="hash">The type to register.</param>
-    /// <param name="t">The type to register.</param>
-    public abstract void RegisterType(uint hash, System.Type t);
+   /// <summary>
+   /// Register a type to be used in serialization and deserialization.
+   /// </summary>
+   /// <param name="hash">The type to register.</param>
+   /// <param name="t">The type to register.</param>
+   public abstract void RegisterType(uint hash, System.Type t);
 
-    /// <summary>
-    /// Lookup a type by its hash.
-    /// </summary>
-    /// <param name="hash">The hash to lookup.</param>
-    /// <param name="dispatchedType">The type that was found.</param>
-    public abstract System.Type? LookupType(uint hash);
+   /// <summary>
+   /// Lookup a type by its hash.
+   /// </summary>
+   /// <param name="hash">The hash to lookup.</param>
+   /// <param name="dispatchedType">The type that was found.</param>
+   public abstract System.Type? LookupType(uint hash);
 
 }

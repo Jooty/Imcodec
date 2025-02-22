@@ -67,9 +67,11 @@ public enum SerializerFlags {
 /// <param name="Versionable">States whether the object is versionable.</param>
 /// <param name="Behaviors">States the behaviors of the serializer.</param>
 /// <param name="typeRegistry">The type registry to use for serialization.</param>
+/// <param name="UseServerTypeRegistry">States whether to use the server type registry.</param>
 public partial class ObjectSerializer(bool Versionable = true,
                         SerializerFlags Behaviors = SerializerFlags.None,
-                        TypeRegistry? typeRegistry = null) {
+                        TypeRegistry? typeRegistry = null,
+                        bool UseServerTypeRegistry = true) {
 
     /// <summary>
     /// States whether the object is versionable. If true, <see cref="Property"/>
@@ -94,7 +96,14 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// </summary>
     public TypeRegistry TypeRegistry { get; set; } = typeRegistry ?? s_defaultTypeRegistry;
 
+    /// <summary>
+    /// States whether to use the server type registry. These are types not available 
+    /// from the client data and have been manually recreated.
+    /// </summary>
+    public bool UseServerTypeRegistry { get; set; } = UseServerTypeRegistry;
+
     private static readonly ClientGeneratedTypeRegistry s_defaultTypeRegistry = new();
+    private static readonly ServerTypeRegistry s_serverTypeRegistry = new();
 
     /// <summary>
     /// Serializes the specified <see cref="PropertyClass"/> object using
@@ -294,6 +303,16 @@ public partial class ObjectSerializer(bool Versionable = true,
     protected PropertyClass? DispatchType(uint hash) {
         var lookupType = TypeRegistry.LookupType(hash);
         if (lookupType == null) {
+            // If the type is not found in the client type registry,
+            // search the server type registry if flags permit.
+            if (UseServerTypeRegistry) {
+                lookupType = s_serverTypeRegistry.LookupType(hash);
+
+                if (lookupType != null) {
+                    return (PropertyClass) Activator.CreateInstance(lookupType)!;
+                }
+            }
+
             return null;
         }
 

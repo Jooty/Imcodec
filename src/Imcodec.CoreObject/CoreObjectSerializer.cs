@@ -32,11 +32,13 @@ namespace Imcodec.CoreObject;
 /// <param name="Versionable">States whether the object is versionable.</param>
 /// <param name="Behaviors">States the behaviors of the serializer.</param>
 /// <param name="typeRegistry">The type registry to use for serialization.</param>
+/// <param name="UseServerTypeRegistry">States whether to use the server type registry.</param>
 public sealed class CoreObjectSerializer(
     bool versionable = false,
     SerializerFlags behaviors = SerializerFlags.UseFlags | SerializerFlags.Compress,
-    TypeRegistry? typeRegistry = null
-) : ObjectSerializer(versionable, behaviors, typeRegistry) {
+    TypeRegistry? typeRegistry = null,
+    bool UseServerTypeRegistry = true
+) : ObjectSerializer(versionable, behaviors, typeRegistry, UseServerTypeRegistry) {
 
    private static readonly Dictionary<int, (byte, byte)> s_blockAndTypeMap = new() {
       { 350837933, (2, 2) }, // ClientObject
