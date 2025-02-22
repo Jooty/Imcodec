@@ -25,13 +25,13 @@ namespace Imcodec.Cli;
 
 internal class DeserializedObjectInfo {
 
-    internal required string _fileName;
-    internal uint _flags;
-    internal required string _className;
-    internal uint _hash;
-    internal required string _deserializedOn;
-    internal required string _imcodecVersion;
-    internal required PropertyClass _object;
+    public required string _fileName { get; set; }
+    public uint _flags { get; set; }
+    public required string _className { get; set; }
+    public uint _hash { get; set; }
+    public required string _deserializedOn { get; set; }
+    public required string _imcodecVersion { get; set; }
+    public required PropertyClass _object { get; set; }
 
 }
 
@@ -63,7 +63,7 @@ public static class Deserialization {
 
                 // Ensure that enums are written as strings.
                 var jsonSerializerSettings = new JsonSerializerSettings {
-                    Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                    Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
                 };
                 var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
 

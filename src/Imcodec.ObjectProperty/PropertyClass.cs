@@ -184,9 +184,6 @@ public abstract record PropertyClass {
             if (propMap.TryGetValue(propertyHash, out var property)) {
                 property.Decode(reader, serializer);
             }
-            else {
-                throw new Exception($"Failed to find property with hash {propertyHash}");
-            }
 
             // Seek bit to the end of this property.
             reader.SeekBit((int) (propertyStart + propertySize));

@@ -139,16 +139,23 @@ public sealed class ArchiveCommands {
     }
 
     private static string CreateFileOutputPath(string basePath, string fileName) {
-        var actualFileName = IOUtility.ExtractFileName(fileName);
-        var actualPath = IOUtility.ExtractDirectoryPath(fileName);
+        // Get the directory path and file name
+        var directoryPath = Path.GetDirectoryName(fileName);
+        var actualFileName = Path.GetFileName(fileName);
 
-        var fullPath = Path.Combine(basePath, actualPath!);
-        var fullOutputPath = Path.Combine(fullPath, actualFileName!);
-        if (!Directory.Exists(fullPath)) {
-            Directory.CreateDirectory(fullPath);
+        // If there's no directory structure in fileName, just combine base path with filename
+        if (string.IsNullOrEmpty(directoryPath)) {
+            return Path.Combine(basePath, actualFileName);
         }
 
-        return fullOutputPath;
+        // Combine base path with the directory structure
+        var fullDirectoryPath = Path.Combine(basePath, directoryPath);
+
+        // Create all necessary directories
+        Directory.CreateDirectory(fullDirectoryPath);
+
+        // Return the full path including the file name
+        return Path.Combine(fullDirectoryPath, actualFileName);
     }
 
     private static string GetOutputDirectory(string archivePath, string outputPath, string archiveName) {
