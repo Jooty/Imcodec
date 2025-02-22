@@ -17,18 +17,18 @@ modification, are permitted provided that the following conditions are met:
    contributors may be used to endorse or promote products derived from
    this software without specific prior written permission.
 */
+
 using Imcodec.ObjectProperty;
-using Imcodec.IO;
 
 namespace Imcodec.CoreObject;
 
 public partial record CoreObject : PropertyClass {
 
-    public CoreTemplate m_coreTemplate { get; init; }
+   public CoreTemplate m_coreTemplate { get; init; }
 
-    public override uint GetHash() => 1152306685;
+   public override uint GetHash() => 1152306685;
 
-    public CoreObject(CoreTemplate coreTemplate) 
-        => m_coreTemplate = coreTemplate;
+   public CoreObject(CoreTemplate coreTemplate)
+      => m_coreTemplate = coreTemplate;
 
 }

@@ -117,6 +117,7 @@ public partial class ObjectSerializer(bool Versionable = true,
                                   uint propertyMask,
                                   out byte[]? output) {
         var castedFlags = (PropertyFlags) propertyMask;
+
         return Serialize(input, castedFlags, out output);
     }
 
@@ -156,6 +157,7 @@ public partial class ObjectSerializer(bool Versionable = true,
         }
 
         output = writer.GetData();
+
         return true;
     }
 
@@ -172,6 +174,7 @@ public partial class ObjectSerializer(bool Versionable = true,
                                        uint propertyMask,
                                        out T? output) where T : PropertyClass {
         var castedFlags = (PropertyFlags) propertyMask;
+        
         return Deserialize(inputBuffer, castedFlags, out output);
     }
 
@@ -270,7 +273,7 @@ public partial class ObjectSerializer(bool Versionable = true,
 
         var sizeSpan = new Span<byte>(deflatedBuffer, 0, sizeof(int));
         BitConverter.TryWriteBytes(sizeSpan, uncompressedSize);
-        
+
         compressedData.CopyTo(new Span<byte>(deflatedBuffer, sizeof(int), compressedData.Length));
 
         return new BitWriter(deflatedBuffer);

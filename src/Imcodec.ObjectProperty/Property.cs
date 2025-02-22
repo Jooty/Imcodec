@@ -249,6 +249,7 @@ public sealed class Property<T>(uint hash,
         }
 
         val = list;
+
         return true;
     }
 
@@ -302,10 +303,12 @@ public sealed class Property<T>(uint hash,
         }
         else if (InnerType.IsPrimitive) {
             var changedType = Convert.ChangeType(value, InnerType);
+            
             return changedType;
         }
         else if (InnerType.IsEnum) {
             var castedEnum = Enum.ToObject(InnerType, value);
+            
             return castedEnum;
         }
         else if (InnerType.IsAssignableFrom(value.GetType())) {

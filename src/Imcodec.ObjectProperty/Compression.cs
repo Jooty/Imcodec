@@ -45,6 +45,7 @@ public static class Compression {
         if (compressedLength < maxCompressedLength) {
             var final = new byte[compressedLength];
             Buffer.BlockCopy(outputBuffer, 0, final, 0, compressedLength);
+            
             return final;
         }
 

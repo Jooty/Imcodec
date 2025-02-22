@@ -20,7 +20,6 @@ modification, are permitted provided that the following conditions are met:
 
 namespace Imcodec.IO;
 
-
 public abstract class BitManipulator : IDisposable {
 
     protected Stream Stream { get; set; }
@@ -45,6 +44,7 @@ public abstract class BitManipulator : IDisposable {
 
     public BitManipulator WithCompactLengths() {
         CompactLengths = true;
+
         return this;
     }
 
@@ -54,6 +54,7 @@ public abstract class BitManipulator : IDisposable {
     /// <returns>The bit position of the read stream.</returns>
     public int BitPos() {
         var offset = (int) Stream.Position - (BitPosition != 0 ? 1 : 0);
+
         return BitPosition + 8 * offset;
     }
 
@@ -71,6 +72,7 @@ public abstract class BitManipulator : IDisposable {
         }
 
         Stream.Seek(pos, SeekOrigin.Begin);
+
         return data;
     }
 
@@ -88,6 +90,7 @@ public abstract class BitManipulator : IDisposable {
         }
 
         Stream.Seek(pos, SeekOrigin.Begin);
+
         return data;
     }
 
@@ -95,9 +98,8 @@ public abstract class BitManipulator : IDisposable {
     /// Gets the length of the internal stream.
     /// </summary>
     /// <returns>Returns the length of the internal stream.</returns>
-    public uint Count() {
-        return (uint) Stream.Length;
-    }
+    public uint Count() 
+        => (uint) Stream.Length;
 
     /// <summary>
     /// Reset the current bit position.
@@ -165,7 +167,7 @@ public abstract class BitManipulator : IDisposable {
 
         // Adjust beforeLen if it goes out of bounds
         if (pos < beforeLen) {
-            beforeLen = (int)pos;
+            beforeLen = (int) pos;
         }
 
         // Read before bytes
@@ -174,7 +176,7 @@ public abstract class BitManipulator : IDisposable {
 
         // Adjust afterLen if it goes out of bounds
         if (pos + afterLen > Stream.Length) {
-            afterLen = (int)(Stream.Length - pos);
+            afterLen = (int) (Stream.Length - pos);
         }
 
         // Read after bytes
@@ -191,8 +193,7 @@ public abstract class BitManipulator : IDisposable {
         return window;
     }
 
-    public void Dispose() {
-        Stream.Dispose();
-    }
+    public void Dispose()
+        => Stream.Dispose();
 
 }

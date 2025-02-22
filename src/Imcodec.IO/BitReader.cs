@@ -188,6 +188,7 @@ public class BitReader : BitManipulator {
         // Client will still serialize the length as if it was a UTF-8 string,
         // meaning we must double the read length.
         var bytes = ReadBytes(length * 2);
+
         return Encoding.Unicode.GetString(bytes);
     }
 
@@ -196,7 +197,8 @@ public class BitReader : BitManipulator {
     /// </summary>
     /// <returns>The boolean value that was read.</returns>
     public bool ReadBool() {
-        ResetBitPos();
+        ResetBitPos(); 
+        
         return _reader.ReadBoolean();
     }
 
@@ -206,7 +208,8 @@ public class BitReader : BitManipulator {
     /// <param name="count">The amount of bytes to read.</param>
     /// <returns>An u8 array of the bytes read.</returns>
     public byte[] ReadBytes(int count) {
-        ResetBitPos();
+        ResetBitPos(); 
+        
         return _reader.ReadBytes(count);
     }
 
@@ -216,6 +219,7 @@ public class BitReader : BitManipulator {
     /// <returns>The <see cref="Vector2"/> that was read.</returns>
     public Vector2 ReadVector2() {
         ResetBitPos();
+
         return new Vector2(
             _reader.ReadSingle(),
             _reader.ReadSingle());
@@ -227,6 +231,7 @@ public class BitReader : BitManipulator {
     /// <returns>The <see cref="Vector3"/> that was read.</returns>
     public Vector3 ReadVector3() {
         ResetBitPos();
+
         return new Vector3(
             _reader.ReadSingle(),
             _reader.ReadSingle(),
@@ -239,6 +244,7 @@ public class BitReader : BitManipulator {
     /// <returns>The <see cref="Quaternion"/> that was read.</returns>
     public Quaternion ReadQuaternion() {
         ResetBitPos();
+
         return new Quaternion(
             _reader.ReadSingle(),
             _reader.ReadSingle(),
@@ -266,6 +272,7 @@ public class BitReader : BitManipulator {
     /// <returns>The <see cref="Color"/> that was read.</returns>
     public Color ReadColor() {
         ResetBitPos();
+        
         return new Color(
             _reader.ReadByte(),
             _reader.ReadByte(),
@@ -279,6 +286,7 @@ public class BitReader : BitManipulator {
     /// <returns>The <see cref="Rectangle"/> that was read.</returns>
     public Rectangle ReadRectangle() {
         ResetBitPos();
+        
         return new Rectangle(
             _reader.ReadInt32(),
             _reader.ReadInt32(),
@@ -292,6 +300,7 @@ public class BitReader : BitManipulator {
     /// <returns>The <see cref="RectangleF"/> that was read.</returns>
     public RectangleF ReadRectangleF() {
         ResetBitPos();
+        
         return new RectangleF(
             _reader.ReadSingle(),
             _reader.ReadSingle(),

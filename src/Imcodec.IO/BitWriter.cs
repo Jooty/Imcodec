@@ -170,7 +170,7 @@ public class BitWriter : BitManipulator {
             }
         }
         else {
-            WriteUInt16((ushort)str.Length);
+            WriteUInt16((ushort) str.Length);
             var bytes = Encoding.UTF8.GetBytes(str);
             WriteBytes(bytes);
         }
@@ -192,7 +192,7 @@ public class BitWriter : BitManipulator {
             }
         }
         else {
-            WriteUInt16((ushort)str.Length);
+            WriteUInt16((ushort) str.Length);
             var bytes = Encoding.Unicode.GetBytes(str);
             WriteBytes(bytes);
         }
@@ -314,7 +314,7 @@ public class BitWriter : BitManipulator {
     /// </summary>
     /// <param name="bit">The bit to write to the stream.</param>
     public void WriteBit(bool bit) {
-        WriteBit(bit ? (byte)1 : (byte)0);
+        WriteBit(bit ? (byte) 1 : (byte) 0);
     }
 
     /// <summary>
@@ -325,7 +325,7 @@ public class BitWriter : BitManipulator {
         --base.BitPosition;
 
         if (bit == 1) {
-            base.BitValue |= (byte)(1 << base.BitPosition);
+            base.BitValue |= (byte) (1 << base.BitPosition);
         }
         if (base.BitPosition == 0) {
             FlushBits();
@@ -339,13 +339,13 @@ public class BitWriter : BitManipulator {
     /// <param name="count">The length of how many bits will be written to the stream.</param>
     /// <typeparam name="T">The given type.</typeparam>
     public unsafe void WriteBits<T>(T bit, int count) where T : unmanaged {
-        var ptr = (byte*)&bit;
+        var ptr = (byte*) &bit;
 
         for (int i = 0; i < count; i++) {
             if (i % 8 == 0 && i != 0) {
                 ptr++;
             }
-            WriteBit((byte)((*ptr >> i % 8) & 1));
+            WriteBit((byte) ((*ptr >> i % 8) & 1));
         }
     }
 

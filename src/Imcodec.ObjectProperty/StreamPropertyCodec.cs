@@ -30,7 +30,7 @@ namespace Imcodec.ObjectProperty;
 /// </summary>
 internal static class StreamPropertyCodec {
 
-    private static readonly Dictionary<Type, Func<BitReader, object>> s_primitiveReaders = new () {
+    private static readonly Dictionary<Type, Func<BitReader, object>> s_primitiveReaders = new() {
         { typeof(byte),           (r) => r.ReadUInt8()                     },
         { typeof(char),           (r) => r.ReadUInt8()                     },
         { typeof(bool),           (r) => r.ReadBit()                       },
@@ -105,10 +105,12 @@ internal static class StreamPropertyCodec {
     internal static bool TryGetReader(Type type, out Func<BitReader, object> codec) {
         if (s_primitiveReaders.TryGetValue(type, out var func)) {
             codec = func;
+            
             return true;
         }
 
         codec = null!;
+        
         return false;
     }
 
@@ -123,10 +125,12 @@ internal static class StreamPropertyCodec {
     internal static bool TryGetWriter(Type type, out Action<BitWriter, object> codec) {
         if (s_primitiveWriters.TryGetValue(type, out var func)) {
             codec = func;
+            
             return true;
         }
 
         codec = null!;
+        
         return false;
     }
 

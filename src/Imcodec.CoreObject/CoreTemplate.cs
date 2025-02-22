@@ -17,6 +17,7 @@ modification, are permitted provided that the following conditions are met:
    contributors may be used to endorse or promote products derived from
    this software without specific prior written permission.
 */
+
 using Imcodec.ObjectProperty;
 using Imcodec.Types;
 

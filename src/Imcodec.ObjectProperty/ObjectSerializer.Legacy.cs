@@ -79,6 +79,7 @@ public partial class ObjectSerializer {
     [Obsolete("Use SerializerFlags property directly")]
     public virtual ObjectSerializer OnBehaviors(SerializerFlags flags) {
         SerializerFlags = flags;
+        
         return this;
     }
 
@@ -89,6 +90,7 @@ public partial class ObjectSerializer {
     [Obsolete("Use Versionable property directly")]
     public virtual ObjectSerializer OnMode(Mode mode) {
         Versionable = mode == Mode.Verbose;
+        
         return this;
     }
 
@@ -99,6 +101,7 @@ public partial class ObjectSerializer {
     [Obsolete("Use PropertyMask property directly")]
     public virtual ObjectSerializer OnPropertyMask(PropertyFlags flags) {
         PropertyMask = flags;
+        
         return this;
     }
 

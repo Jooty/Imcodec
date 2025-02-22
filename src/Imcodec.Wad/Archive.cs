@@ -54,6 +54,7 @@ public sealed class Archive {
     public Memory<byte>? OpenFile(string fileName) {
         if (Files.TryGetValue(fileName, out var lazyEntry)) {
             var fileEntry = lazyEntry.Value;
+            
             return ReadFileData(fileEntry);
         }
 
@@ -68,6 +69,7 @@ public sealed class Archive {
     public async Task<Memory<byte>?> OpenFileAsync(string fileName) {
         if (Files.TryGetValue(fileName, out var lazyEntry)) {
             var fileEntry = lazyEntry.Value;
+            
             return await ReadFileDataAsync(fileEntry);
         }
 
