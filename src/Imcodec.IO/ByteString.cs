@@ -20,10 +20,12 @@ modification, are permitted provided that the following conditions are met:
 
 using System.Diagnostics;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Imcodec.IO;
 
 [DebuggerDisplay("{ToString()}")]
+[JsonConverter(typeof(ByteStringJsonConverter))]
 public readonly struct ByteString {
 
     private readonly byte[] _bytes;
@@ -65,5 +67,20 @@ public readonly struct ByteString {
             return _bytes.Length;
         }
     }
+
+}
+
+public class ByteStringJsonConverter : JsonConverter<ByteString> {
+
+    public override ByteString ReadJson(JsonReader reader, Type objectType, ByteString existingValue, bool hasExistingValue, JsonSerializer serializer) {
+        if (reader.Value is null) {
+            return new ByteString();
+        }
+
+        return new ByteString(reader.Value?.ToString() ?? string.Empty);
+    }
+
+    public override void WriteJson(JsonWriter writer, ByteString value, JsonSerializer serializer) 
+        => writer.WriteValue(value.ToString());
 
 }

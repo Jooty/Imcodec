@@ -18,12 +18,14 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text;
 
 namespace Imcodec.IO;
 
 [DebuggerDisplay("{ToString()}")]
+[JsonConverter(typeof(WideByteStringJsonConverter))]
 public readonly struct WideByteString {
 
     private readonly byte[] _bytes;
@@ -57,5 +59,20 @@ public readonly struct WideByteString {
         => _bytes is null ? null : Encoding.Unicode.GetString(_bytes);
 
     public int Length => _bytes?.Length ?? 0;
+
+}
+
+public class WideByteStringJsonConverter : JsonConverter<WideByteString> {
+
+    public override WideByteString ReadJson(JsonReader reader, Type objectType, WideByteString existingValue, bool hasExistingValue, JsonSerializer serializer) {
+        if (reader.Value is null) {
+            return new WideByteString();
+        }
+
+        return new WideByteString(reader.Value?.ToString() ?? string.Empty);
+    }
+
+    public override void WriteJson(JsonWriter writer, WideByteString value, JsonSerializer serializer) 
+        => writer.WriteValue(value.ToString());
 
 }
