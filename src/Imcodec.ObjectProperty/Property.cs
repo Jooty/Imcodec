@@ -159,7 +159,7 @@ public sealed class Property<T>(uint hash,
             return Property<T>.EncodeEnum(writer, val!, serializer);
         }
         else if (StreamPropertyCodec.TryGetWriter(InnerType, out var codec)) {
-            codec.Invoke(writer, (T) val!);
+            codec.Invoke(writer, val!);
 
             return true;
         }

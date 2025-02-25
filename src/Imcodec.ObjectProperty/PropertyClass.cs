@@ -133,6 +133,7 @@ public abstract record PropertyClass {
     }
 
     private bool EncodeVersionable(BitWriter writer, ObjectSerializer serializer) {
+        var objectStart = writer.BitPos();
         writer.WriteUInt32(0); // Placeholder for the size.
 
         foreach (var property in Properties) {
@@ -141,27 +142,25 @@ public abstract record PropertyClass {
             }
 
             // Write the hash and size of the property.
+            var sizeStart = writer.BitPos();
             writer.WriteUInt32(0); // Placeholder for the size.
             writer.WriteUInt32(property.Hash);
 
-            var sizeBitPos = writer.BitPos();
+            var preEncodeBitPos = writer.BitPos();
             var encodeSuccess = property.Encode(writer, serializer);
-            if (!encodeSuccess) {
-                return false;
-            }
 
             // Write the size of the property.
-            var size = writer.BitPos() - sizeBitPos;
-            writer.SeekBit(sizeBitPos);
+            var size = writer.BitPos() - preEncodeBitPos;
+            writer.SeekBit(sizeStart);
             writer.WriteUInt32((uint)size);
-            writer.SeekBit(sizeBitPos + size);
+            writer.SeekBit(preEncodeBitPos + size);
         }
 
         // Write the size of the object.
-        var objectSize = writer.BitPos();
-        writer.SeekBit(0);
+        var objectSize = writer.BitPos() - objectStart;
+        writer.SeekBit(objectStart);
         writer.WriteUInt32((uint)objectSize);
-        writer.SeekBit(objectSize);
+        writer.SeekBit(objectStart + objectSize);
 
         return true;
     }
@@ -179,6 +178,11 @@ public abstract record PropertyClass {
             var propertyStart = reader.BitPos();
             var propertySize = reader.ReadUInt32();
             var propertyHash = reader.ReadUInt32();
+
+            // A property size of 0 would cause an infinite loop.
+            if (propertySize == 0) {
+                return false;
+            }
 
             // Ensure that the property exists. If it does, decode it.
             if (propMap.TryGetValue(propertyHash, out var property)) {
