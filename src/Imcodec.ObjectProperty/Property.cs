@@ -182,8 +182,12 @@ public sealed class Property<T>(uint hash,
     private static bool EncodePropertyClass(BitWriter writer,
                                             PropertyClass propertyClass,
                                             ObjectSerializer serializer) {
-        if (!serializer.PreWriteObject(writer, propertyClass)) {
-            return false;
+        serializer.PreWriteObject(writer, propertyClass);
+
+        // If the property class is null, we can skip encoding the object.
+        // We'll still return true because we didn't technically fail to encode the object.
+        if (propertyClass is null) {
+            return true;
         }
 
         return propertyClass.Encode(writer, serializer);
@@ -290,8 +294,12 @@ public sealed class Property<T>(uint hash,
     private static bool DecodePropertyClass(BitReader reader,
                                             ObjectSerializer serializer,
                                             out PropertyClass? propertyClass) {
-        if (!serializer.PreloadObject(reader, out propertyClass)) {
-            return false;
+        serializer.PreloadObject(reader, out propertyClass);
+
+        // If the property class is null, we can skip decoding the object.
+        // We'll still return true because we didn't technically fail to decode the object.
+        if (propertyClass is null) {
+            return true;
         }
 
         return propertyClass!.Decode(reader, serializer);
