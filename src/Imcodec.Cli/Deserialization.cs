@@ -44,6 +44,7 @@ internal class DeserializedBlobInfo {
     public required uint _flags { get; set; }
     public required string _serializerType { get; set; }
     public required bool _verbose { get; set; }
+    public required string _objectType { get; set; }
     public required PropertyClass _object { get; set; }
 
 }
@@ -88,6 +89,7 @@ public static class Deserialization {
         }
         catch (Exception ex) {
             Console.WriteLine($"Failed to deserialize file ({fileName}): {ex.Message} {ex.StackTrace}");
+            
             return null;
         }
     }
@@ -129,11 +131,12 @@ public static class Deserialization {
                     var info = new DeserializedBlobInfo {
                         _rawBlob = hexBlob,
                         _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                        _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
-                        _object = propertyClass,
+                        _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",      
                         _flags = (uint) serializer.SerializerFlags,
                         _serializerType = Name,
-                        _verbose = IsVerbose
+                        _verbose = IsVerbose,
+                        _objectType = propertyClass.GetType().Name,
+                        _object = propertyClass
                     };
 
                     return JsonConvert.SerializeObject(info, Formatting.Indented);
