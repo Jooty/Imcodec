@@ -18,17 +18,15 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System;
-using Newtonsoft.Json;
 using Cocona;
 using Imcodec.ObjectProperty;
 
 namespace Imcodec.Cli;
 
-public class ObjectPropertyCommands {
+public partial class ObjectPropertyCommands {
 
-    [Command("deser", Description = "Deserialize a BiND buffer to a JSON file.")]
-    public void Deserialize([Argument] string inputPath,
+    [Command("file", Description = "Deserialize a BiND buffer to a JSON file.")]
+    public void DeserializeFile([Argument] string inputPath,
                             [Argument] string outputPath = ".") {
         // Ensure that the file exists.
         if (!File.Exists(inputPath)) {
@@ -54,6 +52,26 @@ public class ObjectPropertyCommands {
         Console.WriteLine($"Successfully deserialized the buffer to '{outputPath}'.");
     }
 
+    [Command("blob", Description = "Deserialize a hex byte blob as JSON.")]
+    private void DeserializeBlob([Argument] string hexBlob) {
+        // Ensure the hex blob is not empty, and matches the mattern of a hex blob.
+        if (!IsHexBlob(hexBlob)) {
+            Console.WriteLine("The hex blob is empty or invalid.");
+
+            return;
+        }
+
+        // Deserialize the byte array.
+        var jsonObj = Deserialization.TryDeserializeHexBlob(hexBlob);
+        if (jsonObj == null) {
+            Console.WriteLine("Failed to deserialize the byte array.");
+            
+            return;
+        }
+
+        Console.WriteLine(jsonObj);
+    }
+
     private static string GetOutputFile(string inputFilePath, string outputPath) {
         // '.' denotes default. If the output path is the default, use the archive path.
         if (outputPath == ".") {
@@ -62,5 +80,9 @@ public class ObjectPropertyCommands {
 
         return outputPath;
     }
+
+    private static bool IsHexBlob(string hexBlob) =>
+        // Check if the string is empty or contains only valid hex characters.
+        !string.IsNullOrEmpty(hexBlob);
 
 }
