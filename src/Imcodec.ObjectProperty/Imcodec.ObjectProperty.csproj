@@ -7,32 +7,6 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <!-- Configure source generator output -->
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
-
-        <!-- Make sure analyzers run always -->
-        <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
-        <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
-
-        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-        <GenerateFullPaths>true</GenerateFullPaths>
-        <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
-    </PropertyGroup>
-
-    <!-- Create the generated files directory before compilation -->
-    <Target Name="CreateGeneratedFilesDirectory" BeforeTargets="BeforeCompile">
-        <MakeDir Directories="Generated" />
-        <MakeDir Directories="Generated\Imcodec.ObjectProperty.CodeGen" />
-        <MakeDir Directories="Generated\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.IncrementalSourceGenerator" />
-    </Target>
-
-    <ItemGroup>
-        <Compile Remove="Generated/**/*.cs" />
-        <Content Include="Generated/**/*.cs" />
-    </ItemGroup>
-
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>Imcodec.Test</_Parameter1>
