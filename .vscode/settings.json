@@ -1,0 +1,20 @@
+{
+    "dotnet.preferCSharpExtension": true,
+    "csharp.suppressBuildAssetsNotification": true,
+    "csharp.suppressDotnetRestoreNotification": true,
+    "csharp.suppressProjectJsonNotification": true,
+    "csharp.suppressHiddenDiagnostics": false,
+    "csharp.maxProjectFileCountForDiagnosticAnalysis": 1000,
+    "csharp.semanticHighlighting.enabled": true,
+    "csharp.suppressDotnetInstallWarning": true,
+    "dotnet.codeLens.enableReferencesCodeLens": true,
+    "dotnet.server.trace": "Messages",
+    "dotnet.completion.showNameCompletionSuggestions": true,
+    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+    "dotnet.backgroundAnalysis.analyzerPackagesSearchPaths": [
+        "${workspaceFolder}/src/Imcodec.ObjectProperty.CodeGen/bin/Debug/netstandard2.0"
+    ],
+    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "openFiles",
+    "dotnet.codeLens.enableTestsCodeLens": true
+}

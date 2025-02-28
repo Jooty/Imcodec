@@ -1,4 +1,33 @@
 {
+    "RoslynExtensionsOptions": {
+        "EnableAnalyzersSupport": true,
+        "EnableDecompilationSupport": true,
+        "LocationPaths": []
+    },
+    "FormattingOptions": {
+        "EnableEditorConfigSupport": true
+    },
+    "RoslynExtensionsOptions": {
+        "EnableAnalyzersSupport": true,
+        "EnableDecompilationSupport": true
+    },
+    "FileOptions": {
+        "SystemExcludeSearchPatterns": [
+            "**/node_modules/**/*",
+            "**/bin/**/*",
+            "**/obj/**/*",
+            "**/**.dll",
+            "**/**.exe"
+        ],
+        "ExcludeSearchPatterns": []
+    },
+    "Analyzers": {
+        "EnableEditorConfigSupport": true
+    },
+    "ImplementTypeOptions": {
+        "PropertyGenerationBehavior": "PreferAutoProperties",
+        "InsertionBehavior": "WithOtherMembersOfTheSameKind"
+    },
     "FormattingOptions": {
         "NewLinesForBracesInLambdaExpressionBody": false,
         "NewLinesForBracesInAnonymousMethods": false,

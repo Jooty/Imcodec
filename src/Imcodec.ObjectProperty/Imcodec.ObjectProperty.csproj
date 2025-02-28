@@ -7,12 +7,30 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
-    <Target Name="CleanSourceGeneratedFiles" BeforeTargets="BeforeBuild" DependsOnTargets="$(BeforeBuildDependsOn)">
-        <RemoveDir Directories="Generated" />
+    <PropertyGroup>
+        <!-- Configure source generator output -->
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\Generated</CompilerGeneratedFilesOutputPath>
+
+        <!-- Make sure analyzers run always -->
+        <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+        <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <GenerateFullPaths>true</GenerateFullPaths>
+        <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+    </PropertyGroup>
+
+    <!-- Create the generated files directory before compilation -->
+    <Target Name="CreateGeneratedFilesDirectory" BeforeTargets="BeforeCompile">
+        <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)" />
+        <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)\Imcodec.ObjectProperty.CodeGen" />
+        <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.IncrementalSourceGenerator" />
     </Target>
 
     <ItemGroup>
-        <Compile Remove="$(CompilerGeneratedFilesOutputPath)/*.cs" />
+        <Compile Remove="Generated/**/*.cs" />
+        <Content Include="Generated/**/*.cs" />
     </ItemGroup>
 
     <ItemGroup>
@@ -33,8 +51,10 @@
         <ProjectReference Include="..\Imcodec.IO\Imcodec.IO.csproj" />
         <ProjectReference Include="..\Imcodec.Math\Imcodec.Math.csproj" />
         <ProjectReference Include="..\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj"
+                      PrivateAssets="all"
                       OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false"/>
+                      ReferenceOutputAssembly="false"
+                      SetTargetFramework="TargetFramework=netstandard2.0"/>
         <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
     </ItemGroup>
 
