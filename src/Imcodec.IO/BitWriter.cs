@@ -148,7 +148,7 @@ public class BitWriter : BitManipulator {
     /// </summary>
     /// <param name="str">The UTF-8 encoded string to write to the stream.</param>
     public void WriteString(string str) {
-        if (str.ToString() is null || str.ToString() == string.Empty) {
+        if (str is null || str.ToString() is null || str.ToString() == string.Empty) {
             if (base.CompactLengths) {
                 WriteUInt8(0);
             }
