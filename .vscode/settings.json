@@ -16,5 +16,10 @@
     ],
     "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
     "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "openFiles",
-    "dotnet.codeLens.enableTestsCodeLens": true
+    "dotnet.codeLens.enableTestsCodeLens": true,
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.privateMemberSearchPaths": [
+      "Imcodec.ObjectProperty/Generated"
+    ],
+    "dotnet.server.useOmnisharp": true
 }

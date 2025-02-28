@@ -10,7 +10,7 @@
     <PropertyGroup>
         <!-- Configure source generator output -->
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\Generated</CompilerGeneratedFilesOutputPath>
+        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
 
         <!-- Make sure analyzers run always -->
         <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
@@ -23,9 +23,9 @@
 
     <!-- Create the generated files directory before compilation -->
     <Target Name="CreateGeneratedFilesDirectory" BeforeTargets="BeforeCompile">
-        <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)" />
-        <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)\Imcodec.ObjectProperty.CodeGen" />
-        <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.IncrementalSourceGenerator" />
+        <MakeDir Directories="Generated" />
+        <MakeDir Directories="Generated\Imcodec.ObjectProperty.CodeGen" />
+        <MakeDir Directories="Generated\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.IncrementalSourceGenerator" />
     </Target>
 
     <ItemGroup>
