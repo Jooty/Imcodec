@@ -43,7 +43,7 @@ public class ServerTypeRegistry : TypeRegistry {
 
     public override void RegisterType(uint hash, System.Type type) 
         => _types[hash] = type;
-
+/*
     public record WizZoneTriggers : PropertyClass {
         public override uint GetHash() => 0x06DAAC43;
 
@@ -849,5 +849,6 @@ public class ServerTypeRegistry : TypeRegistry {
         // HASH : 0x492B6BF1
         // SIZE : 65 bits
     }
+    */
 
 }

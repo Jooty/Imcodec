@@ -119,7 +119,7 @@ namespace Imcodec.ObjectProperty.CodeGen {
             var flagsStr = GetFlagsString((int) flags);
 
             var endStr = $"// {flagsStr} ({flags})"
-                + $"\n // Hash: {hash}"
+                + $"\n\t // Hash: {hash}"
                 + $"\n\tpublic {propertyType} {propertyName} {{ get; set; }}";
 
             return endStr;
