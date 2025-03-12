@@ -18,6 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Linq;
 using System.Text;
 using Imcodec.ObjectProperty.CodeGen.Definitions;
 
@@ -61,6 +62,11 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t}");
             sb.AppendLine();
         }
+
+        // If a base class is present, encode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
+        }
         
         sb.AppendLine("\t\tOnPostEncode();");
         sb.AppendLine("\t\treturn true;");
@@ -88,6 +94,11 @@ internal static class PropertyClassSerializationGenerator {
             
             sb.AppendLine("\t\t}");
             sb.AppendLine();
+        }
+
+        // If a base class is present, decode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
         }
         
         sb.AppendLine("\t\tOnPostDecode();");
@@ -324,6 +335,11 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t}");
             sb.AppendLine();
         }
+
+        // If a base class is present, encode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
+        }
         
         sb.AppendLine("\t\t// Write the size of the object");
         sb.AppendLine("\t\tvar objectSize = writer.BitPos() - objectStart;");
@@ -373,10 +389,17 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\t\t\t\tbreak;");
         sb.AppendLine("\t\t\t}");
         sb.AppendLine();
+
         sb.AppendLine("\t\t\t// Seek bit to the end of this property");
         sb.AppendLine("\t\t\treader.SeekBit((int) (propertyStart + propertySize));");
         sb.AppendLine("\t\t}");
         sb.AppendLine();
+
+        // If a base class is present, decode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
+        }
+
         sb.AppendLine("\t\t// Seek bit to the end of this object");
         sb.AppendLine("\t\treader.SeekBit((int) (objectStart + objectSize));");
         sb.AppendLine("\t\treturn true;");
@@ -446,5 +469,9 @@ internal static class PropertyClassSerializationGenerator {
         
         return sb.ToString();
     }
+
+    private static bool HasNoBaseClass(PropertyClassDefinition classDefinition) 
+        => classDefinition.BaseClassNames.Count == 1
+        && classDefinition.BaseClassNames.All(x => x == "PropertyClass");
 
 }
