@@ -36,57 +36,7 @@ public partial class ServerGeneratedTypeRegistry : TypeRegistry {
     public override void RegisterType(uint hash, System.Type type) 
         => _types[hash] = type;
 
-    [PropertySerializationTarget]
-    public partial record Trigger : PropertyClass {
-
-        public override uint GetHash() => 0x068C265B;
-
-        [PropertyField(0xB8C90C10, 31)] public ByteString m_triggerName { get; set; }
-        [PropertyField(0x3933D634, 31)] public uint m_triggerMax { get; set; }
-        [PropertyField(0x767AAC3C, 31)] public uint m_cooldown { get; set; }
-        [PropertyField(0x2E8B9981, 31)] public uint m_cooldownRand { get; set; }
-        [PropertyField(0x3282D78A, 31)] public bool m_pulsar { get; set; }
-        [PropertyField(0x7DB09CC1, 31)] public List<ByteString>? m_activateEvents { get; set; }
-        [PropertyField(0xA7BEADF6, 31)] public List<ByteString>? m_fireEvents { get; set; }
-        [PropertyField(0x62A2160A, 31)] public List<ByteString>? m_deactivateEvents { get; set; }
-        [PropertyField(0x5C548D5F, 31)] public List<ByteString>? m_unknown { get; set; }
-        [PropertyField(0xA955FFA6, 31)] public RequirementList? m_requirements { get; set; }
-        [PropertyField(0xE11C8ADA, 31)] public ResultList? m_results { get; set; }
-        [PropertyField(0x794EA0DF, 31)] public uint unknown_uint_3 { get; set; }
-        [PropertyField(0x88B9D287, 31)] public ByteString unknown_str_3 { get; set; }
-        //[AutoProperty(0x8177DA98, 31)] public TriggerObjectInfo? m_triggerObjInfo { get; set; }
-
-        internal override bool Encode(BitWriter writer, ObjectSerializer serializer) 
-            => throw new NotImplementedException("This should be replaced by generated code");
-        
-        internal override bool Decode(BitReader reader, ObjectSerializer serializer)
-            => throw new NotImplementedException("This should be replaced by generated code");
-
-    }
-
 /*
-    public record WizZoneTriggers : PropertyClass {
-        public override uint GetHash() => 0x06DAAC43;
-
-        [AutoProperty(0x3F1DB764, 31)] public List<Trigger>? m_triggers { get; set; }
-    }
-
-    // ? Why does this exist?
-    public record TriggerObjectBase : CoreObjectInfo {
-        // todo: need actual hashes here
-        public override uint GetHash() => 0xFFFFFF;
-
-        // Why would a trigger have a location? Isn't this what volumes are for?
-        [AutoProperty(0x7DB3F828, 31)] public float m_locationX { get; set; }
-        [AutoProperty(0x7DB3F829, 31)] public float m_locationY { get; set; }
-        [AutoProperty(0x7DB3F82A, 31)] public float m_locationZ { get; set; }
-    }
-
-    public record TriggerObjectInfo : TriggerObjectBase {
-        // todo: need actual hashes here
-        public override uint GetHash() => 0xFFFFFF;
-    }
-
     public record WizZoneVolumes : PropertyClass {
         public override uint GetHash() => 0x1B6EF770;
 
