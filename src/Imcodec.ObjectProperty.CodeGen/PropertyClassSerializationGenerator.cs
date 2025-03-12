@@ -389,9 +389,6 @@ internal static class PropertyClassSerializationGenerator {
     public static string GenerateHelperMethods() {
         var sb = new StringBuilder();
         
-        sb.AppendLine("\t/// <summary>");
-        sb.AppendLine("\t/// Determines if a property is eligible for processing based on its flags and the serializer settings.");
-        sb.AppendLine("\t/// </summary>");
         sb.AppendLine("\tprivate static bool IsPropertyEligibleForProcessing(PropertyFlags propertyFlags, ObjectSerializer serializer) {");
         sb.AppendLine("\t\tvar serializerFlags = serializer.SerializerFlags;");
         sb.AppendLine("\t\tvar serializerMask = serializer.PropertyMask;");
@@ -408,9 +405,7 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t}");
         
         sb.AppendLine();
-        sb.AppendLine("\t/// <summary>");
-        sb.AppendLine("\t/// Writes the size of a vector to the bit writer.");
-        sb.AppendLine("\t/// </summary>");
+
         sb.AppendLine("\tprivate static void WriteVectorSize(BitWriter writer, int size, ObjectSerializer serializer) {");
         sb.AppendLine("\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {");
         sb.AppendLine("\t\t\tif (size < 127) {");
@@ -425,9 +420,7 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t}");
         
         sb.AppendLine();
-        sb.AppendLine("\t/// <summary>");
-        sb.AppendLine("\t/// Reads the size of a vector from the bit reader.");
-        sb.AppendLine("\t/// </summary>");
+
         sb.AppendLine("\tprivate static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer) {");
         sb.AppendLine("\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {");
         sb.AppendLine("\t\t\tvar sizeRedundant = reader.ReadBit();");
@@ -438,9 +431,7 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t}");
         
         sb.AppendLine();
-        sb.AppendLine("\t/// <summary>");
-        sb.AppendLine("\t/// Sanitizes a string enum value for parsing.");
-        sb.AppendLine("\t/// </summary>");
+        
         sb.AppendLine("\tprivate static string SanitizeStringEnum(string enumString) {");
         sb.AppendLine("\t\t// Client inconsistency: The client will sometimes use '-' and '_' interchangably.");
         sb.AppendLine("\t\tenumString = enumString.Replace('-', '_');");

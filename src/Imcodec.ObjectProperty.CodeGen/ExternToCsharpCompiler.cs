@@ -118,8 +118,9 @@ namespace Imcodec.ObjectProperty.CodeGen {
             // Flags is an integer. Cast it to the enum type, and write it as a string.
             var flagsStr = GetFlagsString((int) flags);
 
-            var endStr = $"// {flagsStr} ({flags})"
-                + $"\n\t // Hash: {hash}"
+            var endStr = 
+                  $"// Flags: ({flags}) {flagsStr}"
+                + $"\n\t// Hash: {hash}"
                 + $"\n\tpublic {propertyType} {propertyName} {{ get; set; }}";
 
             return endStr;

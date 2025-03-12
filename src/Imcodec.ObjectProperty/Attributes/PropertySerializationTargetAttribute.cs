@@ -18,24 +18,12 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System.Collections.Generic;
+namespace Imcodec.ObjectProperty.Attributes;
 
-namespace Imcodec.ObjectProperty.TypeCache;
-
-// This class is empty on purpose; it is meant to be populated by the code generator.
-// It exists here, partially, to allow the object serializer to by default use this registry.
-
-public partial class ClientGeneratedTypeRegistry : TypeRegistry {
-
-    private readonly Dictionary<uint, System.Type> _typeMap = [];
-
-    public override void RegisterType(uint hash, System.Type type)
-        => _typeMap[hash] = type;
-
-    public override System.Type? LookupType(uint hash) {
-        _typeMap.TryGetValue(hash, out var type);
-        
-        return type;
-    }
-
-}
+/// <summary>
+/// Marks a class as a server-side property class.
+/// This attribute triggers the source generator to create serialization methods.
+/// The decorated class must be partial.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class PropertySerializationTargetAttribute  : Attribute { }
