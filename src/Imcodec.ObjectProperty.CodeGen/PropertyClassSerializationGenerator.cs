@@ -44,7 +44,7 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t/// <summary>");
         sb.AppendLine("\t/// Encodes this object's properties using the specified writer and serializer.");
         sb.AppendLine("\t/// </summary>");
-        sb.AppendLine("\tinternal override bool Encode(BitWriter writer, ObjectSerializer serializer) {");
+        sb.AppendLine("\tpublic override bool Encode(BitWriter writer, ObjectSerializer serializer) {");
         sb.AppendLine("\t\tOnPreEncode();");
         sb.AppendLine();
         sb.AppendLine("\t\tif (serializer.Versionable) {");
@@ -77,7 +77,7 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t/// <summary>");
         sb.AppendLine("\t/// Decodes this object's properties using the specified reader and serializer.");
         sb.AppendLine("\t/// </summary>");
-        sb.AppendLine("\tinternal override bool Decode(BitReader reader, ObjectSerializer serializer) {");
+        sb.AppendLine("\tpublic override bool Decode(BitReader reader, ObjectSerializer serializer) {");
         sb.AppendLine("\t\tOnPreDecode();");
         sb.AppendLine();
         sb.AppendLine("\t\tif (serializer.Versionable) {");

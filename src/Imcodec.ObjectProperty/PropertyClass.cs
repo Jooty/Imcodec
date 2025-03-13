@@ -59,7 +59,7 @@ public abstract record PropertyClass {
     /// serialize the object properties.</param>
     /// <returns><c>true</c> if the encoding is successful;
     /// otherwise, <c>false</c>.</returns>
-    internal abstract bool Encode(BitWriter writer, ObjectSerializer serializer);
+    public abstract bool Encode(BitWriter writer, ObjectSerializer serializer);
 
     /// <summary>
     /// Decodes the object properties using the specified <see cref="BitReader"/>
@@ -69,6 +69,6 @@ public abstract record PropertyClass {
     /// <param name="serializer">The <see cref="ObjectSerializer"/> used for decoding.</param>
     /// <returns><c>true</c> if the decoding is successful for all properties;
     /// otherwise, <c>false</c>.</returns>
-    internal abstract bool Decode(BitReader reader, ObjectSerializer serializer);
+    public abstract bool Decode(BitReader reader, ObjectSerializer serializer);
 
 }

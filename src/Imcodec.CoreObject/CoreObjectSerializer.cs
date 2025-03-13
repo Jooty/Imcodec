@@ -85,8 +85,9 @@ public sealed class CoreObjectSerializer(
       writer.WriteUInt8(type);
 
       // Write the template ID if this is a CoreObject. Otherwise, write the hash.
-      if (propertyClass is CoreObject co) {
-         writer.WriteUInt32((uint) (co.m_coreTemplate.m_templateID & 0xFFFFFFFF));
+      if (propertyClass is ObjectProperty.TypeCache.CoreObject co) {
+         var hash = GetHashFromBlockAndType(block, type);
+         writer.WriteUInt32(hash);
       }
       else {
          writer.WriteUInt32(propertyClass.GetHash());
