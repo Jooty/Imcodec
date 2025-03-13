@@ -4,13 +4,6 @@
         "EnableDecompilationSupport": true,
         "LocationPaths": []
     },
-    "FormattingOptions": {
-        "EnableEditorConfigSupport": true
-    },
-    "RoslynExtensionsOptions": {
-        "EnableAnalyzersSupport": true,
-        "EnableDecompilationSupport": true
-    },
     "FileOptions": {
         "SystemExcludeSearchPatterns": [
             "**/node_modules/**/*",
