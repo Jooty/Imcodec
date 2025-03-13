@@ -28,6 +28,8 @@ public partial record WizZoneTriggers : PropertyClass {
 
     public override uint GetHash() => 0x06DAAC43;
 
+    [PropertyField(0x3F1DB764, 31)] public List<Trigger>? m_triggers { get; set; }
+
 }
 
 [PropertySerializationTarget]
