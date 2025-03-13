@@ -21,6 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Imcodec.ObjectProperty;
+using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.Benchmarks;
 
@@ -39,7 +40,7 @@ public class ObjectSerializerBenchmarks {
     [GlobalSetup]
     public void Setup() {
         // Initialize the serializer and test data
-        _serializer = new ObjectSerializer(false, SerializerFlags.None, new DummyTypeRegistry());
+        _serializer = new ObjectSerializer(false, SerializerFlags.None);
 
         // Create a sample loot table
         _lootTable = new LootInfoList {
@@ -73,13 +74,13 @@ public class ObjectSerializerBenchmarks {
 
     [Benchmark]
     public void SerializeWithCompression() {
-        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
+        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress);
         compressedSerializer.Serialize(_lootTable, (PropertyFlags) 31, out var _);
     }
 
     [Benchmark]
     public void DeserializeWithCompression() {
-        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
+        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress);
         compressedSerializer.Deserialize<LootInfoList>(_compressedData, (PropertyFlags) 31, out var _);
     }
 
