@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.ObjectProperty;
+using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.Test.ObjectPropertyTest;
 
@@ -34,7 +35,7 @@ public class LootTableTest {
 
     [Fact]
     public void TryDeserializeLootTableBlob() {
-        var serializer = new ObjectSerializer(false, SerializerFlags.None, new DummyTypeRegistry());
+        var serializer = new ObjectSerializer(false, SerializerFlags.None);
         var byteBlob = Convert.FromHexString(LootTableBlob);
         var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
 
@@ -75,7 +76,7 @@ public class LootTableTest {
     [Fact]
     public void TrySerializeWithCompression() {
         // Serialize a loot info list with compression and see if it matches the expected blob.
-        var serializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
+        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
         var lootTable = new LootInfoList {
             m_goldInfo = new GoldLootInfo {
                 m_goldAmount = 2,
@@ -97,7 +98,7 @@ public class LootTableTest {
     [Fact]
     public void TryDeserializeWithCompression() {
         // Deserialize a compressed loot info list and see if it matches the expected blob.
-        var serializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
+        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
         var byteBlob = Convert.FromHexString(LootTableBlobCompressed);
         var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
 

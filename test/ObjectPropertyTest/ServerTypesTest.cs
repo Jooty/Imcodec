@@ -20,7 +20,7 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.CoreObject;
 using Imcodec.ObjectProperty;
-using static Imcodec.ObjectProperty.TypeCache.ServerTypeRegistry;
+using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.Test.ObjectPropertyTest;
 
@@ -43,7 +43,7 @@ public sealed class ServerTypesTest {
 
     [Fact]
     public void TryDeserializeServerTypes() {
-        var serializer = new ObjectSerializer(false, SerializerFlags.None, new DummyTypeRegistry());
+        var serializer = new ObjectSerializer(false, SerializerFlags.None);
         var byteBlob = ConvertFromHexString(s_serverTypesObjectSerializer);
         var deserializeSuccess = serializer.Deserialize<WizZoneTriggers>(byteBlob, (PropertyFlags) 31, out var serverTypes);
 
@@ -53,7 +53,7 @@ public sealed class ServerTypesTest {
 
     [Fact]
     public void TryDeserializeServerTypesCore() {
-        var serializer = new CoreObjectSerializer(false, SerializerFlags.None, new DummyTypeRegistry());
+        var serializer = new CoreObjectSerializer(false, SerializerFlags.None);
         var byteBlob = ConvertFromHexString(s_serverTypesCoreObjectSerializer);
         var deserializeSuccess = serializer.Deserialize<WizZoneTriggers>(byteBlob, (PropertyFlags) 31, out var serverTypes);
 

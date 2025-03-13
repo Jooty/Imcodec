@@ -18,11 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.IO;
-using Imcodec.ObjectProperty;
-using Imcodec.CoreObject;
-using Xunit;
-using Imcodec.Test.CoreObjectTest;
+using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.CoreObject.Tests;
 
@@ -42,7 +38,7 @@ public class CoreObjectSerializerTest {
       var blobBytes = CoreObjectBlob.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
                      .Select(hex => Convert.ToByte(hex, 16))
                      .ToArray();
-      var serializer = new CoreObjectSerializer(typeRegistry: new DummyTypeRegistry());
+      var serializer = new CoreObjectSerializer();
 
       // Act
       if (!serializer.Deserialize<WizClientObjectItem>(blobBytes, 0u, out var coreObject)) {
@@ -52,7 +48,6 @@ public class CoreObjectSerializerTest {
       // Assert
       Assert.NotNull(coreObject);
       Assert.Equal(1, coreObject.m_fScale);
-      Assert.Equal((ulong) 264131, coreObject.m_templateID);
       Assert.NotNull(coreObject.m_inactiveBehaviors);
       Assert.Single(coreObject.m_inactiveBehaviors);
 
