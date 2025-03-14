@@ -18,9 +18,10 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Imcodec.CoreObject;
 using Imcodec.ObjectProperty.TypeCache;
 
-namespace Imcodec.CoreObject.Tests;
+namespace Imcodec.Test.CoreObjectTest;
 
 public class CoreObjectSerializerTest {
 
@@ -31,26 +32,27 @@ public class CoreObjectSerializerTest {
         0D F6 20 9D A4 02 00 57 AC 0C A5
         """;
 
-   [Fact]
-	public void Serializer_Deserialize() {
+    [Fact]
+    public void SerializerDeserialize() {
 
-      // Arrange
-      var blobBytes = CoreObjectBlob.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
-                     .Select(hex => Convert.ToByte(hex, 16))
-                     .ToArray();
-      var serializer = new CoreObjectSerializer();
+        // Arrange
+        var blobBytes = CoreObjectBlob
+            .Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(static hex => Convert.ToByte(hex, 16))
+            .ToArray();
+        var serializer = new CoreObjectSerializer();
 
-      // Act
-      if (!serializer.Deserialize<WizClientObjectItem>(blobBytes, 0u, out var coreObject)) {
-         Assert.True(false, "Failed to serialize object.");
-      }
+        // Act
+        if (!serializer.Deserialize<WizClientObjectItem>(blobBytes, 0u, out var coreObject)) {
+            Assert.True(false, "Failed to serialize object.");
+        }
 
-      // Assert
-      Assert.NotNull(coreObject);
-      Assert.Equal(1, coreObject.m_fScale);
-      Assert.NotNull(coreObject.m_inactiveBehaviors);
-      Assert.Single(coreObject.m_inactiveBehaviors);
+        // Assert
+        Assert.NotNull(coreObject);
+        Assert.Equal(1, coreObject.m_fScale);
+        Assert.NotNull(coreObject.m_inactiveBehaviors);
+        Assert.Single(coreObject.m_inactiveBehaviors);
 
-   }
+    }
 
 }

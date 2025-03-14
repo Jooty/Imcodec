@@ -51,6 +51,11 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\t\treturn EncodeVersionable(writer, serializer);");
         sb.AppendLine("\t\t}");
         sb.AppendLine();
+
+        // If a base class is present, encode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
+        }
         
         // Add property encodings.
         foreach (var property in classDefinition.Properties) {
@@ -61,11 +66,6 @@ internal static class PropertyClassSerializationGenerator {
             
             sb.AppendLine("\t\t}");
             sb.AppendLine();
-        }
-
-        // If a base class is present, encode its properties as well.
-        if (!HasNoBaseClass(classDefinition)) {
-            sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
         }
         
         sb.AppendLine("\t\tOnPostEncode();");
@@ -84,6 +84,11 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\t\treturn DecodeVersionable(reader, serializer);");
         sb.AppendLine("\t\t}");
         sb.AppendLine();
+
+        // If a base class is present, decode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
+        }
         
         // Add property decodings.
         foreach (var property in classDefinition.Properties) {
@@ -94,11 +99,6 @@ internal static class PropertyClassSerializationGenerator {
             
             sb.AppendLine("\t\t}");
             sb.AppendLine();
-        }
-
-        // If a base class is present, decode its properties as well.
-        if (!HasNoBaseClass(classDefinition)) {
-            sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
         }
         
         sb.AppendLine("\t\tOnPostDecode();");
@@ -207,7 +207,8 @@ internal static class PropertyClassSerializationGenerator {
                 // A reader was not found. Assume the property is a PropertyClass.
                 sb.AppendLine("\t\t\t// PropertyClass decoding");
                 sb.AppendLine($"\t\t\tserializer.PreloadObject(reader, out var item_{property.Name});");
-                sb.AppendLine($"\t\t\tif ({property.Name} != null) {{");
+                sb.AppendLine($"\t\t\tif (item_{property.Name} != null) {{");
+                sb.AppendLine($"\t\t\t\t{property.Name} = ({property.CsharpType}) item_{property.Name};");
                 sb.AppendLine($"\t\t\t\t{property.Name}.Decode(reader, serializer);");
                 sb.AppendLine("\t\t\t}");
             }
@@ -230,40 +231,38 @@ internal static class PropertyClassSerializationGenerator {
 
         return "object";
     }
-    
-    private static string GetWriterMethodForType(string typeName, string valueVar) {
-        return typeName switch {
-            "byte" => $"writer.WriteUInt8({valueVar});",
-            "sbyte" => $"writer.WriteInt8({valueVar});",
-            "char" => $"writer.WriteUInt8(Convert.ToByte({valueVar}));",
-            "bool" => $"writer.WriteBit({valueVar});",
-            "short" => $"writer.WriteInt16({valueVar});",
-            "ushort" => $"writer.WriteUInt16({valueVar});",
-            "int" => $"writer.WriteInt32({valueVar});",
-            "uint" => $"writer.WriteUInt32({valueVar});",
-            "long" => $"writer.WriteInt64({valueVar});",
-            "ulong" => $"writer.WriteUInt64({valueVar});",
-            "float" => $"writer.WriteFloat({valueVar});",
-            "double" => $"writer.WriteDouble({valueVar});",
-            "string" or "ByteString" => $"writer.WriteString({valueVar});",
-            "WideByteString" => $"writer.WriteWString({valueVar});",
-            "Vector3" => $"writer.WriteVector3({valueVar});",
-            "Quaternion" => $"writer.WriteQuaternion({valueVar});",
-            "Matrix" => $"writer.WriteMatrix({valueVar});",
-            "Color" => $"writer.WriteColor({valueVar});",
-            "Rectangle" => $"writer.WriteRectangle({valueVar});",
-            "RectangleF" => $"writer.WriteRectangleF({valueVar});",
-            "Vector2" or "Point" => $"writer.WriteVector2({valueVar});",
-            "GID" => $"writer.WriteUInt64({valueVar});",
-            "Bui2" => $"writer.WriteBits({valueVar}, 2);",
-            "Bui4" => $"writer.WriteBits({valueVar}, 4);",
-            "Bui5" => $"writer.WriteBits({valueVar}, 5);",
-            "Bui7" => $"writer.WriteBits({valueVar}, 7);",
-            "S24" => $"writer.WriteBits({valueVar}, 24);",
-            "U24" => $"writer.WriteBits({valueVar}, 24);",
-            _ => ""
-        };
-    }
+
+    private static string GetWriterMethodForType(string typeName, string valueVar) => typeName switch {
+        "byte" => $"writer.WriteUInt8({valueVar});",
+        "sbyte" => $"writer.WriteInt8({valueVar});",
+        "char" => $"writer.WriteUInt8(Convert.ToByte({valueVar}));",
+        "bool" => $"writer.WriteBit({valueVar});",
+        "short" => $"writer.WriteInt16({valueVar});",
+        "ushort" => $"writer.WriteUInt16({valueVar});",
+        "int" => $"writer.WriteInt32({valueVar});",
+        "uint" => $"writer.WriteUInt32({valueVar});",
+        "long" => $"writer.WriteInt64({valueVar});",
+        "ulong" => $"writer.WriteUInt64({valueVar});",
+        "float" => $"writer.WriteFloat({valueVar});",
+        "double" => $"writer.WriteDouble({valueVar});",
+        "string" or "ByteString" => $"writer.WriteString({valueVar});",
+        "WideByteString" => $"writer.WriteWString({valueVar});",
+        "Vector3" => $"writer.WriteVector3({valueVar});",
+        "Quaternion" => $"writer.WriteQuaternion({valueVar});",
+        "Matrix" => $"writer.WriteMatrix({valueVar});",
+        "Color" => $"writer.WriteColor({valueVar});",
+        "Rectangle" => $"writer.WriteRectangle({valueVar});",
+        "RectangleF" => $"writer.WriteRectangleF({valueVar});",
+        "Vector2" or "Point" => $"writer.WriteVector2({valueVar});",
+        "GID" => $"writer.WriteUInt64({valueVar});",
+        "Bui2" => $"writer.WriteBits({valueVar}, 2);",
+        "Bui4" => $"writer.WriteBits({valueVar}, 4);",
+        "Bui5" => $"writer.WriteBits({valueVar}, 5);",
+        "Bui7" => $"writer.WriteBits({valueVar}, 7);",
+        "S24" => $"writer.WriteBits({valueVar}, 24);",
+        "U24" => $"writer.WriteBits({valueVar}, 24);",
+        _ => ""
+    };
 
     private static string GetReaderMethodForType(string typeName, string variableName) {
         return typeName switch {
@@ -311,6 +310,11 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\tvar objectStart = writer.BitPos();");
         sb.AppendLine("\t\twriter.WriteUInt32(0); // Placeholder for the size");
         sb.AppendLine();
+
+        // If a base class is present, encode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
+        }
         
         // Add property encoding for versionable format.
         foreach (var property in classDefinition.Properties) {
@@ -335,11 +339,6 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t}");
             sb.AppendLine();
         }
-
-        // If a base class is present, encode its properties as well.
-        if (!HasNoBaseClass(classDefinition)) {
-            sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
-        }
         
         sb.AppendLine("\t\t// Write the size of the object");
         sb.AppendLine("\t\tvar objectSize = writer.BitPos() - objectStart;");
@@ -359,6 +358,12 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\t// Properties may be out of order in the binary stream");
         sb.AppendLine("\t\tvar objectStart = reader.BitPos();");
         sb.AppendLine("\t\tvar objectSize = reader.ReadUInt32();");
+
+        // If a base class is present, decode its properties as well.
+        if (!HasNoBaseClass(classDefinition)) {
+            sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
+        }
+        
         sb.AppendLine();
         sb.AppendLine("\t\twhile (reader.BitPos() - objectStart < objectSize) {");
         sb.AppendLine("\t\t\tvar propertyStart = reader.BitPos();");
@@ -394,11 +399,6 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\t\treader.SeekBit((int) (propertyStart + propertySize));");
         sb.AppendLine("\t\t}");
         sb.AppendLine();
-
-        // If a base class is present, decode its properties as well.
-        if (!HasNoBaseClass(classDefinition)) {
-            sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
-        }
 
         sb.AppendLine("\t\t// Seek bit to the end of this object");
         sb.AppendLine("\t\treader.SeekBit((int) (objectStart + objectSize));");

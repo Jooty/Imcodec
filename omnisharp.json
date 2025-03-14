@@ -22,6 +22,7 @@
         "InsertionBehavior": "WithOtherMembersOfTheSameKind"
     },
     "FormattingOptions": {
+        "EnableEditorConfigSupport": true,
         "NewLinesForBracesInLambdaExpressionBody": false,
         "NewLinesForBracesInAnonymousMethods": false,
         "NewLinesForBracesInAnonymousTypes": false,
