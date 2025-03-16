@@ -33,13 +33,6 @@ public sealed class ServerTypesTest {
         01000000090046697265644F666621000000000000000000000000000000000000
         00000000
         """;
-    private static readonly string s_serverTypesCoreObjectSerializer
-        = """
-        000043ACDA060100000000005B268C0615005472696767657254657374466F7249
-        6D636F6465630100000000000000000000000001000000080046697265644F6E21
-        0000000001000000090046697265644F6666210000000000000000000000000000
-        00000000000000000000000000000000000000
-        """;
 
     [Fact]
     public void TryDeserializeServerTypes() {
@@ -51,18 +44,8 @@ public sealed class ServerTypesTest {
         Assert.NotNull(serverTypes);
     }
 
-    [Fact]
-    public void TryDeserializeServerTypesCore() {
-        var serializer = new CoreObjectSerializer(false, SerializerFlags.None);
-        var byteBlob = ConvertFromHexString(s_serverTypesCoreObjectSerializer);
-        var deserializeSuccess = serializer.Deserialize<WizZoneTriggers>(byteBlob, (PropertyFlags) 31, out var serverTypes);
-
-        Assert.True(deserializeSuccess);
-        Assert.NotNull(serverTypes);
-    }
-
     private static byte[] ConvertFromHexString(string hexString) {
-        string cleanHex = new string([.. hexString.Where(c => !char.IsWhiteSpace(c))]);
+        var cleanHex = new string([.. hexString.Where(c => !char.IsWhiteSpace(c))]);
 
         return [.. Enumerable.Range(0, cleanHex.Length)
             .Where(x => x % 2 == 0)

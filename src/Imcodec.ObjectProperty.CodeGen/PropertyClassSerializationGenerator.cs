@@ -33,24 +33,24 @@ internal static class PropertyClassSerializationGenerator {
         var sb = new StringBuilder();
 
         GenerateEncodeMethod(classDefinition, sb);
-        sb.AppendLine();
+        _ = sb.AppendLine();
         GenerateDecodeMethod(classDefinition, sb);
-        sb.AppendLine();
+        _ = sb.AppendLine();
         
         return sb.ToString();
     }
     
     private static void GenerateEncodeMethod(PropertyClassDefinition classDefinition, StringBuilder sb) {
-        sb.AppendLine("\t/// <summary>");
-        sb.AppendLine("\t/// Encodes this object's properties using the specified writer and serializer.");
-        sb.AppendLine("\t/// </summary>");
-        sb.AppendLine("\tpublic override bool Encode(BitWriter writer, ObjectSerializer serializer) {");
-        sb.AppendLine("\t\tOnPreEncode();");
-        sb.AppendLine();
-        sb.AppendLine("\t\tif (serializer.Versionable) {");
-        sb.AppendLine("\t\t\treturn EncodeVersionable(writer, serializer);");
-        sb.AppendLine("\t\t}");
-        sb.AppendLine();
+        _ = sb.AppendLine("\t/// <summary>")
+            .AppendLine("\t/// Encodes this object's properties using the specified writer and serializer.")
+            .AppendLine("\t/// </summary>")
+            .AppendLine("\tpublic override bool Encode(BitWriter writer, ObjectSerializer serializer) {")
+            .AppendLine("\t\tOnPreEncode();")
+            .AppendLine()
+            .AppendLine("\t\tif (serializer.Versionable) {")
+            .AppendLine("\t\t\treturn EncodeVersionable(writer, serializer);")
+            .AppendLine("\t\t}")
+            .AppendLine();
 
         // If a base class is present, encode its properties as well.
         if (!HasNoBaseClass(classDefinition)) {
@@ -130,7 +130,7 @@ internal static class PropertyClassSerializationGenerator {
             var writer = GetWriterMethodForType(elementType, "item");
             if (string.IsNullOrEmpty(writer)) {
                 // A writer was not found. Assume the element is a PropertyClass.
-                sb.AppendLine("\t\t\t\t\tserializer.PreWriteObject(writer, item);");
+                sb.AppendLine("\t\t\t\t\tserializer.PreWriteObject(writer, item!);");
                 sb.AppendLine("\t\t\t\t\tif (item != null) {");
                 sb.AppendLine("\t\t\t\t\t\titem.Encode(writer, serializer);");
                 sb.AppendLine("\t\t\t\t\t}");
@@ -147,7 +147,7 @@ internal static class PropertyClassSerializationGenerator {
             if (string.IsNullOrEmpty(writer)) {
                 // A writer was not found. Assume the property is a PropertyClass.
                 sb.AppendLine("\t\t\t// PropertyClass encoding");
-                sb.AppendLine($"\t\t\tserializer.PreWriteObject(writer, {property.Name});");
+                sb.AppendLine($"\t\t\tserializer.PreWriteObject(writer, {property.Name}!);");
                 sb.AppendLine($"\t\t\tif ({property.Name} != null) {{");
                 sb.AppendLine($"\t\t\t\t{property.Name}.Encode(writer, serializer);");
                 sb.AppendLine("\t\t\t}");
@@ -190,8 +190,11 @@ internal static class PropertyClassSerializationGenerator {
                 sb.AppendLine($"\t\t\t\t\tserializer.PreloadObject(reader, out var item_{property.Name});");
                 sb.AppendLine($"\t\t\t\t\tif (item_{property.Name} != null) {{");
                 sb.AppendLine($"\t\t\t\t\t\titem_{property.Name}.Decode(reader, serializer);");
+                sb.AppendLine($"\t\t\t\t\t\t{property.Name}.Add(({elementType}) item_{property.Name});");
                 sb.AppendLine("\t\t\t\t\t}");
-                sb.AppendLine($"\t\t\t\t\t{property.Name}.Add(({elementType}) item_{property.Name});");
+                sb.AppendLine("\t\t\t\t\telse {");
+                sb.AppendLine($"\t\t\t\t\t\t{property.Name}.Add(null);");
+                sb.AppendLine("\t\t\t\t\t}");
             }
             else {
                 sb.AppendLine($"\t\t\t\t\t{reader}");
@@ -379,8 +382,12 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\t\tswitch (propertyHash) {");
         
         // Generate case statements for each property.
+        var missingHashCounter = 9;
         foreach (var property in classDefinition.Properties) {
-            sb.AppendLine($"\t\t\t\tcase {property.Hash}: // {property.Name}");
+            var hash = property.Hash == 0 
+                ? $"0x{missingHashCounter++:X8}" 
+                : $"0x{property.Hash:X8}";
+            sb.AppendLine($"\t\t\t\tcase {hash}: // {property.Name}");
             
             // Generate decoding for this property.
             sb.Append(GeneratePropertyDecoding(property).Replace("\t\t\t", "\t\t\t\t\t"));
@@ -410,68 +417,61 @@ internal static class PropertyClassSerializationGenerator {
     }
     
     public static string GenerateHelperMethods() {
-        var sb = new StringBuilder();
-        
-        sb.AppendLine("\tprivate static bool IsPropertyEligibleForProcessing(PropertyFlags propertyFlags, ObjectSerializer serializer) {");
-        sb.AppendLine("\t\tvar serializerFlags = serializer.SerializerFlags;");
-        sb.AppendLine("\t\tvar serializerMask = serializer.PropertyMask;");
-        sb.AppendLine();
-        sb.AppendLine("\t\t// Properties with the Prop_Encode flag set are always encoded");
-        sb.AppendLine("\t\tvar alwaysEncode = serializerFlags.HasFlag(SerializerFlags.DirtyEncode) && propertyFlags.HasFlag(PropertyFlags.Prop_Encode);");
-        sb.AppendLine();
-        sb.AppendLine("\t\t// Check if the property mask is met and if the property is deprecated");
-        sb.AppendLine("\t\tvar propertyMaskMet = (propertyFlags & serializerMask) == serializerMask;");
-        sb.AppendLine("\t\tvar deprecated = propertyFlags.HasFlag(PropertyFlags.Prop_Deprecated);");
-        sb.AppendLine();
-        sb.AppendLine("\t\t// Skip properties that are not marked for serialization or are deprecated and not dirty encoded");
-        sb.AppendLine("\t\treturn propertyMaskMet && (!deprecated || alwaysEncode);");
-        sb.AppendLine("\t}");
-        
-        sb.AppendLine();
-
-        sb.AppendLine("\tprivate static void WriteVectorSize(BitWriter writer, int size, ObjectSerializer serializer) {");
-        sb.AppendLine("\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {");
-        sb.AppendLine("\t\t\tif (size < 127) {");
-        sb.AppendLine("\t\t\t\twriter.WriteBits((byte)size, 7);");
-        sb.AppendLine("\t\t\t} else {");
-        sb.AppendLine("\t\t\t\twriter.WriteBit(true);");
-        sb.AppendLine("\t\t\t\twriter.WriteUInt32((uint)size);");
-        sb.AppendLine("\t\t\t}");
-        sb.AppendLine("\t\t} else {");
-        sb.AppendLine("\t\t\twriter.WriteUInt32((uint)size);");
-        sb.AppendLine("\t\t}");
-        sb.AppendLine("\t}");
-        
-        sb.AppendLine();
-
-        sb.AppendLine("\tprivate static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer) {");
-        sb.AppendLine("\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {");
-        sb.AppendLine("\t\t\tvar sizeRedundant = reader.ReadBit();");
-        sb.AppendLine("\t\t\treturn reader.ReadBits<uint>(sizeRedundant ? 31 : 7);");
-        sb.AppendLine("\t\t} else {");
-        sb.AppendLine("\t\t\treturn reader.ReadUInt32();");
-        sb.AppendLine("\t\t}");
-        sb.AppendLine("\t}");
-        
-        sb.AppendLine();
-        
-        sb.AppendLine("\tprivate static string SanitizeStringEnum(string enumString) {");
-        sb.AppendLine("\t\t// Client inconsistency: The client will sometimes use '-' and '_' interchangably.");
-        sb.AppendLine("\t\tenumString = enumString.Replace('-', '_');");
-        sb.AppendLine();
-        sb.AppendLine("\t\t// The client is written with C++. We'll replace the scope operator with the C# namespace");
-        sb.AppendLine("\t\tenumString = enumString.Replace(\"::\", \".\");");
-        sb.AppendLine("\t\tenumString = enumString.Substring(enumString.LastIndexOf('.') + 1);");
-        sb.AppendLine();
-        sb.AppendLine("\t\treturn enumString;");
-        sb.AppendLine("\t}");
-        sb.AppendLine();
+        var sb = new StringBuilder()
+            .AppendLine("\tprivate static bool IsPropertyEligibleForProcessing(PropertyFlags propertyFlags, ObjectSerializer serializer) {")
+            .AppendLine("\t\tvar serializerFlags = serializer.SerializerFlags;")
+            .AppendLine("\t\tvar serializerMask = serializer.PropertyMask;")
+            .AppendLine()
+            .AppendLine("\t\t// Properties with the Prop_Encode flag set are always encoded")
+            .AppendLine("\t\tvar alwaysEncode = serializerFlags.HasFlag(SerializerFlags.DirtyEncode) && propertyFlags.HasFlag(PropertyFlags.Prop_Encode);")
+            .AppendLine()
+            .AppendLine("\t\t// Check if the property mask is met and if the property is deprecated")
+            .AppendLine("\t\tvar propertyMaskMet = (propertyFlags & serializerMask) == serializerMask;")
+            .AppendLine("\t\tvar deprecated = propertyFlags.HasFlag(PropertyFlags.Prop_Deprecated);")
+            .AppendLine()
+            .AppendLine("\t\t// Skip properties that are not marked for serialization or are deprecated and not dirty encoded")
+            .AppendLine("\t\treturn propertyMaskMet && (!deprecated || alwaysEncode);")
+            .AppendLine("\t}")
+            .AppendLine()
+            .AppendLine("\tprivate static void WriteVectorSize(BitWriter writer, int size, ObjectSerializer serializer) {")
+            .AppendLine("\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {")
+            .AppendLine("\t\t\tif (size < 127) {")
+            .AppendLine("\t\t\t\twriter.WriteBits((byte)size, 7);")
+            .AppendLine("\t\t\t} else {")
+            .AppendLine("\t\t\t\twriter.WriteBit(true);")
+            .AppendLine("\t\t\t\twriter.WriteUInt32((uint)size);")
+            .AppendLine("\t\t\t}")
+            .AppendLine("\t\t} else {")
+            .AppendLine("\t\t\twriter.WriteUInt32((uint)size);")
+            .AppendLine("\t\t}")
+            .AppendLine("\t}")
+            .AppendLine()
+            .AppendLine("\tprivate static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer) {")
+            .AppendLine("\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {")
+            .AppendLine("\t\t\tvar sizeRedundant = reader.ReadBit();")
+            .AppendLine("\t\t\treturn reader.ReadBits<uint>(sizeRedundant ? 31 : 7);")
+            .AppendLine("\t\t} else {")
+            .AppendLine("\t\t\treturn reader.ReadUInt32();")
+            .AppendLine("\t\t}")
+            .AppendLine("\t}")
+            .AppendLine()
+            .AppendLine("\tprivate static string SanitizeStringEnum(string enumString) {")
+            .AppendLine("\t\t// Client inconsistency: The client will sometimes use '-' and '_' interchangably.")
+            .AppendLine("\t\tenumString = enumString.Replace('-', '_');")
+            .AppendLine()
+            .AppendLine("\t\t// The client is written with C++. We'll replace the scope operator with the C# namespace")
+            .AppendLine("\t\tenumString = enumString.Replace(\"::\", \".\");")
+            .AppendLine("\t\tenumString = enumString.Substring(enumString.LastIndexOf('.') + 1);")
+            .AppendLine()
+            .AppendLine("\t\treturn enumString;")
+            .AppendLine("\t}")
+            .AppendLine();
         
         return sb.ToString();
     }
 
     private static bool HasNoBaseClass(PropertyClassDefinition classDefinition) 
         => classDefinition.BaseClassNames.Count == 1
-        && classDefinition.BaseClassNames.All(x => x == "PropertyClass");
+        && classDefinition.BaseClassNames.All(static x => x == "PropertyClass");
 
 }

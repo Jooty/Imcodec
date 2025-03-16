@@ -1,7 +1,26 @@
+/*
+BSD 3-Clause License
+
+Copyright (c) 2024, Jooty
+
+Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+*/
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -42,18 +61,16 @@ Redistribution and use in source and binary forms, with or without
 
         private const string PropertyClassAttributeName = "PropertySerializationTarget";
         private const string AutoPropertyAttributeName = "PropertyField";
-        
-        private const string LogFilePath = @"C:\Users\Jay\Downloads\imcodec_source_generator.log";
 
         public void Initialize(IncrementalGeneratorInitializationContext context) {
-            InitializeLogFile();
-
-            // Get all class declarations with our target attribute (PropertySerializationTargetAttribute)
-            IncrementalValuesProvider<TypeDeclarationSyntax> typeDeclarations = context.SyntaxProvider
+            // Get all class declarations with our target attribute (PropertySerializationTargetAttribute).
+            var typeDeclarations = context.SyntaxProvider
                 .CreateSyntaxProvider(
                     predicate: static (s, _) => IsCandidateClass(s),
                     transform: static (ctx, _) => ctx.Node as TypeDeclarationSyntax)
-                .Where(type => type != null && HasAttribute(type, PropertyClassAttributeName));
+                .Where(type => type is not null)
+                .Select((type, _) => type!)
+                .Where(type => HasAttribute(type, PropertyClassAttributeName));
 
             // Register source output.
             IncrementalValueProvider<(Compilation, ImmutableArray<TypeDeclarationSyntax>)> compilationAndClasses =
@@ -63,63 +80,32 @@ Redistribution and use in source and binary forms, with or without
                 (spc, source) => Execute(source.Item1, source.Item2, spc));
         }
 
-        private void InitializeLogFile() {
-            using (var writer = new StreamWriter(LogFilePath, false)) {
-                writer.WriteLine($"=== Imcodec Source Generator Log ===");
-                writer.WriteLine($"Started at: {DateTime.Now}");
-                writer.WriteLine($"Generator: {typeof(ServerPropertyClassSourceGenerator).FullName}");
-                writer.WriteLine($"=================================");
-                writer.WriteLine();
-            }
-        }
-
-        private void LogMessage(string message) {
-            using (var writer = new StreamWriter(LogFilePath, true)) {
-                writer.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
-            }
-        }
-
-        private static bool IsCandidateClass(SyntaxNode node) {
-            return (node is ClassDeclarationSyntax || node is RecordDeclarationSyntax) &&
+        private static bool IsCandidateClass(SyntaxNode node) 
+            => (node is ClassDeclarationSyntax || node is RecordDeclarationSyntax) &&
                 (node as TypeDeclarationSyntax)?.AttributeLists.Count > 0 &&
                 (node as TypeDeclarationSyntax)?.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)) == true;
-        }
 
         private bool HasAttribute(TypeDeclarationSyntax classDeclaration, string attributeName) {
-            LogMessage($"Checking class: {classDeclaration.Identifier}");
-
             foreach (var attributeList in classDeclaration.AttributeLists) {
                 foreach (var attribute in attributeList.Attributes) {
-                    LogMessage($"Checking attribute: {attribute.Name}");
-
                     var name = attribute.Name.ToString();
                     if (name == attributeName || name == attributeName + "Attribute") {
-                        LogMessage($"Found attribute: {attributeName}");
-
                         return true;
                     }
                 }
             }
-
-            LogMessage($"Class {classDeclaration.Identifier} does not have attribute {attributeName}");
 
             return false;
         }
 
         private void Execute(Compilation compilation, ImmutableArray<TypeDeclarationSyntax> types, SourceProductionContext context) {
             if (types.IsDefaultOrEmpty) {
-                LogMessage("No classes or records found with PropertySerializationTargetAttribute. Source generation skipped.");
-
                 return;
             }
-
-            LogMessage($"Found {types.Length} type(s) with {PropertyClassAttributeName}.");
 
             var typeDefinitions = new List<PropertyClassDefinition>();
             foreach (var typeDeclaration in types) {
                 try {
-                    LogMessage($"Processing class: {typeDeclaration.Identifier}");
-                    
                     var classDefinition = ProcessClass(compilation, typeDeclaration);
                     if (classDefinition != null) {
                         typeDefinitions.Add(classDefinition);
@@ -127,13 +113,6 @@ Redistribution and use in source and binary forms, with or without
                         // Generate serialization code for this class.
                         var source = GenerateSerializationCode(classDefinition, GetNamespace(typeDeclaration));
                         context.AddSource($"{classDefinition.Name}.g.cs", SourceText.From(source, Encoding.UTF8));
-
-                        LogMessage($"Generated {classDefinition.Name}.g.cs with {classDefinition.Properties.Count} properties");
-
-                        foreach (var property in classDefinition.Properties) {
-                            LogMessage($"  - Property: {property.Name}, Hash: 0x{property.Hash:X8}, Type: {property.CsharpType}, " + 
-                                      $"Flags: {property.Flags}, IsVector: {(property.IsVector ? "Yes" : "No")}");
-                        }
 
                         context.ReportDiagnostic(
                             Diagnostic.Create(
@@ -147,13 +126,19 @@ Redistribution and use in source and binary forms, with or without
                                 Location.None));
                     }
                     else {
-                        LogMessage($"Class {typeDeclaration.Identifier} was not processed - it may not have valid properties or a proper GetHash() method.");
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                new DiagnosticDescriptor(
+                                    "IMC0001",
+                                    "Class Processing Error",
+                                    $"Failed to process class {typeDeclaration.Identifier}",
+                                    "Imcodec.ObjectProperty.CodeGen",
+                                    DiagnosticSeverity.Error,
+                                    isEnabledByDefault: true),
+                                Location.None));
                     }
                 }
                 catch (Exception ex) {
-                    LogMessage($"ERROR processing class {typeDeclaration.Identifier}: {ex.Message}");
-                    LogMessage($"Stack trace: {ex.StackTrace}");
-
                     context.ReportDiagnostic(
                         Diagnostic.Create(
                             new DiagnosticDescriptor(
@@ -169,19 +154,10 @@ Redistribution and use in source and binary forms, with or without
 
             // Generate the type registry class.
             try {
-                LogMessage("Generating type registry class");
                 var dispatcherSource = WriteDispatcherClass(typeDefinitions.ToArray(), ContainingNamespace);
                 context.AddSource($"{TypeRegistryClassName}.g.cs", SourceText.From(dispatcherSource, Encoding.UTF8));
-                LogMessage($"Generated {TypeRegistryClassName}.g.cs with {typeDefinitions.Count} registered types");
-                
-                foreach (var cls in typeDefinitions) {
-                    LogMessage($"  - Registered: {cls.Name}, Hash: 0x{cls.Hash:X8}");
-                }
             }
             catch (Exception ex) {
-                LogMessage($"ERROR generating type registry: {ex.Message}");
-                LogMessage($"Stack trace: {ex.StackTrace}");
-                
                 context.ReportDiagnostic(
                     Diagnostic.Create(
                         new DiagnosticDescriptor(
@@ -193,8 +169,6 @@ Redistribution and use in source and binary forms, with or without
                             isEnabledByDefault: true),
                         Location.None));
             }
-
-            LogMessage("Source generation completed.");
         }
 
         private string GetNamespace(TypeDeclarationSyntax classDeclaration) {
@@ -218,11 +192,7 @@ Redistribution and use in source and binary forms, with or without
         private PropertyClassDefinition? ProcessClass(Compilation compilation, TypeDeclarationSyntax classDeclaration) {
             var semanticModel = compilation.GetSemanticModel(classDeclaration.SyntaxTree);
             var className = classDeclaration.Identifier.Text;
-            
-            LogMessage($"Extracting hash for class: {className}");
             var hash = GetClassHash(classDeclaration);
-            LogMessage($"Class hash: 0x{hash:X8}");
-            
             var classDefinition = new PropertyClassDefinition(className, hash);
 
             // Add base classes.
@@ -230,33 +200,24 @@ Redistribution and use in source and binary forms, with or without
                 foreach (var baseType in classDeclaration.BaseList.Types) {
                     var baseTypeName = baseType.Type.ToString();
                     classDefinition.AddBaseClass(baseTypeName);
-                    LogMessage($"Added base class: {baseTypeName}");
                 }
             }
             else {
                 // Default to PropertyClass if no base type is specified.
                 classDefinition.AddBaseClass("PropertyClass");
-                LogMessage("No base classes specified, defaulting to PropertyClass");
             }
 
             // Process properties with AutoProperty attribute.
             int propertyCount = 0;
             foreach (var member in classDeclaration.Members) {
                 if (member is PropertyDeclarationSyntax propertyDeclaration) {
-                    LogMessage($"Examining property: {propertyDeclaration.Identifier.Text}");
                     var propertyDefinition = ProcessProperty(propertyDeclaration, semanticModel);
                     if (propertyDefinition != null) {
                         classDefinition.Properties.Add(propertyDefinition);
                         propertyCount++;
-                        LogMessage($"Added property: {propertyDefinition.Name} with hash: 0x{propertyDefinition.Hash:X8}");
-                    }
-                    else {
-                        LogMessage($"Property {propertyDeclaration.Identifier.Text} was not added (missing or invalid AutoProperty attribute)");
                     }
                 }
             }
-            
-            LogMessage($"Processed {propertyCount} properties for class {className}");
 
             return classDefinition;
         }
@@ -268,29 +229,21 @@ Redistribution and use in source and binary forms, with or without
                     methodDeclaration.Identifier.Text == "GetHash" &&
                     methodDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.OverrideKeyword))) {
                     
-                    LogMessage($"Found GetHash method in {classDeclaration.Identifier.Text}");
-                    
                     if (methodDeclaration.Body != null) {
                         foreach (var statement in methodDeclaration.Body.Statements) {
                             if (statement is ReturnStatementSyntax returnStmt) {
                                 // Try to extract hash value.
                                 string expressionText = returnStmt.Expression!.ToString();
-                                LogMessage($"Return expression: {expressionText}");
 
                                 // Remove "0x" prefix if present.
                                 if (expressionText.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
                                     expressionText = expressionText.Substring(2);
-                                    LogMessage($"Stripped 0x prefix, remaining: {expressionText}");
                                 }
 
                                 if (uint.TryParse(expressionText,
                                                 System.Globalization.NumberStyles.HexNumber,
                                                 null, out uint hashValue)) {
-                                    LogMessage($"Successfully parsed hash: 0x{hashValue:X8}");
                                     return hashValue;
-                                }
-                                else {
-                                    LogMessage($"Failed to parse hash value from: {expressionText}");
                                 }
                             }
                         }
@@ -298,29 +251,22 @@ Redistribution and use in source and binary forms, with or without
                     else if (methodDeclaration.ExpressionBody != null) {
                         // Handle expression-bodied methods: public override uint GetHash() => 0x12345678;
                         string expressionText = methodDeclaration.ExpressionBody.Expression.ToString();
-                        LogMessage($"Expression-bodied method, expression: {expressionText}");
 
                         // Remove "0x" prefix if present.
                         if (expressionText.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
                             expressionText = expressionText.Substring(2);
-                            LogMessage($"Stripped 0x prefix, remaining: {expressionText}");
                         }
 
                         if (uint.TryParse(expressionText,
                                         System.Globalization.NumberStyles.HexNumber,
                                         null, out uint hashValue)) {
-                            LogMessage($"Successfully parsed hash: 0x{hashValue:X8}");
                             return hashValue;
-                        }
-                        else {
-                            LogMessage($"Failed to parse hash value from: {expressionText}");
                         }
                     }
                 }
             }
 
             // Default hash value if none found.
-            LogMessage("WARNING: No valid GetHash method found, using default value 0");
             return 0;
         }
 
@@ -332,10 +278,10 @@ Redistribution and use in source and binary forms, with or without
             foreach (var attributeList in propertyDeclaration.AttributeLists) {
                 foreach (var attribute in attributeList.Attributes) {
                     var attributeName = attribute.Name.ToString();
-                    if (attributeName == AutoPropertyAttributeName || attributeName == AutoPropertyAttributeName + "Attribute") {
+                    if (   attributeName == AutoPropertyAttributeName 
+                        || attributeName == AutoPropertyAttributeName + "Attribute") {
                         hasAutoProperty = true;
                         autoPropertyAttribute = attribute;
-                        LogMessage($"Found AutoProperty attribute on {propertyDeclaration.Identifier.Text}");
 
                         break;
                     }
@@ -348,7 +294,6 @@ Redistribution and use in source and binary forms, with or without
 
             if (!hasAutoProperty || autoPropertyAttribute?.ArgumentList == null ||
                 autoPropertyAttribute.ArgumentList.Arguments.Count < 2) {
-                LogMessage($"Property {propertyDeclaration.Identifier.Text} does not have a valid AutoProperty attribute");
 
                 return null;
             }
@@ -358,40 +303,19 @@ Redistribution and use in source and binary forms, with or without
 
             var hashArg = autoPropertyAttribute.ArgumentList.Arguments[0].Expression.ToString();
             var flagsArg = autoPropertyAttribute.ArgumentList.Arguments[1].Expression.ToString();
-            
-            LogMessage($"AutoProperty args: hash={hashArg}, flags={flagsArg}");
 
             // Handle hexadecimal hash values.
             if (hashArg.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
                 hashArg = hashArg.Substring(2);
-                if (uint.TryParse(hashArg, System.Globalization.NumberStyles.HexNumber, null, out hash)) {
-                    LogMessage($"Parsed hex hash: 0x{hash:X8}");
-                }
-                else {
-                    LogMessage($"Failed to parse hex hash: {hashArg}");
-                }
-            }
-            else {
-                if (uint.TryParse(hashArg, out hash)) {
-                    LogMessage($"Parsed decimal hash: {hash} (0x{hash:X8})");
-                }
-                else {
-                    LogMessage($"Failed to parse decimal hash: {hashArg}");
-                }
+                _ = uint.TryParse(hashArg, System.Globalization.NumberStyles.HexNumber, null, out hash);
             }
 
             // Parse flags.
-            if (uint.TryParse(flagsArg, out flags)) {
-                LogMessage($"Parsed flags: {flags}");
-            }
-            else {
-                LogMessage($"Failed to parse flags: {flagsArg}");
-            }
+            _ = uint.TryParse(flagsArg, out flags);
 
             // Get property type information.
             var propertyName = propertyDeclaration.Identifier.Text;
             var propertyType = propertyDeclaration.Type.ToString();
-            LogMessage($"Property {propertyName} has type: {propertyType}");
 
             // Check if it's a collection type.
             string container = "";
@@ -400,44 +324,39 @@ Redistribution and use in source and binary forms, with or without
 
                 // If the property is a collection, grab the internal type.
                 if (propertyType.StartsWith("List<")) {
-                    propertyType = propertyType.Substring(5, propertyType.Length - 7);
+                    // Find the closing angle bracket for the List<T> type.
+                    int startIndex = propertyType.IndexOf('<') + 1;
+                    int endIndex = propertyType.LastIndexOf('>');
+                    propertyType = propertyType.Substring(startIndex, endIndex - startIndex);
                 }
                 else if (propertyType.EndsWith("[]")) {
-                    propertyType = propertyType.Substring(0, propertyType.Length - 2);
+                    // Find the closing bracket for the array type.
+                    int startIndex = propertyType.IndexOf('[') + 1;
+                    int endIndex = propertyType.LastIndexOf(']');
+                    propertyType = propertyType.Substring(startIndex, endIndex - startIndex);
                 }
-
-                LogMessage($"Property {propertyName} identified as a collection");
             }
 
-            // Check if it's an enum type
-            bool isEnum = false;
+            // Check if it's an enum type.
             var propertySymbol = semanticModel.GetDeclaredSymbol(propertyDeclaration);
-            if (propertySymbol != null) {
-                isEnum = propertySymbol.Type.TypeKind == TypeKind.Enum;
-                if (isEnum) {
-                    LogMessage($"Property {propertyName} identified as an enum");
-                }
-            }
+            var isEnum = propertySymbol?.Type.TypeKind == TypeKind.Enum
+                     || (flags & (uint) PropertyFlags.Prop_Enum) != 0;
 
-            // Get enum options if it's an enum
+            // Get enum options if it's an enum.
             var enumOptions = new Dictionary<string, object>();
             if (isEnum && propertySymbol != null) {
-                var enumType = propertySymbol.Type as INamedTypeSymbol;
-                if (enumType != null) {
-                    LogMessage($"Processing enum members for {propertyName}");
+                if (propertySymbol.Type is INamedTypeSymbol enumType) {
                     foreach (var member in enumType.GetMembers().OfType<IFieldSymbol>()
                             .Where(m => m.HasConstantValue)) {
                         enumOptions[member.Name] = member.ConstantValue!;
-                        LogMessage($"  - Enum value: {member.Name} = {member.ConstantValue}");
                     }
                 }
 
                 // Add "enum " prefix to type name for enum types
                 propertyType = "enum " + propertyType;
-                LogMessage($"Updated property type to: {propertyType}");
             }
 
-            // Create property definition
+            // Create property definition.
             var propDef = new PropertyDefinition(
                 propertyName,
                 propertyType,
@@ -446,19 +365,20 @@ Redistribution and use in source and binary forms, with or without
                 hash,
                 enumOptions);
                 
-            LogMessage($"Created PropertyDefinition for {propertyName}");
             return propDef;
         }
 
         private string GenerateSerializationCode(PropertyClassDefinition classDefinition, string namespaceName) {
-            LogMessage($"Generating serialization code for {classDefinition.Name} in namespace {namespaceName}");
-            
             var sb = new StringBuilder();
 
             // Add copyright header and auto-generated warning.
             sb.AppendLine(CopyrightHeader);
             sb.AppendLine();
             sb.AppendLine(s_autoGeneratedWarning);
+            sb.AppendLine();
+
+            // Enable nullable reference types.
+            sb.AppendLine("#nullable enable");
             sb.AppendLine();
 
             // Add usings.
@@ -479,15 +399,12 @@ Redistribution and use in source and binary forms, with or without
 
             // Generate serialization methods.
             sb.Append(PropertyClassSerializationGenerator.GenerateSerializationMethods(classDefinition));
-            LogMessage($"Generated serialization methods for {classDefinition.Name}");
 
             // Generate versionable methods.
             sb.Append(PropertyClassSerializationGenerator.GenerateVersionableMethods(classDefinition));
-            LogMessage($"Generated versionable methods for {classDefinition.Name}");
 
             // Generate helper methods.
             sb.Append(PropertyClassSerializationGenerator.GenerateHelperMethods());
-            LogMessage($"Generated helper methods for {classDefinition.Name}");
 
             sb.AppendLine("}");
 
@@ -495,8 +412,6 @@ Redistribution and use in source and binary forms, with or without
         }
 
         private string WriteDispatcherClass(PropertyClassDefinition[] classDefinitions, string containingNamespace) {
-            LogMessage($"Generating type registry class with {classDefinitions.Length} type(s)");
-            
             var dispatcherBuilder = new StringBuilder();
             dispatcherBuilder.AppendLine($"{CopyrightHeader}\n");
             dispatcherBuilder.AppendLine($"{s_autoGeneratedWarning}\n");
@@ -512,7 +427,6 @@ Redistribution and use in source and binary forms, with or without
             dispatcherBuilder.AppendLine($"\tpublic {TypeRegistryClassName}() {{");
             foreach (var classDefinition in classDefinitions) {
                 dispatcherBuilder.AppendLine($"\t\tRegisterType({classDefinition.Hash}, typeof({classDefinition.Name}));");
-                LogMessage($"Added registration for {classDefinition.Name} with hash 0x{classDefinition.Hash:X8}");
             }
             dispatcherBuilder.AppendLine("\t}\n");
 
