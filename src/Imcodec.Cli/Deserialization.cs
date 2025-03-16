@@ -108,16 +108,16 @@ public static class Deserialization {
         // Create configurations for all serializers to try.
         var serializerConfigs = new List<(string Name, Func<ObjectSerializer> Factory, bool IsVerbose)> {
             // Standard serializers.
-            ("ObjectCompact",           () => new ObjectSerializer(false, SerializerFlags.None), false),
-            ("ObjectCompactCompressed", () => new ObjectSerializer(false, SerializerFlags.UseFlags | SerializerFlags.Compress), false),
-            ("ObjectVerbose",           () => new ObjectSerializer(true, SerializerFlags.None), true),
-            ("ObjectVerboseCompressed", () => new ObjectSerializer(true, SerializerFlags.UseFlags | SerializerFlags.Compress), true),
+            ("ObjectCompact",           static () => new ObjectSerializer(false, SerializerFlags.None), false),
+            ("ObjectCompactCompressed", static () => new ObjectSerializer(false, SerializerFlags.UseFlags | SerializerFlags.Compress), false),
+            ("ObjectVerbose",           static () => new ObjectSerializer(true, SerializerFlags.None), true),
+            ("ObjectVerboseCompressed", static () => new ObjectSerializer(true, SerializerFlags.UseFlags | SerializerFlags.Compress), true),
 
             // Core serializers.
-            ("CoreObject",                  () => new CoreObjectSerializer(false, SerializerFlags.None), false),
-            ("CoreObjectCompressed",        () => new CoreObjectSerializer(false, SerializerFlags.UseFlags | SerializerFlags.Compress), false),
-            ("CoreObjectVerbose",           () => new CoreObjectSerializer(true, SerializerFlags.None), true),
-            ("CoreObjectVerboseCompressed", () => new CoreObjectSerializer(true, SerializerFlags.UseFlags | SerializerFlags.Compress), true)
+            ("CoreObject",                  static () => new CoreObjectSerializer(false, SerializerFlags.None), false),
+            ("CoreObjectCompressed",        static () => new CoreObjectSerializer(false, SerializerFlags.UseFlags | SerializerFlags.Compress), false),
+            ("CoreObjectVerbose",           static () => new CoreObjectSerializer(true, SerializerFlags.None), true),
+            ("CoreObjectVerboseCompressed", static () => new CoreObjectSerializer(true, SerializerFlags.UseFlags | SerializerFlags.Compress), true)
         };
 
         // Attempt to deserialize the blob using a number of methods.

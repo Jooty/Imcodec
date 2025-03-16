@@ -28,11 +28,11 @@ public static class StringHash {
     /// <param name="input">The input string to compute the hash value for.</param>
     /// <returns>The computed hash value.</returns>
     public static uint Compute(string input) {
-        int result = 0;
-
+        var result = 0;
         var shift1 = 0;
         var shift2 = 32;
-        foreach (char c in input) {
+
+        foreach (var c in input) {
             var cb = (byte) c;
 
             result ^= (cb - 32) << shift1;

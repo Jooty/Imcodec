@@ -18,8 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System.Collections.Generic;
-
 namespace Imcodec.ObjectProperty.TypeCache;
 
 // This class is empty on purpose; it is meant to be populated by the code generator.
@@ -33,7 +31,7 @@ public partial class ClientGeneratedTypeRegistry : TypeRegistry {
         => _typeMap[hash] = type;
 
     public override System.Type? LookupType(uint hash) {
-        _typeMap.TryGetValue(hash, out var type);
+        _ = _typeMap.TryGetValue(hash, out var type);
         
         return type;
     }

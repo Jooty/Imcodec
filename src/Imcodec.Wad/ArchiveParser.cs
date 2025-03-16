@@ -100,6 +100,7 @@ public class ArchiveParser {
                 return false;
             }
         }
+        
         return true;
     }
 

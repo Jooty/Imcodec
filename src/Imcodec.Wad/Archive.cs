@@ -27,7 +27,7 @@ namespace Imcodec.Wad;
 /// </summary>
 public sealed class Archive {
 
-    public readonly Dictionary<string, Lazy<FileEntry>> Files = [];
+    public Dictionary<string, Lazy<FileEntry>> Files { get; private set; } = [];
     private readonly Stream _archiveStream;
     private readonly uint _version;
 
@@ -121,37 +121,32 @@ public sealed class Archive {
     }
 
     private Memory<byte> ReadFileData(FileEntry fileEntry) {
-        _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
+        _ = _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
         var readLen = fileEntry.IsCompressed ? fileEntry.CompressedSize : fileEntry.UncompressedSize;
         var fileSpan = ReadFromStream(_archiveStream, readLen);
 
-        if (fileEntry.IsCompressed) {
-            return ZLibUtility.Inflate(fileSpan, (int) fileEntry.UncompressedSize);
-        }
-
-        return fileSpan;
+        return fileEntry.IsCompressed 
+            ? ZLibUtility.Inflate(fileSpan, (int) fileEntry.UncompressedSize) 
+            : fileSpan;
     }
 
     private async Task<Memory<byte>> ReadFileDataAsync(FileEntry fileEntry) {
-        _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
+        _ = _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
         var buffer = new byte[fileEntry.UncompressedSize];
         await _archiveStream.ReadExactlyAsync(buffer);
 
-        if (fileEntry.IsCompressed) {
-            return await ZLibUtility.InflateAsync(buffer, (int) fileEntry.CompressedSize);
-        }
-
-        return buffer;
+        return fileEntry.IsCompressed 
+            ? await ZLibUtility.InflateAsync(buffer, (int) fileEntry.CompressedSize) 
+            : (Memory<byte>) buffer;
     }
 
     private static Memory<byte> ReadFromStream(Stream stream, long size) {
         var buffer = new byte[size];
         var read = stream.Read(buffer, 0, (int) size);
-        if (read != size) {
-            throw new Exception($"{nameof(ReadFromStream)} did not read proper size. GOT: {read} EXPECTED: {size}");
-        }
-
-        return buffer;
+        
+        return read != size
+            ? throw new Exception($"{nameof(ReadFromStream)} did not read proper size. GOT: {read} EXPECTED: {size}")
+            : (Memory<byte>) buffer;
     }
 
 }
