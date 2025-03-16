@@ -31,7 +31,8 @@ public partial class ClientGeneratedTypeRegistry : TypeRegistry {
         => _typeMap[hash] = type;
 
     public override System.Type? LookupType(uint hash) {
-        _typeMap.TryGetValue(hash, out var type);
+        _ = _typeMap.TryGetValue(hash, out var type);
+        
         return type;
     }
 

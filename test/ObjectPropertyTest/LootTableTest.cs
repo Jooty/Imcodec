@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.ObjectProperty;
+using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.Test.ObjectPropertyTest;
 
@@ -29,12 +30,13 @@ public class LootTableTest {
     basic struct types, and a ByteString. We will test the serialization and deserialization of a loot table.
     */
 
-    private const string LootTableBlob = "2A0367480100000089876B65050000000000050000005E39841B0100000002000000";
-    private const string LootTableBlobCompressed = "2200000078DAD3624EF760646060E86CCF4E65650001101967D9220D126502620057C70401";
+    private const string LootTableBlob = "2A0367480100000089876B65050000000000050000005E39841B010000000200000000000000";
+    private const string LootTableBlobCompressed = "2600000078DAD3624EF760646060E86CCF4E65650001101967D9220D12656280000067CB0401";
 
     [Fact]
     public void TryDeserializeLootTableBlob() {
-        var serializer = new ObjectSerializer(false, SerializerFlags.None, new DummyTypeRegistry());
+        // Deserialize a loot info list.
+        var serializer = new ObjectSerializer(false, SerializerFlags.None);
         var byteBlob = Convert.FromHexString(LootTableBlob);
         var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
 
@@ -55,27 +57,27 @@ public class LootTableTest {
         // Serialize a loot info list and see if it matches the expected blob.
         var serializer = new ObjectSerializer(false);
         var lootTable = new LootInfoList {
+            m_loot = [
+                new MagicXPLootInfo { m_lootType = LOOT_TYPE.LOOT_TYPE_MAGIC_XP, m_experience = 5 }
+            ],
             m_goldInfo = new GoldLootInfo {
                 m_goldAmount = 2,
                 m_lootType = LOOT_TYPE.LOOT_TYPE_GOLD
-            },
-            m_loot = [
-                new MagicXPLootInfo { m_lootType = LOOT_TYPE.LOOT_TYPE_MAGIC_XP, m_experience = 5 }
-            ]
+            }
         };
 
         var serializeSuccess = serializer.Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
         Assert.True(serializeSuccess);
         Assert.True(byteBlob is not null);
 
-        var hexBlob = BitConverter.ToString(byteBlob).Replace("-", "");
+        var hexBlob = Convert.ToHexString(byteBlob);
         Assert.Equal(LootTableBlob, hexBlob);
     }
 
     [Fact]
     public void TrySerializeWithCompression() {
         // Serialize a loot info list with compression and see if it matches the expected blob.
-        var serializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
+        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
         var lootTable = new LootInfoList {
             m_goldInfo = new GoldLootInfo {
                 m_goldAmount = 2,
@@ -90,14 +92,14 @@ public class LootTableTest {
         Assert.True(serializeSuccess);
         Assert.True(byteBlob is not null);
 
-        var hexBlob = BitConverter.ToString(byteBlob).Replace("-", "");
+        var hexBlob = Convert.ToHexString(byteBlob);
         Assert.Equal(LootTableBlobCompressed, hexBlob);
     }
 
     [Fact]
     public void TryDeserializeWithCompression() {
-        // Deserialize a compressed loot info list and see if it matches the expected blob.
-        var serializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
+        // Deserialize a compressed loot info list.
+        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
         var byteBlob = Convert.FromHexString(LootTableBlobCompressed);
         var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
 

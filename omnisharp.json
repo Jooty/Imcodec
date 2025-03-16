@@ -4,13 +4,6 @@
         "EnableDecompilationSupport": true,
         "LocationPaths": []
     },
-    "FormattingOptions": {
-        "EnableEditorConfigSupport": true
-    },
-    "RoslynExtensionsOptions": {
-        "EnableAnalyzersSupport": true,
-        "EnableDecompilationSupport": true
-    },
     "FileOptions": {
         "SystemExcludeSearchPatterns": [
             "**/node_modules/**/*",
@@ -29,6 +22,7 @@
         "InsertionBehavior": "WithOtherMembersOfTheSameKind"
     },
     "FormattingOptions": {
+        "EnableEditorConfigSupport": true,
         "NewLinesForBracesInLambdaExpressionBody": false,
         "NewLinesForBracesInAnonymousMethods": false,
         "NewLinesForBracesInAnonymousTypes": false,

@@ -103,7 +103,7 @@ public partial class ObjectSerializer(bool Versionable = true,
     public bool UseServerTypeRegistry { get; set; } = UseServerTypeRegistry;
 
     private static readonly ClientGeneratedTypeRegistry s_defaultTypeRegistry = new();
-    private static readonly ServerTypeRegistry s_serverTypeRegistry = new();
+    private static readonly ServerGeneratedTypeRegistry s_serverTypeRegistry = new();
 
     /// <summary>
     /// Serializes the specified <see cref="PropertyClass"/> object using

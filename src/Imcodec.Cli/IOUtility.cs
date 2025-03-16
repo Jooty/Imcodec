@@ -34,6 +34,7 @@ internal static class IOUtility {
         // Get the file name after the last directory separator.
         // Verify it's a file name and not a directory.
         var fileName = path.Split(Path.DirectorySeparatorChar).Last();
+
         return fileName.Contains('.') ? fileName : "";
     }
 
@@ -51,6 +52,7 @@ internal static class IOUtility {
         }
 
         var pathWithoutFileName = path[..idx];
+
         return pathWithoutFileName.Contains('.') ? "" : pathWithoutFileName;
     }
 
@@ -62,6 +64,7 @@ internal static class IOUtility {
     internal static string ExtractFileExtension(string path) {
         // Get the file extension from the file name.
         var fileName = ExtractFileName(path);
+
         return fileName?.Split('.').Last() ?? "";
     }
 
@@ -73,6 +76,7 @@ internal static class IOUtility {
     internal static string RemoveExtension(string path) {
         // Split on the last index of '.'.
         var idx = path.LastIndexOf('.');
+        
         return idx == -1 ? path : path[..idx];
     }
 

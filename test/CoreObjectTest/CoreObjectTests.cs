@@ -18,44 +18,34 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Imcodec.IO;
-using Imcodec.ObjectProperty;
 using Imcodec.CoreObject;
-using Xunit;
-using Imcodec.Test.CoreObjectTest;
+using Imcodec.ObjectProperty.TypeCache;
 
-namespace Imcodec.CoreObject.Tests;
+namespace Imcodec.Test.CoreObjectTest;
 
 public class CoreObjectSerializerTest {
 
     private const string CoreObjectBlob
         = """
-        70 00 00 00 78 DA 2B E6 3C CC CE C2 C0 C8 00 02 3B 97 F4 BB 
-        27 4D 99 29 C6 72 6F 93 CF 17 7D 6F E5 C4 2B CB 97 33 E0 04 
-        0D F6 20 9D A4 02 00 57 AC 0C A5
+        6A 00 00 00 78 DA 2B E6 AC EB 9F 94 C4 40 12 68 B0 67 20 03 00 00 29 62 03 3D
         """;
 
-   [Fact]
-	public void Serializer_Deserialize() {
+    [Fact]
+    public void SerializerSerialize() {
+        // Arrange
+        var serializer = new CoreObjectSerializer();
+        var coreObject = new WizClientObjectItem {
+            m_fScale = 1,
+        };
 
-      // Arrange
-      var blobBytes = CoreObjectBlob.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
-                     .Select(hex => Convert.ToByte(hex, 16))
-                     .ToArray();
-      var serializer = new CoreObjectSerializer(typeRegistry: new DummyTypeRegistry());
+        // Act
+        if (!serializer.Serialize(coreObject, 1, out var bytes)) {
+            Assert.True(false, "Failed to serialize object.");
+        }
 
-      // Act
-      if (!serializer.Deserialize<WizClientObjectItem>(blobBytes, 0u, out var coreObject)) {
-         Assert.True(false, "Failed to serialize object.");
-      }
-
-      // Assert
-      Assert.NotNull(coreObject);
-      Assert.Equal(1, coreObject.m_fScale);
-      Assert.Equal((ulong) 264131, coreObject.m_templateID);
-      Assert.NotNull(coreObject.m_inactiveBehaviors);
-      Assert.Single(coreObject.m_inactiveBehaviors);
-
-   }
+        // Assert
+        Assert.NotNull(bytes);
+        Assert.Equal(CoreObjectBlob, string.Join(" ", bytes.Select(static b => b.ToString("X2"))));
+    }
 
 }

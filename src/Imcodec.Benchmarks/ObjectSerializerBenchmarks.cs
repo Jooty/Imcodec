@@ -21,6 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Imcodec.ObjectProperty;
+using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.Benchmarks;
 
@@ -38,10 +39,10 @@ public class ObjectSerializerBenchmarks {
 
     [GlobalSetup]
     public void Setup() {
-        // Initialize the serializer and test data
-        _serializer = new ObjectSerializer(false, SerializerFlags.None, new DummyTypeRegistry());
+        // Initialize the serializer and test data.
+        _serializer = new ObjectSerializer(false, SerializerFlags.None);
 
-        // Create a sample loot table
+        // Create a sample loot table.
         _lootTable = new LootInfoList {
             m_goldInfo = new GoldLootInfo {
                 m_goldAmount = 2,
@@ -56,39 +57,36 @@ public class ObjectSerializerBenchmarks {
             ]
         };
 
-        // Pre-serialize data for deserialization benchmark
+        // Pre-serialize data for deserialization benchmark.
         _serializedData = Convert.FromHexString(LootTableBlob);
         _compressedData = Convert.FromHexString(LootTableBlobCompressed);
     }
 
     [Benchmark]
-    public void SerializeLootTable() {
-        _serializer.Serialize(_lootTable, (PropertyFlags) 31, out var _);
-    }
+    public void SerializeLootTable() 
+        => _ = _serializer.Serialize(_lootTable, (PropertyFlags) 31, out var _);
 
     [Benchmark]
-    public void DeserializeLootTable() {
-        _serializer.Deserialize<LootInfoList>(_serializedData, (PropertyFlags) 31, out var _);
-    }
+    public void DeserializeLootTable() 
+        => _ = _serializer.Deserialize<LootInfoList>(_serializedData, (PropertyFlags) 31, out var _);
 
     [Benchmark]
     public void SerializeWithCompression() {
-        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
-        compressedSerializer.Serialize(_lootTable, (PropertyFlags) 31, out var _);
+        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress);
+        _ = compressedSerializer.Serialize(_lootTable, (PropertyFlags) 31, out var _);
     }
 
     [Benchmark]
     public void DeserializeWithCompression() {
-        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress, new DummyTypeRegistry());
-        compressedSerializer.Deserialize<LootInfoList>(_compressedData, (PropertyFlags) 31, out var _);
+        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress);
+        _ = compressedSerializer.Deserialize<LootInfoList>(_compressedData, (PropertyFlags) 31, out var _);
     }
 
 }
 
 public class Program {
 
-    public static void Main(string[] args) {
-        var summary = BenchmarkRunner.Run<ObjectSerializerBenchmarks>();
-    }
+    public static void Main() 
+        => _ = BenchmarkRunner.Run<ObjectSerializerBenchmarks>();
 
 }

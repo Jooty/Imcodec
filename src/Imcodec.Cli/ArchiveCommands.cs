@@ -75,7 +75,7 @@ public sealed class ArchiveCommands {
         // If the output directory does not exist, create it.
         outputPath = GetOutputDirectory(archivePath, outputPath, archiveName!);
         if (!Directory.Exists(outputPath)) {
-            Directory.CreateDirectory(outputPath);
+            _ = Directory.CreateDirectory(outputPath);
         }
 
         var files = UnpackArchiveFiles(archive);
@@ -152,7 +152,7 @@ public sealed class ArchiveCommands {
         var fullDirectoryPath = Path.Combine(basePath, directoryPath);
 
         // Create all necessary directories
-        Directory.CreateDirectory(fullDirectoryPath);
+        _ = Directory.CreateDirectory(fullDirectoryPath);
 
         // Return the full path including the file name
         return Path.Combine(fullDirectoryPath, actualFileName);
