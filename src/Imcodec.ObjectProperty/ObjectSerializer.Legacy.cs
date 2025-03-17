@@ -110,25 +110,19 @@ public partial class ObjectSerializer {
     /// This method maintains compatibility with legacy code.
     /// </summary>
     [Obsolete("Use Serialize method instead")]
-    public ByteString Serialize(PropertyClass propertyClass) {
-        if (Serialize(propertyClass, PropertyMask, out var output)) {
-            return new ByteString(output!);
-        }
-        
-        throw new Exception("Serialization failed");
-    }
+    public ByteString Serialize(PropertyClass propertyClass) 
+        => Serialize(propertyClass, PropertyMask, out var output)
+            ? (ByteString) output!
+            : throw new Exception("Serialization failed");
 
     /// <summary>
     /// [Deprecated] Use Deserialize method instead.
     /// This method maintains compatibility with legacy code.
     /// </summary>
     [Obsolete("Use Deserialize<T> method instead")]
-    public PropertyClass? Deserialize(byte[] buffer) {
-        if (Deserialize<PropertyClass>(buffer, PropertyMask, out var output)) {
-            return output;
-        }
-
-        return null;
-    }
+    public PropertyClass? Deserialize(byte[] buffer) 
+        => Deserialize<PropertyClass>(buffer, PropertyMask, out var output)
+            ? output
+            : null;
 
 }
