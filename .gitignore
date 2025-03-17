@@ -396,7 +396,11 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-/src/Imcodec.ObjectProperty/Generated
-/src/Imcodec.ObjectProperty/GeneratorInput
-src/Imcodec.MessageLayer/GeneratorInput/Root.wad
-/src/Imcodec.MessageLayer/GeneratorInput
+
+# Ignore all JSON files in Imcodec.ObjectProperty folder
+/src/Imcodec.ObjectProperty/*.json
+/src/Imcodec.ObjectProperty/**/*.json
+
+# Ignore all XML files in the Imcodec.MessageLayer folder
+/src/Imcodec.MessageLayer/*.xml
+/src/Imcodec.MessageLayer/**/*.xml
