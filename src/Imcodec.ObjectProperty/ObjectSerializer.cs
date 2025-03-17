@@ -115,7 +115,7 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// <returns><c>true</c> if the serialization is successful; otherwise, <c>false</c>.</returns>
     public virtual bool Serialize(PropertyClass input,
                                   uint propertyMask,
-                                  out byte[]? output) {
+                                  out ByteString? output) {
         var castedFlags = (PropertyFlags) propertyMask;
 
         return Serialize(input, castedFlags, out output);
@@ -131,7 +131,7 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// <param name="output">The serialized byte array output.</param>
     public virtual bool Serialize(PropertyClass input,
                                   PropertyFlags propertyMask,
-                                  out byte[]? output) {
+                                  out ByteString? output) {
         output = default;
         this.PropertyMask = propertyMask;
         var writer = new BitWriter();
