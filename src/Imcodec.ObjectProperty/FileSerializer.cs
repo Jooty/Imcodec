@@ -33,10 +33,10 @@ public class FileSerializer : ObjectSerializer {
     public const uint BiNDMagic = 0x644E4942;
     public const uint BiNDDefaultFlags = 0x7;
 
-    public bool Serialize<T>(T input, out byte[]? output) where T : PropertyClass
+    public bool Serialize<T>(T input, out ByteString? output) where T : PropertyClass
         => Serialize(input, (PropertyFlags) BiNDDefaultFlags, out output);
 
-    public override bool Serialize(PropertyClass input, PropertyFlags propertyMask, out byte[]? output) {
+    public override bool Serialize(PropertyClass input, PropertyFlags propertyMask, out ByteString? output) {
         output = default;
 
         // First, call the base class serialize and check if it was successful.
@@ -46,7 +46,7 @@ public class FileSerializer : ObjectSerializer {
         }
 
         // Create a new buffer with the size of the output buffer plus the size of the magic.
-        var buffer = new byte[baseOutput!.Length + sizeof(uint)];
+        var buffer = new byte[baseOutput!.Value.Length + sizeof(uint)];
 
         // Write the magic header and serializer flags.
         BinaryPrimitives.WriteUInt32LittleEndian(buffer, BiNDMagic);
@@ -55,7 +55,7 @@ public class FileSerializer : ObjectSerializer {
         // Copy the output buffer to the new buffer.
         var skipLen = sizeof(uint) * 2;
         var bufferSpan = buffer.AsSpan(skipLen);
-        baseOutput.CopyTo(bufferSpan);
+        ((byte[]) baseOutput).CopyTo(bufferSpan);
         output = buffer;
 
         return true;
