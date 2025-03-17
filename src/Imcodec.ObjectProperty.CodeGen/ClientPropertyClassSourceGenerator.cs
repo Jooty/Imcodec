@@ -183,12 +183,11 @@ Redistribution and use in source and binary forms, with or without
             // that are duplicated in the parent classes. If the definition only inherits from PropertyClass, we
             // don't need to do anything.
             foreach (var classDefinition in classDefinitions) {
-                if (classDefinition.BaseClasses.Count == 0) {
+                classDefinition.AllProperties = [.. classDefinition.ExclusiveProperties];
+                
+                if (classDefinition.BaseClasses.Count == 1) {
                     continue;
                 }
-                
-                classDefinition.AllProperties = [.. classDefinition.ExclusiveProperties];
-
 
                 // Set the exclusive properties to be those that are not in the base classes.
                 foreach (var baseclass in classDefinition.BaseClasses) {

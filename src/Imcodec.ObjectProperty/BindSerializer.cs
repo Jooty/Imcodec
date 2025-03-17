@@ -110,7 +110,7 @@ public class BindSerializer : ObjectSerializer {
     /// <returns>True if the buffer was successfully deserialized, false otherwise.</returns>
     public override bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) {
         output = default!;
-        var bindHeaderLength = (sizeof(uint) * 2) + 1; // Magic and flags.
+        var bindHeaderLength = sizeof(uint) * 2; // Magic and flags.
 
         var reader = new BitReader(inputBuffer);
 
