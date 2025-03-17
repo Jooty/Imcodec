@@ -28,6 +28,7 @@
     <ProjectReference Include="..\src\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj" />
     <ProjectReference Include="..\src\Imcodec.Wad\Imcodec.Wad.csproj" />
     <ProjectReference Include="..\src\Imcodec.CoreObject\Imcodec.CoreObject.csproj" />
+    <ProjectReference Include="..\src\Imcodec.MessageLayer\Imcodec.MessageLayer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

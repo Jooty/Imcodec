@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Imcodec.IO\Imcodec.IO.csproj" />
+    <ProjectReference Include="..\Imcodec.MessageLayer.CodeGen\Imcodec.MessageLayer.CodeGen.csproj" 
+      OutputItemType="Analyzer" 
+      ReferenceOutputAssembly="false" 
+      SetTargetFramework="TargetFramework=netstandard2.0" />
+    <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="GeneratorInput\*.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+  </ItemGroup>
+
+</Project>

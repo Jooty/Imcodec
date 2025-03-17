@@ -398,3 +398,5 @@ FodyWeavers.xsd
 *.sln.iml
 /src/Imcodec.ObjectProperty/Generated
 /src/Imcodec.ObjectProperty/GeneratorInput
+src/Imcodec.MessageLayer/GeneratorInput/Root.wad
+/src/Imcodec.MessageLayer/GeneratorInput
