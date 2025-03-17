@@ -66,7 +66,7 @@ internal static class XmlMessageReader {
 
     public static ProtocolDefinition? ExtractProtocolDefinition(AdditionalText xmlFile, SourceProductionContext context) {
         var xml = new XmlDocument();
-        using (var stringReader = new StringReader(xmlFile.GetText().ToString())) {
+        using (var stringReader = new StringReader(xmlFile!.GetText()!.ToString())) {
             xml.Load(stringReader);
         }
 

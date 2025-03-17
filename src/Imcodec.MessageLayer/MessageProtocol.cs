@@ -25,30 +25,30 @@ using System.Linq;
 namespace Imcodec.MessageLayer;
 
 /// <summary>
-/// Base class for message protocols that register and dispatch message handlers.
+/// Base interface for message protocols that register and dispatch message handlers.
 /// </summary>
-public abstract class MessageProtocol {
+public interface MessageProtocol {
 
-   /// <summary>
-   /// Gets the unique service identifier for this protocol.
-   /// </summary>
-   public abstract byte ServiceId { get; }
+    /// <summary>
+    /// Gets the unique service identifier for this protocol.
+    /// </summary>
+    public abstract byte ServiceId { get; }
 
-   /// <summary>
-   /// Gets the protocol type identifier.
-   /// </summary>
-   public abstract string ProtocolType { get; }
+    /// <summary>
+    /// Gets the protocol type identifier.
+    /// </summary>
+    public abstract string ProtocolType { get; }
 
-   /// <summary>
-   /// Gets the human-readable description of this protocol.
-   /// </summary>
-   public abstract string ProtocolDescription { get; }
-   
-   /// <summary>
-   /// Gets the version number of this protocol implementation.
-   /// </summary>
-   public abstract int ProtocolVersion { get; }
+    /// <summary>
+    /// Gets the human-readable description of this protocol.
+    /// </summary>
+    public abstract string ProtocolDescription { get; }
 
-   internal abstract IMessage Dispatch(byte messageId);
+    /// <summary>
+    /// Gets the version number of this protocol implementation.
+    /// </summary>
+    public abstract int ProtocolVersion { get; }
+
+    IMessage Dispatch(byte messageId);
 
 }
