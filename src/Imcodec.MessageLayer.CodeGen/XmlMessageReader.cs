@@ -226,7 +226,17 @@ internal static class XmlMessageReader {
 
         // If the protocol needs ordinal sorting, sort the records by name
         if (DoesProtocolNeedOrdering(records)) {
-            records = [.. records.OrderBy(static n => n.Name)];
+            var sortedNodes = new XmlNode[records.Count];
+
+            // Copy everything to the new array.
+            // Array.Copy does NOT work here, as the XmlNode object is only accessable via the iterator.
+            for (int i = 0; i < records.Count; i++) {
+                sortedNodes[i] = records[i];
+            }
+
+            Array.Sort(sortedNodes, static (x, y) => string.CompareOrdinal(x.Name, y.Name));
+
+            return [.. sortedNodes];
         }
 
         return records;
