@@ -170,7 +170,11 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.StringEnums)) {");
             sb.AppendLine("\t\t\t\tvar rawEnumString = reader.ReadString();");
             sb.AppendLine("\t\t\t\tvar enumString = SanitizeStringEnum(rawEnumString);");
-            sb.AppendLine($"\t\t\t\t{property.Name} = ({property.CsharpType})Enum.Parse(typeof({property.CsharpType}), enumString, true);");
+            sb.AppendLine($"\t\t\t\tif (Enum.IsDefined(typeof({property.CsharpType}), enumString)) {{");
+            sb.AppendLine($"\t\t\t\t\t{property.Name} = ({property.CsharpType})Enum.Parse(typeof({property.CsharpType}), enumString, true);");
+            sb.AppendLine("\t\t\t\t} else {");
+            sb.AppendLine($"\t\t\t\t\t{property.Name} = default({property.CsharpType});");
+            sb.AppendLine("\t\t\t\t}");
             sb.AppendLine("\t\t\t} else {");
             sb.AppendLine($"\t\t\t\t{property.Name} = ({property.CsharpType})Enum.ToObject(typeof({property.CsharpType}), reader.ReadUInt32());");
             sb.AppendLine("\t\t\t}");
