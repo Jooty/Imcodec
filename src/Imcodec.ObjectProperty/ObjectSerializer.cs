@@ -198,9 +198,6 @@ public partial class ObjectSerializer(bool Versionable = true,
         // If the behaviors flag is set to use compression, decompress the input buffer.
         if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
             reader = Decompress(reader);
-            if (reader == null) {
-                return false;
-            }
         }
 
         // If the flags request it, ensure our BitReader is reading with compact lengths.
@@ -285,17 +282,15 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// <param name="inputBuffer">The cref="BitReader"/> containing
     /// the compressed data.</param>
     /// <returns>A <see cref="BitReader"/> containing the decompressed data.</returns>
-    protected virtual BitReader? Decompress(BitReader inputBuffer) {
+    protected virtual BitReader Decompress(BitReader inputBuffer) {
+        // Read the uncompressed length from the first 4 bytes of the input buffer.
+        // The rest of the buffer is the compressed data.
         var uncompressedLength = inputBuffer.ReadInt32();
         var decompressedData = Compression.Decompress(inputBuffer.GetData()[4..]);
 
-        // If the decompressed data length does not match the recorded length,
-        // log it and return null.
-        if (decompressedData.Length != uncompressedLength) {
-            throw new Exception("Decompressed data length does not match the recorded length.");
-        }
-
-        return new BitReader(decompressedData);
+        return decompressedData.Length != uncompressedLength
+            ? throw new Exception("Decompressed data length does not match the recorded length.")
+            : new BitReader(decompressedData);
     }
 
     /// <summary>

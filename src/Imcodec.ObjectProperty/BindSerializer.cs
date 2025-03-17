@@ -110,11 +110,12 @@ public class BindSerializer : ObjectSerializer {
     /// <returns>True if the buffer was successfully deserialized, false otherwise.</returns>
     public override bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) {
         output = default!;
+        var bindHeaderLength = (sizeof(uint) * 2) + 1; // Magic and flags.
 
         var reader = new BitReader(inputBuffer);
 
         // Check if the input buffer is too small to contain the magic header.
-        if (inputBuffer.Length < sizeof(uint) * 2) {
+        if (inputBuffer.Length < bindHeaderLength) {
             return false;
         }
 
@@ -123,23 +124,18 @@ public class BindSerializer : ObjectSerializer {
         var skipLen = 0;
         if (magic == BiNDMagic) {
             // If the BiND header is present, the serializer flags will be next.
-            skipLen = sizeof(uint) * 2; // Skip the magic and flags.
-
-            var flags = (SerializerFlags) reader.ReadUInt32();
-            if ((((uint) flags) & 8) != 0) {
+            var flags = reader.ReadUInt32();
+            if ((flags & 8) != 0) {
                 _ = reader.ReadBit();
             }
-            base.SerializerFlags = flags;
+            base.SerializerFlags = (SerializerFlags) flags;
+
+            skipLen = bindHeaderLength;
         }
 
         var baseInput = inputBuffer.Skip(skipLen).ToArray();
-        if (!base.Deserialize<T>(baseInput, propertyMask, out var baseOutput)) {
-            return false;
-        }
 
-        output = baseOutput!;
-
-        return true;
+        return base.Deserialize(baseInput, propertyMask, out output!);
     }
 
 }
