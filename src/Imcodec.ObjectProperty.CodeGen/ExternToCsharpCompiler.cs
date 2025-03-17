@@ -72,7 +72,7 @@ namespace Imcodec.ObjectProperty.CodeGen {
 
             classBuilder.AppendLine($"public partial record {classDefinition.Name} : {topBaseClass} {{\n");
             classBuilder.AppendLine($"\tpublic override uint GetHash() => {classDefinition.Hash};\n");
-            foreach (var property in classDefinition.Properties) {
+            foreach (var property in classDefinition.ExclusiveProperties) {
                 classBuilder.AppendLine($"\t{WritePropertyAsString(property)}\n");
             }
             classBuilder.AppendLine("}");

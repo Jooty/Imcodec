@@ -115,7 +115,7 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
                     _enumDefinitions.Add(enumDefinition);
                 }
 
-                classDefinition.Properties.Add(propertyDefinition);
+                classDefinition.ExclusiveProperties.Add(propertyDefinition);
             }
 
             return classDefinition;
@@ -153,8 +153,8 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
                 }
 
                 foreach (var baseclass in classDefinition.BaseClasses) {
-                    foreach (var property in baseclass.Properties) {
-                        classDefinition.Properties.RemoveAll(p => p.Hash == property.Hash);
+                    foreach (var property in baseclass.ExclusiveProperties) {
+                        classDefinition.ExclusiveProperties.RemoveAll(p => p.Hash == property.Hash);
                     }
                 }
             }

@@ -88,7 +88,9 @@ public static class Deserialization {
             }
         }
         catch (Exception ex) {
+            Console.WriteLine("=== Deserialization failed ===");
             Console.WriteLine($"Failed to deserialize file ({fileName}): {ex.Message} {ex.StackTrace}");
+            Console.WriteLine("===============================");
             
             return null;
         }

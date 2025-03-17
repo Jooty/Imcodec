@@ -119,7 +119,7 @@ Redistribution and use in source and binary forms, with or without
                                 new DiagnosticDescriptor(
                                     "IMC0004",
                                     "Source Generation Information",
-                                    $"Generated source file: {classDefinition.Name}.g.cs with {classDefinition.Properties.Count} properties",
+                                    $"Generated source file: {classDefinition.Name}.g.cs with {classDefinition.ExclusiveProperties.Count} properties",
                                     "Imcodec.ObjectProperty.CodeGen",
                                     DiagnosticSeverity.Info,
                                     isEnabledByDefault: true),
@@ -213,7 +213,7 @@ Redistribution and use in source and binary forms, with or without
                 if (member is PropertyDeclarationSyntax propertyDeclaration) {
                     var propertyDefinition = ProcessProperty(propertyDeclaration, semanticModel);
                     if (propertyDefinition != null) {
-                        classDefinition.Properties.Add(propertyDefinition);
+                        classDefinition.ExclusiveProperties.Add(propertyDefinition);
                         propertyCount++;
                     }
                 }

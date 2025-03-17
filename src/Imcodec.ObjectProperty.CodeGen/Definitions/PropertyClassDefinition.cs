@@ -26,7 +26,8 @@ namespace Imcodec.ObjectProperty.CodeGen.Definitions {
 
         internal List<string> BaseClassNames{ get; set; } = new List<string>();
         internal List<PropertyClassDefinition> BaseClasses { get; set; } = new List<PropertyClassDefinition>();
-        internal List<PropertyDefinition> Properties { get; set; } = new List<PropertyDefinition>();
+        internal List<PropertyDefinition> ExclusiveProperties { get; set; } = new List<PropertyDefinition>();
+        internal List<PropertyDefinition> AllProperties { get; set; } = new List<PropertyDefinition>();
 
         // ctor
         internal PropertyClassDefinition(string className, uint hash) {

@@ -18,14 +18,15 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Imcodec.ObjectProperty.CodeGen.Definitions;
 
-namespace Imcodec.ObjectProperty.CodeGen; 
+namespace Imcodec.ObjectProperty.CodeGen;
 
 internal static class PropertyClassSerializationGenerator {
-    
+
     /// <summary>
     /// Generates serialization and deserialization methods for a PropertyClass.
     /// </summary>
@@ -36,10 +37,10 @@ internal static class PropertyClassSerializationGenerator {
         _ = sb.AppendLine();
         GenerateDecodeMethod(classDefinition, sb);
         _ = sb.AppendLine();
-        
+
         return sb.ToString();
     }
-    
+
     private static void GenerateEncodeMethod(PropertyClassDefinition classDefinition, StringBuilder sb) {
         _ = sb.AppendLine("\t/// <summary>")
             .AppendLine("\t/// Encodes this object's properties using the specified writer and serializer.")
@@ -56,23 +57,23 @@ internal static class PropertyClassSerializationGenerator {
         if (!HasNoBaseClass(classDefinition)) {
             sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
         }
-        
+
         // Add property encodings.
-        foreach (var property in classDefinition.Properties) {
+        foreach (var property in classDefinition.ExclusiveProperties) {
             sb.AppendLine($"\t\t// Property: {property.Name} (Hash: {property.Hash}, Flags: {property.Flags})");
             sb.AppendLine($"\t\tif (IsPropertyEligibleForProcessing((PropertyFlags) {property.Flags}, serializer)) {{");
-            
+
             sb.AppendLine(GeneratePropertyEncoding(property));
-            
+
             sb.AppendLine("\t\t}");
             sb.AppendLine();
         }
-        
+
         sb.AppendLine("\t\tOnPostEncode();");
         sb.AppendLine("\t\treturn true;");
         sb.AppendLine("\t}");
     }
-    
+
     private static void GenerateDecodeMethod(PropertyClassDefinition classDefinition, StringBuilder sb) {
         sb.AppendLine("\t/// <summary>");
         sb.AppendLine("\t/// Decodes this object's properties using the specified reader and serializer.");
@@ -89,26 +90,26 @@ internal static class PropertyClassSerializationGenerator {
         if (!HasNoBaseClass(classDefinition)) {
             sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
         }
-        
+
         // Add property decodings.
-        foreach (var property in classDefinition.Properties) {
+        foreach (var property in classDefinition.ExclusiveProperties) {
             sb.AppendLine($"\t\t// Property: {property.Name} (Hash: {property.Hash}, Flags: {property.Flags})");
             sb.AppendLine($"\t\tif (IsPropertyEligibleForProcessing((PropertyFlags) {property.Flags}, serializer)) {{");
-            
+
             sb.AppendLine(GeneratePropertyDecoding(property));
-            
+
             sb.AppendLine("\t\t}");
             sb.AppendLine();
         }
-        
+
         sb.AppendLine("\t\tOnPostDecode();");
         sb.AppendLine("\t\treturn true;");
         sb.AppendLine("\t}");
     }
-    
+
     private static string GeneratePropertyEncoding(PropertyDefinition property) {
         var sb = new StringBuilder();
-        
+
         // Determine the encoding logic based on the property type.
         if (property.IsEnum) {
             sb.AppendLine("\t\t\t// Enum encoding");
@@ -138,7 +139,7 @@ internal static class PropertyClassSerializationGenerator {
             else {
                 sb.AppendLine($"\t\t\t\t\t{writer}");
             }
-            
+
             sb.AppendLine("\t\t\t\t}");
             sb.AppendLine("\t\t\t}");
         }
@@ -156,13 +157,13 @@ internal static class PropertyClassSerializationGenerator {
                 sb.AppendLine($"\t\t\t{writer}");
             }
         }
-        
+
         return sb.ToString();
     }
-    
+
     private static string GeneratePropertyDecoding(PropertyDefinition property) {
         var sb = new StringBuilder();
-        
+
         // Determine the decoding logic based on the property type.
         if (property.IsEnum) {
             sb.AppendLine("\t\t\t// Enum decoding");
@@ -183,7 +184,7 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t\t} else {");
             sb.AppendLine($"\t\t\t\t{property.Name} = new {property.CsharpType}();");
             sb.AppendLine($"\t\t\t\tfor (int i = 0; i < len_{property.Name}; i++) {{");
-            
+
             var reader = GetReaderMethodForType(elementType, $"var item_{property.Name}");
             if (string.IsNullOrEmpty(reader)) {
                 // A reader was not found. Assume the element is a PropertyClass.
@@ -200,7 +201,7 @@ internal static class PropertyClassSerializationGenerator {
                 sb.AppendLine($"\t\t\t\t\t{reader}");
                 sb.AppendLine($"\t\t\t\t\t{property.Name}.Add(item_{property.Name});");
             }
-            
+
             sb.AppendLine("\t\t\t\t}");
             sb.AppendLine("\t\t\t}");
         }
@@ -219,10 +220,10 @@ internal static class PropertyClassSerializationGenerator {
                 sb.AppendLine($"\t\t\t{reader}");
             }
         }
-        
+
         return sb.ToString();
     }
-    
+
     private static string ExtractElementType(string collectionType) {
         // Extract element type from List<T> or T[].
         if (collectionType.StartsWith("List<") && collectionType.EndsWith(">")) {
@@ -301,10 +302,10 @@ internal static class PropertyClassSerializationGenerator {
             _ => ""
         };
     }
-    
+
     public static string GenerateVersionableMethods(PropertyClassDefinition classDefinition) {
         var sb = new StringBuilder();
-        
+
         // Generate EncodeVersionable method.
         sb.AppendLine("\t/// <summary>");
         sb.AppendLine("\t/// Encodes this object's properties using the specified writer and serializer in versionable format.");
@@ -314,13 +315,10 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\twriter.WriteUInt32(0); // Placeholder for the size");
         sb.AppendLine();
 
-        // If a base class is present, encode its properties as well.
-        if (!HasNoBaseClass(classDefinition)) {
-            sb.AppendLine("\t\tbase.Encode(writer, serializer);\n");
-        }
-        
+        // Instead of calling base.Encode, we'll handle all properties here
         // Add property encoding for versionable format.
-        foreach (var property in classDefinition.Properties) {
+        var allProperties = classDefinition.AllProperties.ToList();
+        foreach (var property in allProperties) {
             sb.AppendLine($"\t\t// Property: {property.Name} (Hash: {property.Hash}, Flags: {property.Flags})");
             sb.AppendLine($"\t\tif (IsPropertyEligibleForProcessing((PropertyFlags) {property.Flags}, serializer)) {{");
             sb.AppendLine("\t\t\t// Write the hash and size of the property");
@@ -329,10 +327,10 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine($"\t\t\twriter.WriteUInt32({property.Hash});");
             sb.AppendLine();
             sb.AppendLine("\t\t\tvar preEncodeBitPos = writer.BitPos();");
-            
+
             // Generate encoding for this property.
             sb.AppendLine(GeneratePropertyEncoding(property).Replace("\t\t\t", "\t\t\t\t"));
-            
+
             sb.AppendLine();
             sb.AppendLine("\t\t\t// Write the size of the property");
             sb.AppendLine("\t\t\tvar size = writer.BitPos() - preEncodeBitPos;");
@@ -342,7 +340,7 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t}");
             sb.AppendLine();
         }
-        
+
         sb.AppendLine("\t\t// Write the size of the object");
         sb.AppendLine("\t\tvar objectSize = writer.BitPos() - objectStart;");
         sb.AppendLine("\t\twriter.SeekBit(objectStart);");
@@ -351,7 +349,7 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine();
         sb.AppendLine("\t\treturn true;");
         sb.AppendLine("\t}");
-        
+
         // Generate DecodeVersionable method.
         sb.AppendLine();
         sb.AppendLine("\t/// <summary>");
@@ -362,11 +360,6 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\tvar objectStart = reader.BitPos();");
         sb.AppendLine("\t\tvar objectSize = reader.ReadUInt32();");
 
-        // If a base class is present, decode its properties as well.
-        if (!HasNoBaseClass(classDefinition)) {
-            sb.AppendLine("\t\tbase.Decode(reader, serializer);\n");
-        }
-        
         sb.AppendLine();
         sb.AppendLine("\t\twhile (reader.BitPos() - objectStart < objectSize) {");
         sb.AppendLine("\t\t\tvar propertyStart = reader.BitPos();");
@@ -380,22 +373,22 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine();
         sb.AppendLine("\t\t\t// Switch on property hash to find the right property");
         sb.AppendLine("\t\t\tswitch (propertyHash) {");
-        
-        // Generate case statements for each property.
+
+        // Generate case statements for each property (including inherited properties)
         var missingHashCounter = 9;
-        foreach (var property in classDefinition.Properties) {
-            var hash = property.Hash == 0 
-                ? $"0x{missingHashCounter++:X8}" 
+        foreach (var property in allProperties) {
+            var hash = property.Hash == 0
+                ? $"0x{missingHashCounter++:X8}"
                 : $"0x{property.Hash:X8}";
             sb.AppendLine($"\t\t\t\tcase {hash}: // {property.Name}");
-            
+
             // Generate decoding for this property.
             sb.Append(GeneratePropertyDecoding(property).Replace("\t\t\t", "\t\t\t\t\t"));
-            
+
             sb.AppendLine("\t\t\t\t\tbreak;");
             sb.AppendLine();
         }
-        
+
         sb.AppendLine("\t\t\t\tdefault:");
         sb.AppendLine("\t\t\t\t\t// Unknown property, skip it");
         sb.AppendLine("\t\t\t\t\tbreak;");
@@ -412,10 +405,10 @@ internal static class PropertyClassSerializationGenerator {
         sb.AppendLine("\t\treturn true;");
         sb.AppendLine("\t}");
         sb.AppendLine();
-        
+
         return sb.ToString();
     }
-    
+
     public static string GenerateHelperMethods() {
         var sb = new StringBuilder()
             .AppendLine("\tprivate static bool IsPropertyEligibleForProcessing(PropertyFlags propertyFlags, ObjectSerializer serializer) {")
@@ -466,11 +459,11 @@ internal static class PropertyClassSerializationGenerator {
             .AppendLine("\t\treturn enumString;")
             .AppendLine("\t}")
             .AppendLine();
-        
+
         return sb.ToString();
     }
 
-    private static bool HasNoBaseClass(PropertyClassDefinition classDefinition) 
+    private static bool HasNoBaseClass(PropertyClassDefinition classDefinition)
         => classDefinition.BaseClassNames.Count == 1
         && classDefinition.BaseClassNames.All(static x => x == "PropertyClass");
 
