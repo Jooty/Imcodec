@@ -34,7 +34,7 @@ public class ObjectSerializerBenchmarks {
     private LootInfoList _lootTable = null!;
     private byte[] _serializedData = [];
     private byte[] _compressedData = [];
-    private const string LootTableBlob = "2A0367480100000089876B65050000000000050000005E39841B0100000002000000";
+    private const string LootTableBlob = "2A0367480100000089876B65050000000000050000005E39841B010000000200000000000000";
     private const string LootTableBlobCompressed = "2600000078DAD3624EF760646060E86CCF4E65650001101967D9220D12656280000067CB0401";
 
     [GlobalSetup]
