@@ -68,7 +68,7 @@ public static class MessageEncoder {
     /// <param name="buffer">The byte array to decode.</param>
     /// <returns>A collection of decoded messages if successful, otherwise null.</returns>
     public static IReadOnlyCollection<IMessage>? Decode(byte[] buffer) {
-        if (buffer.Length <= 0) {
+        if (buffer is null || buffer.Length <= 0) {
             return null;
         }
 
