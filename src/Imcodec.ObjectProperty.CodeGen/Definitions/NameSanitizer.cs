@@ -49,11 +49,11 @@ namespace Imcodec.ObjectProperty.CodeGen.Definitions {
             { "Quaternion",       "Quaternion"     },
             { "Matrix3x3",        "Matrix"         },
             { "Color",            "Color"          },
-            { "Rect<float>",      "RectangleF"     },
-            { "Rect<int>",        "Rectangle"      },
-            { "Point<float>",     "Vector2"        },
-            { "Point<int>",       "Point"          },
-            { "Size<int>",        "Point"          },
+            { "Rect_float",       "RectangleF"     },
+            { "Rect_int",         "Rectangle"      },
+            { "Point_float",      "Vector2"        },
+            { "Point_int",        "Point"          },
+            { "Size_int",         "Point"          },
             { "SerializedBuffer", "ByteString"     },
             { "SimpleVert",       "string"         },
             { "SimpleFace",       "string"         },
@@ -99,13 +99,30 @@ namespace Imcodec.ObjectProperty.CodeGen.Definitions {
             // Remove any `.m_full` suffixes.
             input = input.Replace(".m_full", "");
 
+            // Remove any 'const' prefixes.
+            input = input.Replace("const", "");
+
+            // Sometimes the type may be generic, with syntax of {SomeType}<{actualType}>.
+            // The name to translate this into is: SomeType_ActualType.
+            var genericIndex = input.IndexOf("<");
+            if (genericIndex != -1) {
+                var baseType = input.Substring(0, genericIndex);
+                var endIdx = input.IndexOf(">", genericIndex);
+
+                if (endIdx != -1) {
+                    var genericType = input.Substring(genericIndex + 1, endIdx - genericIndex - 1);
+                    genericType = GetCsharpType(genericType, false);
+                    input = $"{baseType}_{genericType}";
+                }
+            }
+
             // Trim the class name to the right-most accessor.
             var lastAccessorIndex = input.LastIndexOf(".");
             if (lastAccessorIndex != -1) {
                 input = input.Substring(lastAccessorIndex + 1);
             }
 
-            return input;
+            return input.Trim();
         }
 
         /// <summary>
@@ -130,11 +147,16 @@ namespace Imcodec.ObjectProperty.CodeGen.Definitions {
         /// <param name="isVector">Whether the type is a vector.</param>
         /// <returns>The corresponding C# type.</returns>
         internal static string GetCsharpType(string cppType, bool isVector) {
-            cppType = SanitizeIdentifier(cppType);
-
             // Check if the type is in the translation dictionary.
             // If not, we'll assume it's a derivative of PropertyClass.
             if (s_internalTypeTranslationDict.TryGetValue(cppType, out var type)) {
+                return isVector ? $"List<{type}>" : type;
+            }
+
+            // We still didn't find it? Let's try to sanitize it.
+            cppType = SanitizeIdentifier(cppType);
+
+            if (s_internalTypeTranslationDict.TryGetValue(cppType, out type)) {
                 return isVector ? $"List<{type}>" : type;
             }
             else {

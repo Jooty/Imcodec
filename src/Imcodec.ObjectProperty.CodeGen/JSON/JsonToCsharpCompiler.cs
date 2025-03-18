@@ -79,8 +79,9 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
         }
 
         private PropertyClassDefinition? GetDefinition(JsonDumpClass dumpedClass) {
-            // Anything containing a '<' is usually client jargon. We don't want to generate code for it.
-            if (dumpedClass.Name.Contains('<') || dumpedClass.Name.Contains('*')) {
+            // Anything containing a '*' is a pointer. We don't want to deal with these.
+            // We also don't want to deal with SharedPointer.
+            if (dumpedClass.Name.Contains('*') || dumpedClass.Name.Contains("SharedPointer")) {
                 return null;
             }
 
@@ -90,6 +91,7 @@ namespace Imcodec.ObjectProperty.CodeGen.JSON {
                 return null;
             }
 
+            // Types without base classes do not derive PropertyCLass.
             if (dumpedClass.BaseClasses.Count <= 0) {
                 return null;
             }
