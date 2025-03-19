@@ -94,6 +94,10 @@ public class ArchiveParser {
     }
 
     private static bool IsMagicHeader(Span<byte> header) {
+        if (header.Length != 5) {
+            return false;
+        }
+
         byte[] magicHeader = "KIWAD"u8.ToArray();
         for (int i = 0; i < header.Length; i++) {
             if (header[i] != magicHeader[i]) {
