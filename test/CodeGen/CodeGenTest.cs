@@ -35,7 +35,10 @@ public class CodeGenTest {
         var classDefinitions = compiler.Compile(jsonDump);
 
         Assert.NotEmpty(classDefinitions);
-        Assert.Equal(2239, classDefinitions.Length);
+
+        // Duplicate classes are not removed with just the JSON compiler.
+        // Removing duplicates is done in the CodeGen pipeline. 2748 total, 2239 with duplicates removed.
+        Assert.Equal(2748, classDefinitions.Length);
 
         var classDefinition = classDefinitions[23];
         Assert.Equal("PetSnackBehaviorTemplate", classDefinition.Name);
