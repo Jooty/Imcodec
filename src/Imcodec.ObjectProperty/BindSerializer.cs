@@ -122,14 +122,19 @@ public class BindSerializer : ObjectSerializer {
         var magic = reader.ReadUInt32();
         var skipLen = 0;
         if (magic == BiNDMagic) {
+            skipLen = bindHeaderLength;
+
             // If the BiND header is present, the serializer flags will be next.
             var flags = reader.ReadUInt32();
+
+            // Not really sure why there's additional flags here. It could be a property
+            // flag mask or additional serializer flags.
+            // We don't find any problems deserializing without it, so we'll just skip it.
             if ((flags & 8) != 0) {
                 _ = reader.ReadBit();
+                skipLen++;
             }
             base.SerializerFlags = (SerializerFlags) flags;
-
-            skipLen = bindHeaderLength;
         }
 
         var baseInput = inputBuffer.Skip(skipLen).ToArray();
