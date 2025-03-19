@@ -169,7 +169,9 @@ Redistribution and use in source and binary forms, with or without
                 // Find each of the base classes in the list of class definitions.
                 // Our integrity check has a -1 because the base class is always
                 // 'PropertyClass', which is always defined.
-                var baseClasses = classDefinitions.Where(c => classDefinition.BaseClassNames.Contains(c.Name!)).ToList();
+                var baseClasses = classDefinitions
+                    .Where(c => classDefinition.BaseClassNames.Contains(c.Name!))
+                    .ToList();
                 if (baseClasses.Count != classDefinition.BaseClassNames.Count - 1) {
                     throw new Exception($"Class \"{classDefinition.Name}\" has a base class that was not found.");
                 }
@@ -183,15 +185,17 @@ Redistribution and use in source and binary forms, with or without
             // that are duplicated in the parent classes. If the definition only inherits from PropertyClass, we
             // don't need to do anything.
             foreach (var classDefinition in classDefinitions) {
-                classDefinition.AllProperties = [.. classDefinition.ExclusiveProperties];
+                classDefinition.ExclusiveProperties = [.. classDefinition.AllProperties];
                 
-                if (classDefinition.BaseClasses.Count == 1) {
+                // If the class only has one base class, it derives directly from PropertyClass
+                // and has no duplicate properties to remove.
+                if (classDefinition.BaseClasses.Count == 0) {
                     continue;
                 }
 
                 // Set the exclusive properties to be those that are not in the base classes.
                 foreach (var baseclass in classDefinition.BaseClasses) {
-                    foreach (var property in baseclass.ExclusiveProperties) {
+                    foreach (var property in baseclass.AllProperties) {
                         classDefinition.ExclusiveProperties.RemoveAll(p => p.Hash == property.Hash);
                     }
                 }
