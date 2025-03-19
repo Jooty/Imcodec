@@ -93,10 +93,7 @@ public sealed class Archive {
     /// </summary>
     /// <returns>The size of the archive.</returns>
     public uint Size() {
-        // Get the last file entry. Add the offset and size to get the end of the file.
-        var lastFileEntry = Files.Last().Value.Value;
-
-        return lastFileEntry.Offset + lastFileEntry.UncompressedSize;
+        return (uint) _archiveStream.Length;
     }
 
     /// <summary>
@@ -118,6 +115,15 @@ public sealed class Archive {
         }
 
         return writer.GetData();
+    }
+
+    public MemoryStream GetData() {
+        var data = new MemoryStream((int) _archiveStream.Length);
+        _archiveStream.Seek(0, SeekOrigin.Begin);
+        _archiveStream.CopyTo(data);
+        data.Seek(0, SeekOrigin.Begin);
+
+        return data;
     }
 
     private Memory<byte> ReadFileData(FileEntry fileEntry) {
