@@ -25,31 +25,27 @@ namespace Imcodec.ObjectProperty;
 
 public static class Compression {
 
+    private static readonly ThreadLocal<Deflater> s_cachedDeflater =
+        new(static () => new Deflater(Deflater.BEST_COMPRESSION, false));
+
     /// <summary>
     /// Compresses the given byte array using the Deflate algorithm with
     /// the best compression level.
     /// </summary>
     /// <param name="_bytes">The byte array to compress.</param>
     /// <returns>The compressed byte array.</returns>
-    public static byte[] Compress(byte[] _bytes) {
-        var maxCompressedLength = _bytes.Length;
-        var outputBuffer = new byte[maxCompressedLength];
+    public static byte[] Compress(byte[] bytes) {
+        var deflater = s_cachedDeflater.Value!;
+        deflater.Reset();
 
-        var deflater = new Deflater(Deflater.BEST_COMPRESSION, false);
-        deflater.SetInput(_bytes);
-        deflater.Finish();
-
-        var compressedLength = deflater.Deflate(outputBuffer);
-
-        // If compressed data is smaller, copy to right-sized array
-        if (compressedLength < maxCompressedLength) {
-            var final = new byte[compressedLength];
-            Buffer.BlockCopy(outputBuffer, 0, final, 0, compressedLength);
-            
-            return final;
+        using var outputStream = new MemoryStream(bytes.Length);
+        using (var deflaterStream = new DeflaterOutputStream(outputStream, deflater, 1024)) {
+            deflaterStream.IsStreamOwner = false; // Don't dispose the deflater when done.
+            deflaterStream.Write(bytes, 0, bytes.Length);
+            deflaterStream.Finish();
         }
 
-        return outputBuffer;
+        return outputStream.ToArray();
     }
 
     /// <summary>
