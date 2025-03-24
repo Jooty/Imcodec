@@ -68,7 +68,6 @@ public class LootTableTest {
 
         var serializeSuccess = serializer.Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
         Assert.True(serializeSuccess);
-        Assert.True(byteBlob is not null);
 
         var hexBlob = Convert.ToHexString(byteBlob);
         Assert.Equal(LootTableBlob, hexBlob);
@@ -90,7 +89,6 @@ public class LootTableTest {
 
         var serializeSuccess = serializer.Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
         Assert.True(serializeSuccess);
-        Assert.True(byteBlob is not null);
 
         var hexBlob = Convert.ToHexString(byteBlob);
         Assert.Equal(LootTableBlobCompressed, hexBlob);

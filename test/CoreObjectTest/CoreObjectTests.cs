@@ -44,7 +44,6 @@ public class CoreObjectSerializerTest {
         }
 
         // Assert
-        Assert.NotNull(bytes);
         Assert.Equal(CoreObjectBlob, string.Join(" ", ((byte[]) bytes).Select(static b => b.ToString("X2"))));
     }
 

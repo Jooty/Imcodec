@@ -57,7 +57,7 @@ internal static class XmlMessageReader {
         { "USHORT", "ushort" },
         { "INT", "int" },
         { "UINT", "uint" },
-        { "STR", "string" },
+        { "STR", "ByteString" },
         { "WSTR", "WideByteString" },
         { "FLT", "float" },
         { "DBL", "double" },
