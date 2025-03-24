@@ -34,10 +34,10 @@ public class ControlMessageProtocol : MessageProtocol {
 
     public IMessage Dispatch(byte messageId)
         => messageId switch {
-            0 => new SessionAccept(),
+            0 => new SessionOffer(),
             3 => new KeepAlive(),
             4 => new KeepAliveResponse(),
-            5 => new SessionOffer(),
+            5 => new SessionAccept(),
             _ => throw new NotImplementedException($"Message ID {messageId} not implemented.")
         };
 
