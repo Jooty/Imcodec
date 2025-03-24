@@ -54,7 +54,7 @@ public class BindSerializer : ObjectSerializer {
     /// <param name="input">The object to serialize.</param>
     /// <param name="output">The buffer to write the serialized object to.</param>
     /// <returns>True if the object was successfully serialized, false otherwise.</returns>
-    public bool Serialize<T>(T input, out ByteString? output) where T : PropertyClass
+    public bool Serialize<T>(T input, out ByteString output) where T : PropertyClass
         => Serialize(input, (PropertyFlags) BiNDDefaultFlags, out output);
 
     /// <summary>
@@ -65,8 +65,8 @@ public class BindSerializer : ObjectSerializer {
     /// <param name="propertyMask">The property mask to use for serialization.</param>
     /// <param name="output">The buffer to write the serialized object to.</param>
     /// <returns>True if the object was successfully serialized, false otherwise.</returns>
-    public override bool Serialize(PropertyClass input, PropertyFlags propertyMask, out ByteString? output) {
-        output = null;
+    public override bool Serialize(PropertyClass input, PropertyFlags propertyMask, out ByteString output) {
+        output = default;
 
         // First, call the base class serialize and check if it was successful.
         // We then want to suffix the buffer with the BiND magic.
@@ -75,7 +75,7 @@ public class BindSerializer : ObjectSerializer {
         }
 
         // Create a new buffer with the size of the output buffer plus the size of the magic and flags.
-        var buffer = new byte[baseOutput!.Value.Length + (sizeof(uint) * 2)];
+        var buffer = new byte[baseOutput.Length + (sizeof(uint) * 2)];
 
         // Write the magic header and serializer flags.
         BinaryPrimitives.WriteUInt32LittleEndian(buffer, BiNDMagic);
@@ -84,7 +84,7 @@ public class BindSerializer : ObjectSerializer {
         // Copy the output buffer to the new buffer.
         var skipLen = sizeof(uint) * 2;
         var bufferSpan = buffer.AsSpan(skipLen);
-        ((byte[]) baseOutput.Value).CopyTo(bufferSpan);
+        ((byte[]) baseOutput).CopyTo(bufferSpan);
 
         return true;
     }
