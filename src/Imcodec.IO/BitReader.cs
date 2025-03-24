@@ -143,7 +143,7 @@ public class BitReader : BitManipulator {
     /// </summary>
     /// <returns>A <see cref="string"/> representation of the string,
     /// which is interpreted as UTF-8</returns>
-    public string ReadString() {
+    public ByteString ReadString() {
         // If the compact string length bit is flagged, attempt to read a
         // compressed length. If the length MSB is 1,
         // it is not compressed and still uses 16-bits.
@@ -153,7 +153,7 @@ public class BitReader : BitManipulator {
 
         var bytes = ReadBytes(length);
 
-        return Encoding.UTF8.GetString(bytes);
+        return new ByteString(bytes);
     }
 
     /// <summary>
