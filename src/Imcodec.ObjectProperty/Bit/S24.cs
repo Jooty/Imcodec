@@ -18,8 +18,11 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Newtonsoft.Json;
+
 namespace Imcodec.ObjectProperty.Bit;
 
+[JsonConverter(typeof(LongWordConverter))]
 public struct S24(int value) : IConvertible {
 
     public int Value { readonly get; set; } = value;
@@ -34,15 +37,33 @@ public struct S24(int value) : IConvertible {
     public readonly byte ToByte(IFormatProvider? provider) => (byte) Value;
     public readonly short ToInt16(IFormatProvider? provider) => (short) Value;
     public readonly ushort ToUInt16(IFormatProvider? provider) => (ushort) Value;
-    public readonly int ToInt32(IFormatProvider? provider) => (int) Value;
+    public readonly int ToInt32(IFormatProvider? provider) => Value;
     public readonly uint ToUInt32(IFormatProvider? provider) => (uint) Value;
-    public readonly long ToInt64(IFormatProvider? provider) => (long) Value;
+    public readonly long ToInt64(IFormatProvider? provider) => Value;
     public readonly ulong ToUInt64(IFormatProvider? provider) => (ulong) Value;
     public readonly float ToSingle(IFormatProvider? provider) => Value;
     public readonly double ToDouble(IFormatProvider? provider) => Value;
     public readonly decimal ToDecimal(IFormatProvider? provider) => Value;
     public readonly DateTime ToDateTime(IFormatProvider? provider) => throw new InvalidCastException();
     public readonly string ToString(IFormatProvider? provider) => Value.ToString();
-    public readonly object ToType(System.Type conversionType, IFormatProvider? provider) => Convert.ChangeType(Value, conversionType);
+    public readonly object ToType(Type conversionType, IFormatProvider? provider) => Convert.ChangeType(Value, conversionType);
+
+}
+
+public class LongWordConverter : JsonConverter {
+
+    public override bool CanConvert(Type objectType)
+      => objectType == typeof(S24);
+
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
+        if (value is S24 longWord) {
+            writer.WriteValue(longWord.Value);
+        }
+    }
+
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+      => reader.Value != null && int.TryParse(reader.Value.ToString(), out var intValue)
+         ? new S24(intValue)
+         : null;
 
 }

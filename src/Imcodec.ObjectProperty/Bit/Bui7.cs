@@ -18,31 +18,52 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using Newtonsoft.Json;
+
 namespace Imcodec.ObjectProperty.Bit;
 
+[JsonConverter(typeof(SevenBitByteConverter))]
 public struct Bui7(byte value) : IConvertible {
 
     public byte Value { readonly get; set; } = value;
 
-    public static explicit operator Bui7(byte value) => new Bui7(value);
+    public static explicit operator Bui7(byte value) => new(value);
     public static implicit operator byte(Bui7 bits) => bits.Value;
 
     public readonly TypeCode GetTypeCode() => TypeCode.Byte;
     public readonly bool ToBoolean(IFormatProvider? provider) => Value != 0;
     public readonly char ToChar(IFormatProvider? provider) => (char) Value;
     public readonly sbyte ToSByte(IFormatProvider? provider) => (sbyte) Value;
-    public readonly byte ToByte(IFormatProvider? provider) => (byte) Value;
-    public readonly short ToInt16(IFormatProvider? provider) => (short) Value;
-    public readonly ushort ToUInt16(IFormatProvider? provider) => (ushort) Value;
-    public readonly int ToInt32(IFormatProvider? provider) => (int) Value;
-    public readonly uint ToUInt32(IFormatProvider? provider) => (uint) Value;
-    public readonly long ToInt64(IFormatProvider? provider) => (long) Value;
+    public readonly byte ToByte(IFormatProvider? provider) => Value;
+    public readonly short ToInt16(IFormatProvider? provider) => Value;
+    public readonly ushort ToUInt16(IFormatProvider? provider) => Value;
+    public readonly int ToInt32(IFormatProvider? provider) => Value;
+    public readonly uint ToUInt32(IFormatProvider? provider) => Value;
+    public readonly long ToInt64(IFormatProvider? provider) => Value;
     public readonly ulong ToUInt64(IFormatProvider? provider) => Value;
     public readonly float ToSingle(IFormatProvider? provider) => Value;
     public readonly double ToDouble(IFormatProvider? provider) => Value;
     public readonly decimal ToDecimal(IFormatProvider? provider) => Value;
     public readonly DateTime ToDateTime(IFormatProvider? provider) => throw new InvalidCastException();
     public readonly string ToString(IFormatProvider? provider) => Value.ToString();
-    public readonly object ToType(System.Type conversionType, IFormatProvider? provider) => Convert.ChangeType(Value, conversionType);
+    public readonly object ToType(Type conversionType, IFormatProvider? provider) => Convert.ChangeType(Value, conversionType);
+
+}
+
+public class SevenBitByteConverter : JsonConverter {
+
+    public override bool CanConvert(Type objectType)
+      => objectType == typeof(Bui7);
+
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
+        if (value is Bui7 sevenBitByte) {
+            writer.WriteValue(sevenBitByte.Value);
+        }
+    }
+
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+      => reader.Value != null && byte.TryParse(reader.Value.ToString(), out var byteValue)
+         ? new Bui7(byteValue)
+         : null;
 
 }
