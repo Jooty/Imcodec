@@ -147,8 +147,8 @@ public class BitWriter : BitManipulator {
     /// Writes an UTF-8 encoded string to the stream. The bits will not be flushed prior.
     /// </summary>
     /// <param name="str">The UTF-8 encoded string to write to the stream.</param>
-    public void WriteString(string str) {
-        if (str is null || str.ToString() is null || str.ToString() == string.Empty) {
+    public void WriteString(ByteString str) {
+        if (str.ToString() is null || str.ToString() == string.Empty) {
             if (base.CompactLengths) {
                 WriteUInt8(0);
             }
@@ -170,9 +170,8 @@ public class BitWriter : BitManipulator {
             }
         }
         else {
-            WriteUInt16((ushort) str.Length);
-            var bytes = Encoding.UTF8.GetBytes(str);
-            WriteBytes(bytes);
+            WriteUInt16((ushort)str.Length);
+            WriteBytes(str);
         }
     }
 
