@@ -24,6 +24,7 @@ using Newtonsoft.Json;
 namespace Imcodec.Types;
 
 [StructLayout(LayoutKind.Explicit)]
+[JsonConverter(typeof(GIDConverter))]
 public struct GID(ulong full) : IConvertible {
 
     [FieldOffset(0)]
