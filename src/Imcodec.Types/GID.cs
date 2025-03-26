@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Runtime.InteropServices;
+using Newtonsoft.Json;
 
 namespace Imcodec.Types;
 
@@ -63,5 +64,21 @@ public struct GID(ulong full) : IConvertible {
     public readonly DateTime ToDateTime(IFormatProvider? provider) => throw new InvalidCastException();
     public readonly string ToString(IFormatProvider? provider) => Full.ToString();
     public readonly object ToType(Type conversionType, IFormatProvider? provider) => Convert.ChangeType(Full, conversionType);
+
+}
+
+public class GIDConverter : JsonConverter<GID> {
+
+    public override GID ReadJson(JsonReader reader, Type objectType, GID existingValue, bool hasExistingValue, JsonSerializer serializer) {
+        if (reader.TokenType == JsonToken.Integer) {
+            var value = Convert.ToUInt64(reader.Value);
+            return new GID(value);
+        }
+
+        throw new JsonSerializationException($"Unexpected token type {reader.TokenType} when parsing GID");
+    }
+
+    public override void WriteJson(JsonWriter writer, GID value, JsonSerializer serializer) 
+        => writer.WriteValue(value.Full);
 
 }
