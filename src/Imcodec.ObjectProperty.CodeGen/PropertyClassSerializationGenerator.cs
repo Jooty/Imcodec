@@ -181,25 +181,34 @@ internal static class PropertyClassSerializationGenerator {
         }
         else if (property.IsVector) {
             var elementType = ExtractElementType(property.CsharpType);
-            sb.AppendLine("\t\t\t// Collection decoding");
-            sb.AppendLine($"\t\t\tvar len_{property.Name} = ReadVectorSize(reader, serializer);");
-            sb.AppendLine($"\t\t\tif (len_{property.Name} <= 0) {{");
-            sb.AppendLine($"\t\t\t\t{property.Name} = new {property.CsharpType}();");
-            sb.AppendLine("\t\t\t} else {");
-            sb.AppendLine($"\t\t\t\t{property.Name} = new {property.CsharpType}();");
-            sb.AppendLine($"\t\t\t\tfor (int i = 0; i < len_{property.Name}; i++) {{");
+            _ = sb.AppendLine("\t\t\t// Collection decoding")
+                  .AppendLine($"\t\t\tvar len_{property.Name} = ReadVectorSize(reader, serializer);")
+                  .AppendLine($"\t\t\tif (len_{property.Name} <= 0) {{")
+                  .AppendLine($"\t\t\t\t{property.Name} = new {property.CsharpType}();")
+                  .AppendLine("\t\t\t} else {")
+                  .AppendLine($"\t\t\t\t{property.Name} = new {property.CsharpType}();")
+                  .AppendLine($"\t\t\t\tfor (int i = 0; i < len_{property.Name}; i++) {{");
 
             var reader = GetReaderMethodForType(elementType, $"var item_{property.Name}");
             if (string.IsNullOrEmpty(reader)) {
                 // A reader was not found. Assume the element is a PropertyClass.
-                sb.AppendLine($"\t\t\t\t\tserializer.PreloadObject(reader, out var item_{property.Name});");
-                sb.AppendLine($"\t\t\t\t\tif (item_{property.Name} != null) {{");
-                sb.AppendLine($"\t\t\t\t\t\titem_{property.Name}.Decode(reader, serializer);");
-                sb.AppendLine($"\t\t\t\t\t\t{property.Name}.Add(({elementType}) item_{property.Name});");
-                sb.AppendLine("\t\t\t\t\t}");
-                sb.AppendLine("\t\t\t\t\telse {");
-                sb.AppendLine($"\t\t\t\t\t\t{property.Name}.Add(null);");
-                sb.AppendLine("\t\t\t\t\t}");
+                _ = sb.AppendLine($"\t\t\t\t\tvar preloadResult = serializer.PreloadObject(reader, out var item_{property.Name});")
+                      .AppendLine($"\t\t\t\t\tif (preloadResult == PreloadResult.Success) {{")
+                      .AppendLine($"\t\t\t\t\t\titem_{property.Name}.Decode(reader, serializer);")
+                      .AppendLine($"\t\t\t\t\t\t{property.Name}.Add(({elementType}) item_{property.Name});")
+                      .AppendLine("\t\t\t\t\t}")
+                      // The preload result recorded `00 00 00 00` -- null hash.
+                      // This means there actually is no object to decode.
+                      .AppendLine("\t\t\t\t\telse if (preloadResult == PreloadResult.NullHash) {")
+                      .AppendLine($"\t\t\t\t\t\t{property.Name}.Add(null);")
+                      .AppendLine("\t\t\t\t\t}")
+                      .AppendLine("\t\t\t\t\telse {")
+                      // Fallback: The hash was not found -- likely a server type.
+                      // The next 4 bytes will be the object size in bits. Skip the reader to the end of the object.
+                      .AppendLine("\t\t\t\t\t\tvar objectSizeInBits = reader.ReadUInt32();")
+                      .AppendLine("\t\t\t\t\t\treader.SeekBit((int) (reader.BitPos() + objectSizeInBits));")
+                      .AppendLine($"\t\t\t\t\t\t{property.Name}.Add(null);")
+                      .AppendLine("\t\t\t\t\t}");
             }
             else {
                 sb.AppendLine($"\t\t\t\t\t{reader}");

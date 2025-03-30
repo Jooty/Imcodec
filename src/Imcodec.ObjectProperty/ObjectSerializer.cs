@@ -58,6 +58,25 @@ public enum SerializerFlags {
 
 }
 
+public enum PreloadResult {
+
+    /// <summary>
+    /// The object was preloaded successfully.
+    /// </summary>
+    Success,
+
+    /// <summary>
+    /// The object was not found in the type registry.
+    /// </summary>
+    NotFound,
+
+    /// <summary>
+    /// The preload returned `00 00 00 00`, indicated no object is present.
+    /// </summary>
+    NullHash
+
+}
+
 /// <summary>
 /// An object serializer that serializes and deserializes
 /// <see cref="PropertyClass"/> objects.
@@ -205,7 +224,9 @@ public partial class ObjectSerializer(bool Versionable = true,
             reader.WithCompactLengths();
         }
 
-        if (!PreloadObject(reader, out var propertyClass)) {
+        var preloadResult = PreloadObject(reader, out var propertyClass);
+        if (   preloadResult == PreloadResult.NullHash 
+            || preloadResult == PreloadResult.NotFound) {
             return false;
         }
 
@@ -221,19 +242,26 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// </summary>
     /// <param name="inputBuffer">The input buffer containing the serialized data.</param>
     /// <param name="propertyClass">The loaded property class, if found.</param>
-    /// <returns><c>true</c> if the object was preloaded successfully; otherwise, <c>false</c>.</returns>
-    public virtual bool PreloadObject(BitReader inputBuffer,
+    /// <returns>A <see cref="PreloadResult"/> indicating the result of the preload.</returns>
+    /// <remarks>
+    /// This method reads the first 4 bytes of the input buffer to determine the hash value.
+    /// If the hash value is 0, it indicates that no object is present. If the hash value
+    /// is found in the type registry, it creates an instance of the corresponding type.
+    /// Otherwise, it returns <see cref="PreloadResult.NotFound"/>.
+    public virtual PreloadResult PreloadObject(BitReader inputBuffer,
                                          out PropertyClass? propertyClass) {
         var hash = inputBuffer.ReadUInt32();
         if (hash == 0) {
             propertyClass = null;
 
-            return false;
+            return PreloadResult.NullHash;
         }
 
         propertyClass = DispatchType(hash);
-
-        return propertyClass != null;
+        
+        return propertyClass != null
+            ? PreloadResult.Success
+            : PreloadResult.NotFound;
     }
 
     /// <summary>

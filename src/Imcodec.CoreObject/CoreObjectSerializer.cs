@@ -50,7 +50,7 @@ public sealed class CoreObjectSerializer(
       { 958775582, (131, 131) } // ClientRecipe
    };
 
-    public override bool PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
+    public override PreloadResult PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
         var block = inputBuffer.ReadUInt8();
         var type = inputBuffer.ReadUInt8();
         var templateIdOrHash = inputBuffer.ReadUInt32();
@@ -59,14 +59,18 @@ public sealed class CoreObjectSerializer(
             // This is not serialized as a CoreObject. It's a normal object, and dispatch it as such.
             propertyClass = DispatchType(templateIdOrHash);
 
-            return propertyClass != null;
+            return propertyClass == null
+                ? PreloadResult.NotFound
+                : PreloadResult.Success;
         }
 
         // We can dispatch the type based on the template ID.
         var hash = GetHashFromBlockAndType(block, type);
         propertyClass = DispatchType(hash);
 
-        return propertyClass != null;
+        return propertyClass == null
+            ? PreloadResult.NotFound
+            : PreloadResult.Success;
     }
 
     public override bool PreWriteObject(BitWriter writer, PropertyClass propertyClass) {
