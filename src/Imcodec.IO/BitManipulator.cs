@@ -76,6 +76,12 @@ public abstract class BitManipulator : IDisposable {
         return data;
     }
 
+    public long StreamSizeInBits() 
+        => (long) Stream.Length * 8;
+
+    public long StreamSizeInBytes() 
+        => (long) Stream.Length;
+
     /// <summary>
     /// Gets the rest of the current stream as a binary array.
     /// </summary>

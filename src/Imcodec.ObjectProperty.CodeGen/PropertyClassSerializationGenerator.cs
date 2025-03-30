@@ -206,7 +206,10 @@ internal static class PropertyClassSerializationGenerator {
                       // Fallback: The hash was not found -- likely a server type.
                       // The next 4 bytes will be the object size in bits. Skip the reader to the end of the object.
                       .AppendLine("\t\t\t\t\t\tvar objectSizeInBits = reader.ReadUInt32();")
-                      .AppendLine("\t\t\t\t\t\treader.SeekBit((int) (reader.BitPos() + objectSizeInBits));")
+                      .AppendLine("\t\t\t\t\t\tvar readerBitSize = reader.StreamSizeInBits();")
+                      .AppendLine($"\t\t\t\t\t\tif (objectSizeInBits > 0 && reader.BitPos() + objectSizeInBits < readerBitSize) {{")
+                      .AppendLine("\t\t\t\t\t\t\treader.SeekBit((int) (reader.BitPos() + objectSizeInBits - 32));")
+                      .AppendLine("\t\t\t\t\t\t}")
                       .AppendLine($"\t\t\t\t\t\t{property.Name}.Add(null);")
                       .AppendLine("\t\t\t\t\t}");
             }
