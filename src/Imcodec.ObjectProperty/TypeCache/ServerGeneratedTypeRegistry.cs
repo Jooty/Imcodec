@@ -992,19 +992,18 @@ public partial record CombatSigilObjectInfo : CoreObjectInfo {
 
 }
 
+[PropertySerializationTarget]
 public partial record WizBangPriorityTemplate : PropertyClass {
 
     public override uint GetHash() => 511049413;
 
     [PropertyField(2003411223, 31)] public List<ByteString> m_priorityList { get; set; } = [];
 
-    public override bool Encode(BitWriter writer, ObjectSerializer serializer) => throw new NotImplementedException();
-    public override bool Decode(BitReader reader, ObjectSerializer serializer) => throw new NotImplementedException();
-
 }
 
 [PropertySerializationTarget]
 public partial record UnknownSpawnObjectInfo : SpawnObjectInfo {
+    
     public override uint GetHash() => 1839222684;
 
     [PropertyField(0x975DE361, 268435463)] public List<ByteString> m_lootTable { get; set; } = [];

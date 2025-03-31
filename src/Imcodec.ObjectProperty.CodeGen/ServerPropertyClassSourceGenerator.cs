@@ -235,15 +235,19 @@ Redistribution and use in source and binary forms, with or without
                                 // Try to extract hash value.
                                 string expressionText = returnStmt.Expression!.ToString();
 
-                                // Remove "0x" prefix if present.
                                 if (expressionText.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
+                                    // Process as hexadecimal if "0x" prefix is present.
                                     expressionText = expressionText.Substring(2);
-                                }
-
-                                if (uint.TryParse(expressionText,
-                                                System.Globalization.NumberStyles.HexNumber,
-                                                null, out uint hashValue)) {
-                                    return hashValue;
+                                    if (uint.TryParse(expressionText,
+                                                    System.Globalization.NumberStyles.HexNumber,
+                                                    null, out uint hashValue)) {
+                                        return hashValue;
+                                    }
+                                } else {
+                                    // Process as a normal uint.
+                                    if (uint.TryParse(expressionText, out uint hashValue)) {
+                                        return hashValue;
+                                    }
                                 }
                             }
                         }
@@ -252,15 +256,19 @@ Redistribution and use in source and binary forms, with or without
                         // Handle expression-bodied methods: public override uint GetHash() => 0x12345678;
                         string expressionText = methodDeclaration.ExpressionBody.Expression.ToString();
 
-                        // Remove "0x" prefix if present.
                         if (expressionText.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
+                            // Remove "0x" prefix if present and process as hexadecimal.
                             expressionText = expressionText.Substring(2);
-                        }
-
-                        if (uint.TryParse(expressionText,
-                                        System.Globalization.NumberStyles.HexNumber,
-                                        null, out uint hashValue)) {
-                            return hashValue;
+                            if (uint.TryParse(expressionText,
+                                            System.Globalization.NumberStyles.HexNumber,
+                                            null, out uint hashValue)) {
+                                return hashValue;
+                            }
+                        } else {
+                            // Process as a normal uint.
+                            if (uint.TryParse(expressionText, out uint hashValue)) {
+                                return hashValue;
+                            }
                         }
                     }
                 }
