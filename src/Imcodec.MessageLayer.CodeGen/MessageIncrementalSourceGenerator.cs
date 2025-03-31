@@ -147,6 +147,7 @@ modification, are permitted provided that the following conditions are met:
         sb.AppendLine($"    public int ProtocolVersion => {protocol.ProtocolVersion};");
         sb.AppendLine();
 
+        // Group the messages by name and select the first one to avoid duplicates.
         var messageDefinitions = protocol.Messages
             .GroupBy(static m => m.Name)
             .Select(static g => g.First())
@@ -155,7 +156,7 @@ modification, are permitted provided that the following conditions are met:
         // Write protocol dispatcher method.
         sb.AppendLine(WriteProtocolDispatcherMethod(messageDefinitions));
 
-        // Add message classes. Group them by name and select the first one to avoid duplicates.
+        // Add message classes. 
         foreach (var message in messageDefinitions) {
 
             sb.AppendLine($"    /// <summary>");

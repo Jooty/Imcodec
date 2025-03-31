@@ -99,6 +99,13 @@ internal static class XmlMessageReader {
         foreach (var xmlRecord in xmlRecords) {
             var message = ExtractMessageDefinition(xmlRecord, protocol.ServiceId);
             if (message != null) {
+                // Check if the message already exists in the protocol
+                // If it does, remove the existing one before adding the new one.
+                var existingMessage = protocol.Messages.FirstOrDefault(m => m.Name == message.Name);
+                if (existingMessage != null) {
+                    protocol.Messages.Remove(existingMessage);
+                }
+
                 protocol.Messages.Add(message);
             }
         }
