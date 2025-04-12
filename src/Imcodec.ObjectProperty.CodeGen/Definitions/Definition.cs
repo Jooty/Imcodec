@@ -18,16 +18,14 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.Definitions {
-    [DebuggerDisplay("{Name}")]
-    internal class Definition {
+namespace Imcodec.ObjectProperty.CodeGen.Definitions;
 
-        internal string? Name { get; set; }
-        internal uint Hash { get; set; }
+[DebuggerDisplay("{Name}")]
+internal class Definition {
 
+    internal string? Name { get; set; }
+    internal uint Hash { get; set; }
 
-    }
 }

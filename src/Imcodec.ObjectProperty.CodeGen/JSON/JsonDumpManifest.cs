@@ -21,14 +21,14 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Imcodec.ObjectProperty.CodeGen.JSON {
-    public class JsonDumpManifest {
+namespace Imcodec.ObjectProperty.CodeGen.JSON;
 
-       [JsonPropertyName("version")]
-       public int Version { get; set; }
+public class JsonDumpManifest {
 
-       [JsonPropertyName("classes")]
-       public Dictionary<string, JsonDumpClass> Classes { get; set; } = new Dictionary<string, JsonDumpClass>();
+    [JsonPropertyName("version")]
+    public int Version { get; set; }
 
-    }
+    [JsonPropertyName("classes")]
+    public Dictionary<string, JsonDumpClass> Classes { get; set; } = [];
+
 }

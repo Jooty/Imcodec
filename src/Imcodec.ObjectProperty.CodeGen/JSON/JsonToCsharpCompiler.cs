@@ -28,98 +28,98 @@ using System.Linq;
 [assembly: InternalsVisibleTo("Imcodec.Test")]
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 
-namespace Imcodec.ObjectProperty.CodeGen.JSON {
-    internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
+namespace Imcodec.ObjectProperty.CodeGen.JSON;
 
-        private readonly List<EnumDefinition> _enumDefinitions = [];
+internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
 
-        internal override Definition[] Compile(string externCode) {
-            // First pass: Parse the JSON dump manifest into a list of class definitions.
-            var jsonDumpManifest = GetJsonDumpManifest(externCode)
-                ?? throw new Exception("Failed to parse the JSON dump manifest.");
+    private readonly List<EnumDefinition> _enumDefinitions = [];
 
-            var classDefinitions = GetDefinitions(jsonDumpManifest);
-            if (classDefinitions.Count == 0) {
-                throw new Exception("No class definitions were found in the JSON dump manifest.");
-            }
+    internal override Definition[] Compile(string externCode) {
+        // First pass: Parse the JSON dump manifest into a list of class definitions.
+        var jsonDumpManifest = GetJsonDumpManifest(externCode)
+            ?? throw new Exception("Failed to parse the JSON dump manifest.");
 
-            // Return both the class definitions and the enum definitions.
-            var combined = new List<Definition>();
-            combined.AddRange(classDefinitions);
-            combined.AddRange(_enumDefinitions);
-
-            return [.. combined];
+        var classDefinitions = GetDefinitions(jsonDumpManifest);
+        if (classDefinitions.Count == 0) {
+            throw new Exception("No class definitions were found in the JSON dump manifest.");
         }
 
-        private List<PropertyClassDefinition> GetDefinitions(JsonDumpManifest dumpedManifest) {
-            var classDefinitions = new List<PropertyClassDefinition>();
-            foreach (var dumpedClass in dumpedManifest.Classes) {
-                var classDefinition = GetDefinition(dumpedClass.Value);
-                if (classDefinition == null) {
-                    continue;
-                }
+        // Return both the class definitions and the enum definitions.
+        var combined = new List<Definition>();
+        combined.AddRange(classDefinitions);
+        combined.AddRange(_enumDefinitions);
 
-                if (classDefinitions.Any(c => c.Name == classDefinition.Name)) {
-                    continue;
-                }
-
-                classDefinitions.Add(classDefinition);
-            }
-
-            return classDefinitions;
-        }
-
-        private PropertyClassDefinition? GetDefinition(JsonDumpClass dumpedClass) {
-            // Anything containing a '*' is a pointer. We don't want to deal with these.
-            // We also don't want to deal with SharedPointer.
-            if (dumpedClass.Name.Contains('*') || dumpedClass.Name.Contains("SharedPointer")) {
-                return null;
-            }
-
-            // The client has a lot of these standalone enums with a hash. They do not contain options, so they are
-            // useless. Instead, we want to deal with the properties in a PropertyClass definition.
-            if (dumpedClass.Name.StartsWith("enum")) {
-                return null;
-            }
-
-            // Types without base classes do not derive PropertyCLass.
-            if (dumpedClass.BaseClasses.Count <= 0) {
-                return null;
-            }
-
-            var classDefinition = new PropertyClassDefinition(dumpedClass.Name,
-                                                              dumpedClass.Hash);
-            foreach (var baseClass in dumpedClass.BaseClasses) {
-                classDefinition.AddBaseClass(baseClass);
-            }
-
-            foreach (var dumpedProperty in dumpedClass.Properties) {
-                var propertyDefinition = GetPropertyDefinition(dumpedProperty.Key,
-                                                               dumpedProperty.Value);
-                if (propertyDefinition == null) {
-                    continue;
-                }
-
-                // If the PropertyDefinition is an enum, we need to add it to the enum definitions.
-                if (propertyDefinition.IsEnum) {
-                    // The C# type may contain 'List<>'. We want to remove this.
-                    var abstractType = propertyDefinition.CsharpType!.Replace("List<", "").Replace(">", "");
-                    var enumDefinition = new EnumDefinition(abstractType, propertyDefinition.EnumOptions);
-                    _enumDefinitions.Add(enumDefinition);
-                }
-
-                classDefinition.AllProperties.Add(propertyDefinition);
-            }
-
-            return classDefinition;
-        }
-
-        private static PropertyDefinition? GetPropertyDefinition(string propertyName, JsonDumpProperty dumpedProperty)
-            => new(propertyName, dumpedProperty.Type!, dumpedProperty.Flags, dumpedProperty.Container!, dumpedProperty.Hash,
-                   dumpedProperty.EnumOptions);
-
-        private static JsonDumpManifest GetJsonDumpManifest(string json)
-            => JsonSerializer.Deserialize<JsonDumpManifest>(json)!;
-
+        return [.. combined];
     }
+
+    private List<PropertyClassDefinition> GetDefinitions(JsonDumpManifest dumpedManifest) {
+        var classDefinitions = new List<PropertyClassDefinition>();
+        foreach (var dumpedClass in dumpedManifest.Classes) {
+            var classDefinition = GetDefinition(dumpedClass.Value);
+            if (classDefinition == null) {
+                continue;
+            }
+
+            if (classDefinitions.Any(c => c.Name == classDefinition.Name)) {
+                continue;
+            }
+
+            classDefinitions.Add(classDefinition);
+        }
+
+        return classDefinitions;
+    }
+
+    private PropertyClassDefinition? GetDefinition(JsonDumpClass dumpedClass) {
+        // Anything containing a '*' is a pointer. We don't want to deal with these.
+        // We also don't want to deal with SharedPointer.
+        if (dumpedClass.Name.Contains('*') || dumpedClass.Name.Contains("SharedPointer")) {
+            return null;
+        }
+
+        // The client has a lot of these standalone enums with a hash. They do not contain options, so they are
+        // useless. Instead, we want to deal with the properties in a PropertyClass definition.
+        if (dumpedClass.Name.StartsWith("enum")) {
+            return null;
+        }
+
+        // Types without base classes do not derive PropertyCLass.
+        if (dumpedClass.BaseClasses.Count <= 0) {
+            return null;
+        }
+
+        var classDefinition = new PropertyClassDefinition(dumpedClass.Name,
+                                                          dumpedClass.Hash);
+        foreach (var baseClass in dumpedClass.BaseClasses) {
+            classDefinition.AddBaseClass(baseClass);
+        }
+
+        foreach (var dumpedProperty in dumpedClass.Properties) {
+            var propertyDefinition = GetPropertyDefinition(dumpedProperty.Key,
+                                                           dumpedProperty.Value);
+            if (propertyDefinition == null) {
+                continue;
+            }
+
+            // If the PropertyDefinition is an enum, we need to add it to the enum definitions.
+            if (propertyDefinition.IsEnum) {
+                // The C# type may contain 'List<>'. We want to remove this.
+                var abstractType = propertyDefinition.CsharpType!.Replace("List<", "").Replace(">", "");
+                var enumDefinition = new EnumDefinition(abstractType, propertyDefinition.EnumOptions);
+                _enumDefinitions.Add(enumDefinition);
+            }
+
+            classDefinition.AllProperties.Add(propertyDefinition);
+        }
+
+        return classDefinition;
+    }
+
+    private static PropertyDefinition? GetPropertyDefinition(string propertyName, JsonDumpProperty dumpedProperty)
+        => new(propertyName, dumpedProperty.Type!, dumpedProperty.Flags, dumpedProperty.Container!, dumpedProperty.Hash,
+               dumpedProperty.EnumOptions);
+
+    private static JsonDumpManifest GetJsonDumpManifest(string json)
+        => JsonSerializer.Deserialize<JsonDumpManifest>(json)!;
+
 }

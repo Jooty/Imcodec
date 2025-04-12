@@ -744,16 +744,6 @@ public partial record ResUpdatePips : TypeCache.Result {
 }
 
 [PropertySerializationTarget]
-public partial record ResSyncScript : TypeCache.Result {
-
-    public override uint GetHash() => 919520188;
-
-    // PropertyField: m_function (string)
-    // PropertyField: m_script (string)
-
-}
-
-[PropertySerializationTarget]
 public partial record ResAddEnergy : TypeCache.Result {
 
     public override uint GetHash() => 43418311;

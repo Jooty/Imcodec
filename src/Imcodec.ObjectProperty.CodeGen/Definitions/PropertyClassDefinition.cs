@@ -19,29 +19,28 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Collections.Generic;
-using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.Definitions {
-    internal class PropertyClassDefinition : Definition {
+namespace Imcodec.ObjectProperty.CodeGen.Definitions;
 
-        internal List<string> BaseClassNames{ get; set; } = new List<string>();
-        internal List<PropertyClassDefinition> BaseClasses { get; set; } = new List<PropertyClassDefinition>();
-        internal List<PropertyDefinition> AllProperties { get; set; } = new List<PropertyDefinition>();
-        internal List<PropertyDefinition> ExclusiveProperties { get; set; } = new List<PropertyDefinition>();
+internal class PropertyClassDefinition : Definition {
 
-        // ctor
-        internal PropertyClassDefinition(string className, uint hash) {
-            if (className.StartsWith("enum")) {
-                throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
-            }
+    internal List<string> BaseClassNames{ get; set; } = [];
+    internal List<PropertyClassDefinition> BaseClasses { get; set; } = [];
+    internal List<PropertyDefinition> AllProperties { get; set; } = [];
+    internal List<PropertyDefinition> ExclusiveProperties { get; set; } = [];
 
-            Name = NameSanitizer.SanitizeIdentifier(className);
-            Hash = hash;
+    // ctor
+    internal PropertyClassDefinition(string className, uint hash) {
+        if (className.StartsWith("enum")) {
+            throw new System.Exception("Cannot create a PropertyClassDefinition for an enum.");
         }
 
-        internal void AddBaseClass(string baseName)
-            => BaseClassNames.Add(NameSanitizer.SanitizeIdentifier(baseName));
-
-
+        Name = NameSanitizer.SanitizeIdentifier(className);
+        Hash = hash;
     }
+
+    internal void AddBaseClass(string baseName)
+        => BaseClassNames.Add(NameSanitizer.SanitizeIdentifier(baseName));
+
+
 }

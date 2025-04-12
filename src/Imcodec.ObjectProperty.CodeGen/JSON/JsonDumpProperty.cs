@@ -21,38 +21,38 @@ modification, are permitted provided that the following conditions are met:
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Imcodec.ObjectProperty.CodeGen.JSON {
-    public class JsonDumpProperty {
+namespace Imcodec.ObjectProperty.CodeGen.JSON;
 
-        [JsonPropertyName("type")]
-        public string? Type { get; set; }
+public class JsonDumpProperty {
 
-        [JsonPropertyName("id")]
-        public uint Id { get; set; }
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
 
-        [JsonPropertyName("offset")]
-        public uint Offset { get; set; }
+    [JsonPropertyName("id")]
+    public uint Id { get; set; }
 
-        [JsonPropertyName("flags")]
-        public uint Flags { get; set; }
+    [JsonPropertyName("offset")]
+    public uint Offset { get; set; }
 
-        [JsonPropertyName("container")]
-        public string? Container { get; set; }
+    [JsonPropertyName("flags")]
+    public uint Flags { get; set; }
 
-        [JsonPropertyName("dynamic")]
-        public bool Dynamic { get; set; }
+    [JsonPropertyName("container")]
+    public string? Container { get; set; }
 
-        [JsonPropertyName("singleton")]
-        public bool Singleton { get; set; }
+    [JsonPropertyName("dynamic")]
+    public bool Dynamic { get; set; }
 
-        [JsonPropertyName("pointer")]
-        public bool Pointer { get; set; }
+    [JsonPropertyName("singleton")]
+    public bool Singleton { get; set; }
 
-        [JsonPropertyName("hash")]
-        public uint Hash { get; set; }
+    [JsonPropertyName("pointer")]
+    public bool Pointer { get; set; }
 
-        [JsonPropertyName("enum_options")]
-        public Dictionary<string, object> EnumOptions { get; set; } = new Dictionary<string, object>();
+    [JsonPropertyName("hash")]
+    public uint Hash { get; set; }
 
-    }
+    [JsonPropertyName("enum_options")]
+    public Dictionary<string, object> EnumOptions { get; set; } = [];
+
 }

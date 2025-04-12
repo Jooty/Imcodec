@@ -19,18 +19,17 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Collections.Generic;
-using System.Diagnostics;
 
-namespace Imcodec.ObjectProperty.CodeGen.Definitions {
-    internal class EnumDefinition : Definition {
+namespace Imcodec.ObjectProperty.CodeGen.Definitions;
 
-        internal Dictionary<string, int> Options { get; } = new Dictionary<string, int>();
+internal class EnumDefinition : Definition {
 
-        // ctor
-        internal EnumDefinition(string enumName, Dictionary<string, int> options) {
-            Name = enumName;
-            Options = options;
-        }
+    internal Dictionary<string, int> Options { get; } = [];
 
+    // ctor
+    internal EnumDefinition(string enumName, Dictionary<string, int> options) {
+        Name = enumName;
+        Options = options;
     }
+
 }
