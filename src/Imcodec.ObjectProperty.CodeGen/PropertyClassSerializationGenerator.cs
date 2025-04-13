@@ -341,18 +341,16 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t\tvar sizeStart = writer.BitPos();");
             sb.AppendLine("\t\t\twriter.WriteUInt32(0); // Placeholder for the size");
             sb.AppendLine($"\t\t\twriter.WriteUInt32({property.Hash});");
-            sb.AppendLine();
-            sb.AppendLine("\t\t\tvar preEncodeBitPos = writer.BitPos();");
 
             // Generate encoding for this property.
-            sb.AppendLine(GeneratePropertyEncoding(property).Replace("\t\t\t", "\t\t\t\t"));
+            sb.AppendLine(GeneratePropertyEncoding(property));
 
             sb.AppendLine();
             sb.AppendLine("\t\t\t// Write the size of the property");
-            sb.AppendLine("\t\t\tvar size = writer.BitPos() - preEncodeBitPos;");
+            sb.AppendLine("\t\t\tvar size = writer.BitPos() - sizeStart;");
             sb.AppendLine("\t\t\twriter.SeekBit(sizeStart);");
-            sb.AppendLine("\t\t\twriter.WriteUInt32((uint)size);");
-            sb.AppendLine("\t\t\twriter.SeekBit(preEncodeBitPos + size);");
+            sb.AppendLine("\t\t\twriter.WriteUInt32((uint) size);");
+            sb.AppendLine("\t\t\twriter.SeekBit(sizeStart + size);");
             sb.AppendLine("\t\t}");
             sb.AppendLine();
         }
