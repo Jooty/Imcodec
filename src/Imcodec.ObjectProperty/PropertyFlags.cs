@@ -31,7 +31,7 @@ public enum PropertyFlags {
    Prop_Persistent = 1 << 5,
    Prop_Deprecated = 1 << 6,
    Prop_NoScript = 1 << 7,
-   Prop_Encode = 1 << 8,
+   Prop_DirtyEncode = 1 << 8,
    Prop_Blob = 1 << 9,
    Prop_Immutable = 1 << 16,
    Prop_FileName = 1 << 17,

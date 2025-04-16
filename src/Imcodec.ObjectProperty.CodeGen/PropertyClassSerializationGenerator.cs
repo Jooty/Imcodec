@@ -109,53 +109,29 @@ internal static class PropertyClassSerializationGenerator {
 
     private static string GeneratePropertyEncoding(PropertyDefinition property) {
         var sb = new StringBuilder();
+        var dirtyEncode = (property.Flags & (uint)PropertyFlags.Prop_DirtyEncode) != 0;
 
-        // Determine the encoding logic based on the property type.
-        if (property.IsEnum) {
-            sb.AppendLine("\t\t\t// Enum encoding");
-            sb.AppendLine("\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.StringEnums)) {");
-            sb.AppendLine($"\t\t\t\twriter.WriteString({property.Name}.ToString());");
-            sb.AppendLine("\t\t\t} else {");
-            sb.AppendLine($"\t\t\t\twriter.WriteUInt32((uint)(int){property.Name});");
-            sb.AppendLine("\t\t\t}");
-        }
-        else if (property.IsVector) {
-            var elementType = ExtractElementType(property.CsharpType);
-            sb.AppendLine("\t\t\t// Collection encoding");
-            sb.AppendLine($"\t\t\tif ({property.Name} == null) {{");
-            sb.AppendLine("\t\t\t\tWriteVectorSize(writer, 0, serializer);");
-            sb.AppendLine("\t\t\t} else {");
-            sb.AppendLine($"\t\t\t\tWriteVectorSize(writer, {property.Name}.Count, serializer);");
-            sb.AppendLine($"\t\t\t\tforeach (var item in {property.Name}) {{");
+        if (dirtyEncode) {
+            sb.AppendLine("\t\t\t// Optional property (flag bit 8)");
+            sb.AppendLine("\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.DirtyEncode)) {");
+            sb.AppendLine("\t\t\t\t// Always encode if dirty encode flag is set");
+            sb.AppendLine("\t\t\t\twriter.WriteBit(1);");
 
-            var writer = GetWriterMethodForType(elementType, "item");
-            if (string.IsNullOrEmpty(writer)) {
-                // A writer was not found. Assume the element is a PropertyClass.
-                sb.AppendLine("\t\t\t\t\tserializer.PreWriteObject(writer, item!);");
-                sb.AppendLine("\t\t\t\t\tif (item != null) {");
-                sb.AppendLine("\t\t\t\t\t\titem.Encode(writer, serializer);");
-                sb.AppendLine("\t\t\t\t\t}");
-            }
-            else {
-                sb.AppendLine($"\t\t\t\t\t{writer}");
-            }
+            // Append the encoding logic.
+            AppendPropertyEncoding(sb, property, "\t\t\t\t");
+
+            sb.AppendLine("\t\t\t} else {");
+            sb.AppendLine($"\t\t\t\tbool isDirty = _modifiedProperties.Contains(\"{property.Name}\");");
+            sb.AppendLine("\t\t\t\twriter.WriteBit(isDirty);");
+            sb.AppendLine("\t\t\t\tif (isDirty) {");
+
+            // Append the encoding logic (with extra indentation).
+            AppendPropertyEncoding(sb, property, "\t\t\t\t\t");
 
             sb.AppendLine("\t\t\t\t}");
             sb.AppendLine("\t\t\t}");
-        }
-        else {
-            var writer = GetWriterMethodForType(property.CsharpType, property.Name!);
-            if (string.IsNullOrEmpty(writer)) {
-                // A writer was not found. Assume the property is a PropertyClass.
-                sb.AppendLine("\t\t\t// PropertyClass encoding");
-                sb.AppendLine($"\t\t\tserializer.PreWriteObject(writer, {property.Name}!);");
-                sb.AppendLine($"\t\t\tif ({property.Name} != null) {{");
-                sb.AppendLine($"\t\t\t\t{property.Name}.Encode(writer, serializer);");
-                sb.AppendLine("\t\t\t}");
-            }
-            else {
-                sb.AppendLine($"\t\t\t{writer}");
-            }
+        } else {
+            AppendPropertyEncoding(sb, property, "\t\t\t");
         }
 
         return sb.ToString();
@@ -163,81 +139,160 @@ internal static class PropertyClassSerializationGenerator {
 
     private static string GeneratePropertyDecoding(PropertyDefinition property) {
         var sb = new StringBuilder();
+        var dirtyEncode = (property.Flags & (uint)PropertyFlags.Prop_DirtyEncode) != 0;
 
-        // Determine the decoding logic based on the property type.
-        if (property.IsEnum) {
-            sb.AppendLine("\t\t\t// Enum decoding");
-            sb.AppendLine("\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.StringEnums)) {");
-            sb.AppendLine("\t\t\t\tvar rawEnumString = reader.ReadString();");
-            sb.AppendLine("\t\t\t\tvar enumString = SanitizeStringEnum(rawEnumString);");
-            sb.AppendLine($"\t\t\t\tif (Enum.IsDefined(typeof({property.CsharpType}), enumString)) {{");
-            sb.AppendLine($"\t\t\t\t\t{property.Name} = ({property.CsharpType})Enum.Parse(typeof({property.CsharpType}), enumString, true);");
-            sb.AppendLine("\t\t\t\t} else {");
-            sb.AppendLine($"\t\t\t\t\t{property.Name} = default({property.CsharpType});");
-            sb.AppendLine("\t\t\t\t}");
-            sb.AppendLine("\t\t\t} else {");
-            sb.AppendLine($"\t\t\t\t{property.Name} = ({property.CsharpType})Enum.ToObject(typeof({property.CsharpType}), reader.ReadUInt32());");
+        if (dirtyEncode) {
+            sb.AppendLine("\t\t\t// Optional property (flag bit 8)");
+            sb.AppendLine("\t\t\tif (reader.ReadBit()) {");
+
+            // Append the decoding logic
+            AppendPropertyDecoding(sb, property, "\t\t\t\t");
+
+            // Remove the property from the modified list since it was decoded here.
+            sb.AppendLine($"\t\t\t\t_modifiedProperties.Remove(\"{property.Name}\");");
+
             sb.AppendLine("\t\t\t}");
-        }
-        else if (property.IsVector) {
-            var elementType = ExtractElementType(property.CsharpType);
-            _ = sb.AppendLine("\t\t\t// Collection decoding")
-                  .AppendLine($"\t\t\tvar len_{property.Name} = ReadVectorSize(reader, serializer);")
-                  .AppendLine($"\t\t\tif (len_{property.Name} <= 0) {{")
-                  .AppendLine($"\t\t\t\t{property.Name} = new {property.CsharpType}();")
-                  .AppendLine("\t\t\t} else {")
-                  .AppendLine($"\t\t\t\t{property.Name} = new {property.CsharpType}();")
-                  .AppendLine($"\t\t\t\tfor (int i = 0; i < len_{property.Name}; i++) {{");
-
-            var reader = GetReaderMethodForType(elementType, $"var item_{property.Name}");
-            if (string.IsNullOrEmpty(reader)) {
-                // A reader was not found. Assume the element is a PropertyClass.
-                _ = sb.AppendLine($"\t\t\t\t\tvar preloadResult = serializer.PreloadObject(reader, out var item_{property.Name});")
-                      .AppendLine($"\t\t\t\t\tif (preloadResult == PreloadResult.Success) {{")
-                      .AppendLine($"\t\t\t\t\t\titem_{property.Name}.Decode(reader, serializer);")
-                      .AppendLine($"\t\t\t\t\t\t{property.Name}.Add(({elementType}) item_{property.Name});")
-                      .AppendLine("\t\t\t\t\t}")
-                      // The preload result recorded `00 00 00 00` -- null hash.
-                      // This means there actually is no object to decode.
-                      .AppendLine("\t\t\t\t\telse if (preloadResult == PreloadResult.NullHash) {")
-                      .AppendLine($"\t\t\t\t\t\t{property.Name}.Add(null);")
-                      .AppendLine("\t\t\t\t\t}")
-                      .AppendLine("\t\t\t\t\telse {")
-                      // Fallback: The hash was not found -- likely a server type.
-                      // The next 4 bytes will be the object size in bits. Skip the reader to the end of the object.
-                      .AppendLine("\t\t\t\t\t\tvar objectSizeInBits = reader.ReadUInt32();")
-                      .AppendLine("\t\t\t\t\t\tvar readerBitSize = reader.StreamSizeInBits();")
-                      .AppendLine($"\t\t\t\t\t\tif (objectSizeInBits > 0 && reader.BitPos() + objectSizeInBits < readerBitSize) {{")
-                      .AppendLine("\t\t\t\t\t\t\treader.SeekBit((int) (reader.BitPos() + objectSizeInBits - 32));")
-                      .AppendLine("\t\t\t\t\t\t}")
-                      .AppendLine($"\t\t\t\t\t\t{property.Name}.Add(null);")
-                      .AppendLine("\t\t\t\t\t}");
-            }
-            else {
-                sb.AppendLine($"\t\t\t\t\t{reader}");
-                sb.AppendLine($"\t\t\t\t\t{property.Name}.Add(item_{property.Name});");
-            }
-
-            sb.AppendLine("\t\t\t\t}");
-            sb.AppendLine("\t\t\t}");
-        }
-        else {
-            var reader = GetReaderMethodForType(property.CsharpType, property.Name!);
-            if (string.IsNullOrEmpty(reader)) {
-                // A reader was not found. Assume the property is a PropertyClass.
-                sb.AppendLine("\t\t\t// PropertyClass decoding");
-                sb.AppendLine($"\t\t\tserializer.PreloadObject(reader, out var item_{property.Name});");
-                sb.AppendLine($"\t\t\tif (item_{property.Name} != null) {{");
-                sb.AppendLine($"\t\t\t\t{property.Name} = ({property.CsharpType}) item_{property.Name};");
-                sb.AppendLine($"\t\t\t\t{property.Name}.Decode(reader, serializer);");
-                sb.AppendLine("\t\t\t}");
-            }
-            else {
-                sb.AppendLine($"\t\t\t{reader}");
-            }
+        } else {
+            // Append the decoding logic directly
+            AppendPropertyDecoding(sb, property, "\t\t\t");
         }
 
         return sb.ToString();
+    }
+
+    private static void AppendPropertyEncoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        if (property.IsEnum) {
+            AppendEnumEncoding(sb, property, indent);
+        } else if (property.IsVector) {
+            AppendVectorEncoding(sb, property, indent);
+        } else {
+            AppendRegularPropertyEncoding(sb, property, indent);
+        }
+    }
+
+    private static void AppendPropertyDecoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        if (property.IsEnum) {
+            AppendEnumDecoding(sb, property, indent);
+        } else if (property.IsVector) {
+            AppendVectorDecoding(sb, property, indent);
+        } else {
+            AppendRegularPropertyDecoding(sb, property, indent);
+        }
+    }
+
+    private static void AppendEnumEncoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        sb.AppendLine($"{indent}// Enum encoding");
+        sb.AppendLine($"{indent}if (serializer.SerializerFlags.HasFlag(SerializerFlags.StringEnums)) {{");
+        sb.AppendLine($"{indent}\twriter.WriteString({property.Name}.ToString());");
+        sb.AppendLine($"{indent}}} else {{");
+        sb.AppendLine($"{indent}\twriter.WriteUInt32((uint)(int){property.Name});");
+        sb.AppendLine($"{indent}}}");
+    }
+
+    private static void AppendEnumDecoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        sb.AppendLine($"{indent}// Enum decoding");
+        sb.AppendLine($"{indent}if (serializer.SerializerFlags.HasFlag(SerializerFlags.StringEnums)) {{");
+        sb.AppendLine($"{indent}\tvar rawEnumString = reader.ReadString();");
+        sb.AppendLine($"{indent}\tvar enumString = SanitizeStringEnum(rawEnumString);");
+        sb.AppendLine($"{indent}\tif (Enum.IsDefined(typeof({property.CsharpType}), enumString)) {{");
+        sb.AppendLine($"{indent}\t\t{property.Name} = ({property.CsharpType})Enum.Parse(typeof({property.CsharpType}), enumString, true);");
+        sb.AppendLine($"{indent}\t}} else {{");
+        sb.AppendLine($"{indent}\t\t{property.Name} = default({property.CsharpType});");
+        sb.AppendLine($"{indent}\t}}");
+        sb.AppendLine($"{indent}}} else {{");
+        sb.AppendLine($"{indent}\t{property.Name} = ({property.CsharpType})Enum.ToObject(typeof({property.CsharpType}), reader.ReadUInt32());");
+        sb.AppendLine($"{indent}}}");
+    }
+
+    private static void AppendVectorEncoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        var elementType = ExtractElementType(property.CsharpType);
+        sb.AppendLine($"{indent}// Collection encoding");
+        sb.AppendLine($"{indent}if ({property.Name} == null) {{");
+        sb.AppendLine($"{indent}\tWriteVectorSize(writer, 0, serializer);");
+        sb.AppendLine($"{indent}}} else {{");
+        sb.AppendLine($"{indent}\tWriteVectorSize(writer, {property.Name}.Count, serializer);");
+        sb.AppendLine($"{indent}\tforeach (var item in {property.Name}) {{");
+
+        var writer = GetWriterMethodForType(elementType, "item");
+        if (string.IsNullOrEmpty(writer)) {
+            // A writer was not found. Assume the element is a PropertyClass.
+            sb.AppendLine($"{indent}\t\tserializer.PreWriteObject(writer, item!);");
+            sb.AppendLine($"{indent}\t\tif (item != null) {{");
+            sb.AppendLine($"{indent}\t\t\titem.Encode(writer, serializer);");
+            sb.AppendLine($"{indent}\t\t}}");
+        } else {
+            sb.AppendLine($"{indent}\t\t{writer}");
+        }
+
+        sb.AppendLine($"{indent}\t}}");
+        sb.AppendLine($"{indent}}}");
+    }
+
+    private static void AppendVectorDecoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        var elementType = ExtractElementType(property.CsharpType);
+        sb.AppendLine($"{indent}// Collection decoding");
+        sb.AppendLine($"{indent}var len_{property.Name} = ReadVectorSize(reader, serializer);");
+        sb.AppendLine($"{indent}if (len_{property.Name} <= 0) {{");
+        sb.AppendLine($"{indent}\t{property.Name} = new {property.CsharpType}();");
+        sb.AppendLine($"{indent}}} else {{");
+        sb.AppendLine($"{indent}\t{property.Name} = new {property.CsharpType}();");
+        sb.AppendLine($"{indent}\tfor (int i = 0; i < len_{property.Name}; i++) {{");
+
+        var reader = GetReaderMethodForType(elementType, $"var item_{property.Name}");
+        if (string.IsNullOrEmpty(reader)) {
+            // A reader was not found. Assume the element is a PropertyClass.
+            sb.AppendLine($"{indent}\t\tvar preloadResult = serializer.PreloadObject(reader, out var item_{property.Name});");
+            sb.AppendLine($"{indent}\t\tif (preloadResult == PreloadResult.Success) {{");
+            sb.AppendLine($"{indent}\t\t\titem_{property.Name}.Decode(reader, serializer);");
+            sb.AppendLine($"{indent}\t\t\t{property.Name}.Add(({elementType}) item_{property.Name});");
+            sb.AppendLine($"{indent}\t\t}}");
+            sb.AppendLine($"{indent}\t\telse if (preloadResult == PreloadResult.NullHash) {{");
+            sb.AppendLine($"{indent}\t\t\t{property.Name}.Add(null);");
+            sb.AppendLine($"{indent}\t\t}}");
+            sb.AppendLine($"{indent}\t\telse {{");
+            sb.AppendLine($"{indent}\t\t\tvar objectSizeInBits = reader.ReadUInt32();");
+            sb.AppendLine($"{indent}\t\t\tvar readerBitSize = reader.StreamSizeInBits();");
+            sb.AppendLine($"{indent}\t\t\tif (objectSizeInBits > 0 && reader.BitPos() + objectSizeInBits < readerBitSize) {{");
+            sb.AppendLine($"{indent}\t\t\t\treader.SeekBit((int) (reader.BitPos() + objectSizeInBits - 32));");
+            sb.AppendLine($"{indent}\t\t\t}}");
+            sb.AppendLine($"{indent}\t\t\t{property.Name}.Add(null);");
+            sb.AppendLine($"{indent}\t\t}}");
+        } else {
+            sb.AppendLine($"{indent}\t\t{reader}");
+            sb.AppendLine($"{indent}\t\t{property.Name}.Add(item_{property.Name});");
+        }
+
+        sb.AppendLine($"{indent}\t}}");
+        sb.AppendLine($"{indent}}}");
+    }
+
+    private static void AppendRegularPropertyEncoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        var writer = GetWriterMethodForType(property.CsharpType, property.Name!);
+        if (string.IsNullOrEmpty(writer)) {
+            // A writer was not found. Assume the property is a PropertyClass.
+            sb.AppendLine($"{indent}// PropertyClass encoding");
+            sb.AppendLine($"{indent}serializer.PreWriteObject(writer, {property.Name}!);");
+            sb.AppendLine($"{indent}if ({property.Name} != null) {{");
+            sb.AppendLine($"{indent}\t{property.Name}.Encode(writer, serializer);");
+            sb.AppendLine($"{indent}}}");
+        } else {
+            sb.AppendLine($"{indent}{writer}");
+        }
+    }
+
+    private static void AppendRegularPropertyDecoding(StringBuilder sb, PropertyDefinition property, string indent) {
+        var reader = GetReaderMethodForType(property.CsharpType, property.Name!);
+        if (string.IsNullOrEmpty(reader)) {
+            // A reader was not found. Assume the property is a PropertyClass.
+            sb.AppendLine($"{indent}// PropertyClass decoding");
+            sb.AppendLine($"{indent}serializer.PreloadObject(reader, out var item_{property.Name});");
+            sb.AppendLine($"{indent}if (item_{property.Name} != null) {{");
+            sb.AppendLine($"{indent}\t{property.Name} = ({property.CsharpType}) item_{property.Name};");
+            sb.AppendLine($"{indent}\t{property.Name}.Decode(reader, serializer);");
+            sb.AppendLine($"{indent}}}");
+        } else {
+            sb.AppendLine($"{indent}{reader}");
+        }
     }
 
     private static string ExtractElementType(string collectionType) {
@@ -429,15 +484,11 @@ internal static class PropertyClassSerializationGenerator {
             .AppendLine("\t\tvar serializerFlags = serializer.SerializerFlags;")
             .AppendLine("\t\tvar serializerMask = serializer.PropertyMask;")
             .AppendLine()
-            .AppendLine("\t\t// Properties with the Prop_Encode flag set are always encoded")
-            .AppendLine("\t\tvar alwaysEncode = serializerFlags.HasFlag(SerializerFlags.DirtyEncode) && propertyFlags.HasFlag(PropertyFlags.Prop_Encode);")
-            .AppendLine()
-            .AppendLine("\t\t// Check if the property mask is met and if the property is deprecated")
+            .AppendLine("\t\t// Check if the property mask is met and if the property is deprecated.")
             .AppendLine("\t\tvar propertyMaskMet = (propertyFlags & serializerMask) == serializerMask;")
             .AppendLine("\t\tvar deprecated = propertyFlags.HasFlag(PropertyFlags.Prop_Deprecated);")
             .AppendLine()
-            .AppendLine("\t\t// Skip properties that are not marked for serialization or are deprecated and not dirty encoded")
-            .AppendLine("\t\treturn propertyMaskMet && (!deprecated || alwaysEncode);")
+            .AppendLine("\t\treturn propertyMaskMet && (!deprecated);")
             .AppendLine("\t}")
             .AppendLine()
             .AppendLine("\tprivate static void WriteVectorSize(BitWriter writer, int size, ObjectSerializer serializer) {")

@@ -261,6 +261,7 @@ Redistribution and use in source and binary forms, with or without
         }
 
         var beforeBrace = basicClassDef.Substring(0, lastBraceIndex);
+        
         var serializationMethods = PropertyClassSerializationGenerator.GenerateSerializationMethods(classDefinition);
         var versionableMethods = PropertyClassSerializationGenerator.GenerateVersionableMethods(classDefinition);
         var helperMethods = PropertyClassSerializationGenerator.GenerateHelperMethods();

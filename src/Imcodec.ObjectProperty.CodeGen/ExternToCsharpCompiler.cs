@@ -73,8 +73,12 @@ internal abstract class ExternToCsharpCompiler {
 
         classBuilder.AppendLine($"public partial record {classDefinition.Name} : {topBaseClass} {{\n");
         classBuilder.AppendLine($"\tpublic override uint GetHash() => {classDefinition.Hash};\n");
+
+        // Add the modified properties tracker.
+        classBuilder.AppendLine($"\tprivate readonly HashSet<string> _modifiedProperties = [];\n");
+
         foreach (var property in classDefinition.ExclusiveProperties) {
-            classBuilder.AppendLine($"\t{WritePropertyAsString(property)}\n");
+            classBuilder.AppendLine($"\t{WritePropertyAsString(property)}");
         }
         classBuilder.AppendLine("}");
 
@@ -115,16 +119,33 @@ internal abstract class ExternToCsharpCompiler {
         var flags = propertyDefinition.Flags;
         var propertyType = propertyDefinition.CsharpType;
         var propertyName = propertyDefinition.Name;
+        var fieldName = $"_{propertyName.ToLower()}";
 
         // Flags is an integer. Cast it to the enum type, and write it as a string.
         var flagsStr = GetFlagsString((int) flags);
 
-        var endStr = 
-              $"// Flags: ({flags}) {flagsStr}"
-            + $"\n\t// Hash: {hash}"
-            + $"\n\tpublic {propertyType} {propertyName} {{ get; set; }}";
+        var sb = new StringBuilder()
+            .AppendLine($"// Flags: ({flags}) {flagsStr}")
+            .AppendLine($"\t// Hash: {hash}")
+            .AppendLine($"\tprivate {propertyType} {fieldName};") // Generate backing field.
+            .Append($"\tpublic {propertyType} {propertyName} {{ \n\t\tget {{ return {fieldName}; }} "); 
 
-        return endStr;
+        // If the property has the Prop_DirtyEncode flag, generate a setter 
+        // that adds the property name to the _modifiedProperties list.
+        // Otherwise, generate a simple setter.
+        var dirtyEncode = (flags & (uint)PropertyFlags.Prop_DirtyEncode) != 0;
+        if (dirtyEncode) {
+            sb.AppendLine($"\n\t\tset {{");
+            sb.AppendLine($"\t\t\t_modifiedProperties.Add(\"{propertyName}\");");
+            sb.AppendLine($"\t\t\t{fieldName} = value;");
+            sb.AppendLine($"\t\t}}");
+        } else {
+            sb.AppendLine($"\n\t\tset {{ {fieldName} = value; }}");
+        }
+
+        sb.AppendLine($"\t}}");
+
+        return sb.ToString();
     }
 
     private static string GetFlagsString(int value) {

@@ -1000,6 +1000,15 @@ public partial record UnknownSpawnObjectInfo : SpawnObjectInfo {
 }
 
 [PropertySerializationTarget]
+public partial record MobDeckBehaviorTemplate : BehaviorTemplate {
+
+    public override uint GetHash() => 1451865413;
+
+    [PropertyField(2688422295, 268435463)] public List<ByteString> m_spellList { get; set; } = [];
+
+}
+
+[PropertySerializationTarget]
 public partial record MinigameSigilInfo : CoreObjectInfo {
 
     public override uint GetHash() => 234614075;
