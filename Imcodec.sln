@@ -29,7 +29,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Benchmarks", "src\I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.MessageLayer", "src\Imcodec.MessageLayer\Imcodec.MessageLayer.csproj", "{8897CD18-4AF8-12BB-A18A-973C174DAB33}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.MessageLayer.Codegen", "src\Imcodec.MessageLayer.CodeGen\Imcodec.MessageLayer.Codegen.csproj", "{122F45B3-7028-E07D-8515-CBB0E352AAC1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.MessageLayer.CodeGen", "src\Imcodec.MessageLayer.CodeGen\Imcodec.MessageLayer.CodeGen.csproj", "{122F45B3-7028-E07D-8515-CBB0E352AAC1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
