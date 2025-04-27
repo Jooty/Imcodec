@@ -113,22 +113,30 @@ internal static class PropertyClassSerializationGenerator {
 
         if (dirtyEncode) {
             sb.AppendLine("\t\t\t// Optional property (flag bit 8)");
-            sb.AppendLine("\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.DirtyEncode)) {");
-            sb.AppendLine("\t\t\t\t// Always encode if dirty encode flag is set");
-            sb.AppendLine("\t\t\t\twriter.WriteBit(1);");
+            sb.AppendLine("\t\t\t// Dirty encode flag is only used for non-versionable properties");
+            sb.AppendLine("\t\t\tif (!serializer.Versionable) {");
+            sb.AppendLine("\t\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.DirtyEncode)) {");
+            sb.AppendLine("\t\t\t\t\t// Always encode if dirty encode flag is set");
+            sb.AppendLine("\t\t\t\t\twriter.WriteBit(1);");
 
             // Append the encoding logic.
-            AppendPropertyEncoding(sb, property, "\t\t\t\t");
-
-            sb.AppendLine("\t\t\t} else {");
-            sb.AppendLine($"\t\t\t\tbool isDirty = _modifiedProperties.Contains(\"{property.Name}\");");
-            sb.AppendLine("\t\t\t\twriter.WriteBit(isDirty);");
-            sb.AppendLine("\t\t\t\tif (isDirty) {");
-
-            // Append the encoding logic (with extra indentation).
             AppendPropertyEncoding(sb, property, "\t\t\t\t\t");
 
+            sb.AppendLine("\t\t\t\t} else {");
+            sb.AppendLine($"\t\t\t\t\tbool isDirty = _modifiedProperties.Contains(\"{property.Name}\");");
+            sb.AppendLine("\t\t\t\t\twriter.WriteBit(isDirty);");
+            sb.AppendLine("\t\t\t\t\tif (isDirty) {");
+
+            // Append the encoding logic (with extra indentation).
+            AppendPropertyEncoding(sb, property, "\t\t\t\t\t\t");
+
+            sb.AppendLine("\t\t\t\t\t}");
             sb.AppendLine("\t\t\t\t}");
+            sb.AppendLine("\t\t\t} else {");
+
+            // If versionable, just encode property data directly.
+            AppendPropertyEncoding(sb, property, "\t\t\t\t");
+
             sb.AppendLine("\t\t\t}");
         } else {
             AppendPropertyEncoding(sb, property, "\t\t\t");
@@ -143,13 +151,21 @@ internal static class PropertyClassSerializationGenerator {
 
         if (dirtyEncode) {
             sb.AppendLine("\t\t\t// Optional property (flag bit 8)");
-            sb.AppendLine("\t\t\tif (reader.ReadBit()) {");
+            sb.AppendLine("\t\t\t// Dirty encode flag is only used for non-versionable properties");
+            sb.AppendLine("\t\t\tif (!serializer.Versionable) {");
+            sb.AppendLine("\t\t\t\tif (reader.ReadBit()) {");
 
-            // Append the decoding logic
+            // Append the decoding logic.
+            AppendPropertyDecoding(sb, property, "\t\t\t\t\t");
+
+            // Remove the property from the modified list since it was decoded.
+            sb.AppendLine($"\t\t\t\t\t_modifiedProperties.Remove(\"{property.Name}\");");
+
+            sb.AppendLine("\t\t\t\t}");
+            sb.AppendLine("\t\t\t} else {");
+
+            // When versionable, decode property data directly.
             AppendPropertyDecoding(sb, property, "\t\t\t\t");
-
-            // Remove the property from the modified list since it was decoded here.
-            sb.AppendLine($"\t\t\t\t_modifiedProperties.Remove(\"{property.Name}\");");
 
             sb.AppendLine("\t\t\t}");
         } else {
