@@ -45,7 +45,7 @@ public class BindSerializer : ObjectSerializer {
     /// <summary>
     /// The default flags for the BiND serializer.
     /// </summary>
-    public const uint BiNDDefaultFlags = 0x7;
+    public const SerializerFlags BiNDDefaultFlags = (SerializerFlags) 0x7;
 
     /// <summary>
     /// Serializes a <see cref="PropertyClass"/> object to a buffer.
@@ -79,7 +79,6 @@ public class BindSerializer : ObjectSerializer {
 
         // Write the magic header and serializer flags.
         BinaryPrimitives.WriteUInt32LittleEndian(buffer, BiNDMagic);
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(sizeof(uint)), BiNDDefaultFlags);
 
         // Copy the output buffer to the new buffer.
         var skipLen = sizeof(uint) * 2;
@@ -109,8 +108,7 @@ public class BindSerializer : ObjectSerializer {
     /// <returns>True if the buffer was successfully deserialized, false otherwise.</returns>
     public override bool Deserialize<T>(byte[] inputBuffer, PropertyFlags propertyMask, out T output) {
         output = default!;
-        var bindHeaderLength = sizeof(uint) * 2; // Magic and flags.
-
+        var bindHeaderLength = sizeof(uint); // Magic header.
         var reader = new BitReader(inputBuffer);
 
         // Check if the input buffer is too small to contain the magic header.
@@ -124,17 +122,7 @@ public class BindSerializer : ObjectSerializer {
         if (magic == BiNDMagic) {
             skipLen = bindHeaderLength;
 
-            // If the BiND header is present, the serializer flags will be next.
-            var flags = reader.ReadUInt32();
-
-            // Not really sure why there's additional flags here. It could be a property
-            // flag mask or additional serializer flags.
-            // We don't find any problems deserializing without it, so we'll just skip it.
-            if ((flags & 8) != 0) {
-                _ = reader.ReadBit();
-                skipLen++;
-            }
-            base.SerializerFlags = (SerializerFlags) flags;
+            SerializerFlags |= SerializerFlags.SerializeFlags;
         }
 
         var baseInput = inputBuffer.Skip(skipLen).ToArray();

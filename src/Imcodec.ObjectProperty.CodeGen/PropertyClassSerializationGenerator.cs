@@ -115,7 +115,7 @@ internal static class PropertyClassSerializationGenerator {
             sb.AppendLine("\t\t\t// Optional property (flag bit 8)");
             sb.AppendLine("\t\t\t// Dirty encode flag is only used for non-versionable properties");
             sb.AppendLine("\t\t\tif (!serializer.Versionable) {");
-            sb.AppendLine("\t\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.DirtyEncode)) {");
+            sb.AppendLine("\t\t\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.ForceDirtyEncode)) {");
             sb.AppendLine("\t\t\t\t\t// Always encode if dirty encode flag is set");
             sb.AppendLine("\t\t\t\t\twriter.WriteBit(1);");
 

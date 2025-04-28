@@ -32,9 +32,9 @@ public enum SerializerFlags {
     None,
 
     /// <summary>
-    /// States the serializer should use these flags for deserialization.
+    /// States the serializer should serialize serializer flags.
     /// </summary>
-    UseFlags = 1 << 0,
+    SerializeFlags = 1 << 0,
 
     /// <summary>
     /// States the serializer should use compact length prefixes.
@@ -52,9 +52,11 @@ public enum SerializerFlags {
     Compress = 1 << 3,
 
     /// <summary>
-    /// Properties are dirty encoded.
+    /// Properties with bitflag 8 are prefixed with '0' or '1' to indicate dirty state.
+    /// If this bitflag is set, the serializer will always serialize properties with bitflag 8
+    /// as if they were dirty.
     /// </summary>
-    DirtyEncode = 1 << 4,
+    ForceDirtyEncode = 1 << 4,
 
 }
 
@@ -160,6 +162,11 @@ public partial class ObjectSerializer(bool Versionable = true,
             writer.WithCompactLengths();
         }
 
+        // If the flags request it, ensure that the serializer flags are written.
+        if (SerializerFlags.HasFlag(SerializerFlags.SerializeFlags)) {
+            writer.WriteUInt32((uint) SerializerFlags);
+        }
+
         if (!PreWriteObject(writer, input)) {
             return false;
         }
@@ -213,6 +220,15 @@ public partial class ObjectSerializer(bool Versionable = true,
         output = default;
         this.PropertyMask = propertyMask;
         var reader = new BitReader(inputBuffer);
+
+        // If the flags request it, ensure that the serializer flags are read.
+        if (SerializerFlags.HasFlag(SerializerFlags.SerializeFlags)) {
+            SerializerFlags = (SerializerFlags) reader.ReadUInt32();
+
+            if (((int) SerializerFlags & 8) != 0) {
+                _ = reader.ReadBit();
+            }
+        }
 
         // If the behaviors flag is set to use compression, decompress the input buffer.
         if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
@@ -314,7 +330,7 @@ public partial class ObjectSerializer(bool Versionable = true,
         // Read the uncompressed length from the first 4 bytes of the input buffer.
         // The rest of the buffer is the compressed data.
         var uncompressedLength = inputBuffer.ReadInt32();
-        var decompressedData = Compression.Decompress(inputBuffer.GetData()[4..]);
+        var decompressedData = Compression.Decompress(inputBuffer.GetRelativeData());
 
         return decompressedData.Length != uncompressedLength
             ? throw new Exception("Decompressed data length does not match the recorded length.")

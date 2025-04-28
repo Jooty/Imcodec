@@ -35,7 +35,7 @@ namespace Imcodec.CoreObject;
 /// <param name="UseServerTypeRegistry">States whether to use the server type registry.</param>
 public sealed class CoreObjectSerializer(
     bool versionable = false,
-    SerializerFlags behaviors = SerializerFlags.UseFlags | SerializerFlags.Compress,
+    SerializerFlags behaviors = SerializerFlags.Compress,
     TypeRegistry? typeRegistry = null,
     bool UseServerTypeRegistry = true
 ) : ObjectSerializer(versionable, behaviors, typeRegistry, UseServerTypeRegistry) {
