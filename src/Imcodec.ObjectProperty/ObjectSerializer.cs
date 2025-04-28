@@ -162,11 +162,6 @@ public partial class ObjectSerializer(bool Versionable = true,
             writer.WithCompactLengths();
         }
 
-        // If the flags request it, ensure that the serializer flags are written.
-        if (SerializerFlags.HasFlag(SerializerFlags.SerializeFlags)) {
-            writer.WriteUInt32((uint) SerializerFlags);
-        }
-
         if (!PreWriteObject(writer, input)) {
             return false;
         }
@@ -180,6 +175,28 @@ public partial class ObjectSerializer(bool Versionable = true,
         // compress the output buffer.
         if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
             writer = Compress(writer);
+        }
+
+        // If serializer flags are set to serialize, write the flags
+        // at the beginning of the buffer.
+        if (SerializerFlags.HasFlag(SerializerFlags.SerializeFlags)) {
+            var flagsWriter = new BitWriter();
+
+            flagsWriter.WriteUInt32((uint) SerializerFlags);
+            if (((int) SerializerFlags & 8) != 0) {
+                flagsWriter.WriteBit(true);
+            }
+
+            var flagsData = flagsWriter.GetData();
+            var writerData = writer.GetData();
+            var combinedBuffer = new byte[flagsData.Length + writerData.Length];
+
+            flagsData.CopyTo(combinedBuffer, 0);
+            writerData.CopyTo(combinedBuffer, flagsData.Length);
+
+            output = new ByteString(combinedBuffer);
+            
+            return true;
         }
 
         output = writer.GetData();
