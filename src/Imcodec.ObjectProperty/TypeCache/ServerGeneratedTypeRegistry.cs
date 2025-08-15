@@ -477,14 +477,16 @@ public partial record ResModifyTriggerObject : TypeCache.Result {
 }
 
 [PropertySerializationTarget]
-public partial record ResSpawn : TypeCache.Result {
+public partial record ResSpawn : TypeCache.Result
+{
 
     public override uint GetHash() => 723600258;
 
     // Not confident about these types
     [PropertyField(1481718190, 31)] public ulong m_spawnID { get; set; }
     [PropertyField(142527940, 31)] public bool m_activate { get; set; }
-
+    public ulong templateID { get; set; }
+    public List<NodeObject>? nodes;
 }
 
 [PropertySerializationTarget]
