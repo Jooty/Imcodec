@@ -483,8 +483,8 @@ public partial record ResSpawn : TypeCache.Result
     public override uint GetHash() => 723600258;
 
     // Not confident about these types
-    [PropertyField(1481718190, 31)] public ulong m_spawnID { get; set; }
-    [PropertyField(142527940, 31)] public bool m_activate { get; set; }
+    [PropertyField(0x585139AE, 31)] public ulong m_spawnID { get; set; }
+    [PropertyField(0x87ECDC4, 31)] public bool m_activate { get; set; }
     public ulong templateID { get; set; }
     public List<NodeObject>? nodes;
 }
