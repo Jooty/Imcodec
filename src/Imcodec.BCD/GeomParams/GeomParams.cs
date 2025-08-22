@@ -18,9 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System;
-using System.IO;
-
 namespace Imcodec.BCD.GeomParams;
 
 /// <summary>
@@ -30,37 +27,35 @@ public abstract class GeomParams {
     
     public abstract uint TypeId { get; }
 
-    public static GeomParams ReadFrom(BinaryReader reader, uint typeId) {
-        return typeId switch {
-            0 => new BoxGeomParams {
-                Length = reader.ReadSingle(),
-                Width = reader.ReadSingle(),
-                Depth = reader.ReadSingle()
-            },
-            1 => new RayGeomParams {
-                Position = reader.ReadSingle(),
-                Direction = reader.ReadSingle(),
-                Length = reader.ReadSingle()
-            },
-            2 => new SphereGeomParams {
-                Radius = reader.ReadSingle()
-            },
-            3 => new CylinderGeomParams {
-                Radius = reader.ReadSingle(),
-                Length = reader.ReadSingle()
-            },
-            4 => new TubeGeomParams {
-                Radius = reader.ReadSingle(),
-                Length = reader.ReadSingle()
-            },
-            5 => new PlaneGeomParams {
-                Normal = new float[] { reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle() },
-                Distance = reader.ReadSingle()
-            },
-            6 => new MeshGeomParams(),
-            _ => throw new InvalidDataException($"Unknown geometry type: {typeId}")
-        };
-    }
+    public static GeomParams ReadFrom(BinaryReader reader, uint typeId) => typeId switch {
+        0 => new BoxGeomParams {
+            Length = reader.ReadSingle(),
+            Width = reader.ReadSingle(),
+            Depth = reader.ReadSingle()
+        },
+        1 => new RayGeomParams {
+            Position = reader.ReadSingle(),
+            Direction = reader.ReadSingle(),
+            Length = reader.ReadSingle()
+        },
+        2 => new SphereGeomParams {
+            Radius = reader.ReadSingle()
+        },
+        3 => new CylinderGeomParams {
+            Radius = reader.ReadSingle(),
+            Length = reader.ReadSingle()
+        },
+        4 => new TubeGeomParams {
+            Radius = reader.ReadSingle(),
+            Length = reader.ReadSingle()
+        },
+        5 => new PlaneGeomParams {
+            Normal = [reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()],
+            Distance = reader.ReadSingle()
+        },
+        6 => new MeshGeomParams(),
+        _ => throw new InvalidDataException($"Unknown geometry type: {typeId}")
+    };
 
     public abstract void WriteTo(BinaryWriter writer);
 

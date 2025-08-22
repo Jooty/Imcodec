@@ -18,8 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System.IO;
-
 namespace Imcodec.BCD;
 
 /// <summary>
@@ -59,8 +57,7 @@ public class Collision {
             collision.Mesh = ProxyMesh.ReadFrom(reader);
         }
 
-        // Read geometry
-        collision.Geometry = ProxyGeometry.ReadFrom(reader, geometryType);
+        collision.Geometry = ProxyGeometry.ReadFrom(reader);
 
         return collision;
     }
