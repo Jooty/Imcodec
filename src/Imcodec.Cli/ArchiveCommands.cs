@@ -28,7 +28,7 @@ namespace Imcodec.Cli;
 
 public sealed class ArchiveCommands {
 
-    private static readonly List<string> s_deserExtIncludeList = ["xml", "bin"];
+    private static readonly List<string> s_deserExtIncludeList = ["xml", "bin", "bcd"];
 
     /// <summary>
     /// Unpacks the given archive file to the specified output directory.
