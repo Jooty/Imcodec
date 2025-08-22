@@ -20,6 +20,7 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.ObjectProperty;
 using Imcodec.CoreObject;
+using Imcodec.BCD;
 using Newtonsoft.Json;
 
 namespace Imcodec.Cli;
@@ -49,6 +50,16 @@ internal class DeserializedBlobInfo {
 
 }
 
+internal class DeserializedBcdInfo {
+
+    public required string _fileName { get; set; }
+    public required string _deserializedOn { get; set; }
+    public required string _imcodecVersion { get; set; }
+    public required int _collisionCount { get; set; }
+    public required Bcd _bcdData { get; set; }
+
+}
+
 public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
@@ -72,6 +83,13 @@ public static class Deserialization {
     /// <param name="fileData">The data of the file being deserialized.</param>
     /// <returns>The deserialized object as a JSON string, or null if deserialization failed.</returns>
     public static string? TryDeserializeFile(string fileName, byte[] fileData) {
+        // First, try to parse as BCD file if the extension suggests it
+        var fileExt = IOUtility.ExtractFileExtension(fileName).ToLowerInvariant();
+        if (fileExt == "bcd") {
+            return TryDeserializeBcdFile(fileName, fileData);
+        }
+
+        // Otherwise, try the original property class deserialization
         try {
             var bindSerializer = new BindSerializer();
             if (bindSerializer.Deserialize<PropertyClass>(fileData, out var propertyClass)) {
@@ -102,6 +120,44 @@ public static class Deserialization {
             Console.WriteLine("=== Deserialization failed ===");
             Console.WriteLine($"Failed to deserialize file ({fileName}): {ex.Message} {ex.StackTrace}");
             Console.WriteLine("===============================");
+            
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to deserialize the given file data as a BCD file.
+    /// </summary>
+    /// <param name="fileName">The name of the file being deserialized.</param>
+    /// <param name="fileData">The data of the file being deserialized.</param>
+    /// <returns>The deserialized BCD object as a JSON string, or null if deserialization failed.</returns>
+    public static string? TryDeserializeBcdFile(string fileName, byte[] fileData) {
+        try {
+            using var stream = new MemoryStream(fileData);
+            var bcd = Bcd.Parse(stream);
+
+            // Wrap the deserialized BCD with additional information
+            var deserializedBcdInfo = new DeserializedBcdInfo {
+                _fileName = fileName,
+                _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
+                _collisionCount = bcd.Collisions.Count,
+                _bcdData = bcd
+            };
+
+            // Ensure that enums are written as strings
+            var jsonSerializerSettings = new JsonSerializerSettings {
+                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
+                Formatting = Formatting.Indented
+            };
+            var jsonObj = JsonConvert.SerializeObject(deserializedBcdInfo, jsonSerializerSettings);
+
+            return jsonObj;
+        }
+        catch (Exception ex) {
+            Console.WriteLine("=== BCD Deserialization failed ===");
+            Console.WriteLine($"Failed to deserialize BCD file ({fileName}): {ex.Message}");
+            Console.WriteLine("===================================");
             
             return null;
         }
@@ -177,5 +233,5 @@ public static class Deserialization {
         
         return null;
     }
-
+    
 }
