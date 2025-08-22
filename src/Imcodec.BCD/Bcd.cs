@@ -18,9 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 
 namespace Imcodec.BCD;
@@ -36,7 +33,7 @@ public class Bcd {
     /// <summary>
     /// A list of all Collision objects in the file.
     /// </summary>
-    public List<Collision> Collisions { get; set; } = new List<Collision>();
+    public List<Collision> Collisions { get; set; } = [];
 
     /// <summary>
     /// Attempts to parse a BCD file from a given Stream.

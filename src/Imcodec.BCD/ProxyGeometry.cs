@@ -59,11 +59,11 @@ public class ProxyGeometry {
     /// </summary>
     public GeomParams.GeomParams Params { get; set; } = new MeshGeomParams();
 
-    public static ProxyGeometry ReadFrom(BinaryReader reader, uint geometryType) {
+    public static ProxyGeometry ReadFrom(BinaryReader reader) {
         var geometry = new ProxyGeometry();
 
-        uint nameLen = reader.ReadUInt32();
-        byte[] nameBytes = reader.ReadBytes((int) nameLen);
+        var nameLen = reader.ReadUInt32();
+        var nameBytes = reader.ReadBytes((int) nameLen);
         geometry.Name = Encoding.UTF8.GetString(nameBytes);
 
         // Read rotation matrix (3x3).
@@ -79,17 +79,20 @@ public class ProxyGeometry {
 
         geometry.Scale = reader.ReadSingle();
 
-        uint materialLen = reader.ReadUInt32();
-        byte[] materialBytes = reader.ReadBytes((int) materialLen);
+        var materialLen = reader.ReadUInt32();
+        var materialBytes = reader.ReadBytes((int) materialLen);
         geometry.Material = Encoding.UTF8.GetString(materialBytes);
 
-        geometry.Params = GeomParams.GeomParams.ReadFrom(reader, geometryType);
+        // FIX: Read the geometry type again from the stream
+        var geometryTypeFromStream = reader.ReadUInt32();
+
+        geometry.Params = GeomParams.GeomParams.ReadFrom(reader, geometryTypeFromStream);
 
         return geometry;
     }
 
     public void WriteTo(BinaryWriter writer) {
-        byte[] nameBytes = Encoding.UTF8.GetBytes(Name);
+        var nameBytes = Encoding.UTF8.GetBytes(Name);
         writer.Write((uint) nameBytes.Length);
         writer.Write(nameBytes);
 
@@ -105,9 +108,12 @@ public class ProxyGeometry {
 
         writer.Write(Scale);
 
-        byte[] materialBytes = Encoding.UTF8.GetBytes(Material);
+        var materialBytes = Encoding.UTF8.GetBytes(Material);
         writer.Write((uint) materialBytes.Length);
         writer.Write(materialBytes);
+
+        // FIX: Write the geometry type before the parameters
+        writer.Write(Params.TypeId);
 
         Params.WriteTo(writer);
     }

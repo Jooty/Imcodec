@@ -18,21 +18,18 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System.IO;
-
 namespace Imcodec.BCD.GeomParams;
 
 /// <summary>
 /// Sphere-shaped geometry parameters.
 /// </summary>
 public class SphereGeomParams : GeomParams {
-    
+
     public override uint TypeId => 2;
 
     public float Radius { get; set; }
 
-    public override void WriteTo(BinaryWriter writer) {
-        writer.Write(Radius);
-    }
+    public override void WriteTo(BinaryWriter writer)
+        => writer.Write(Radius);
 
 }
