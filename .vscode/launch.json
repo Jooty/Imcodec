@@ -1,26 +1,47 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Build and Launch",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "rebuild",
-            "program": "${workspaceFolder}/src/Imcodec.Cli/bin/Debug/net9.0/win-x64/Imcodec.Cli.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "console": "internalConsole",
-            "stopAtEntry": false
-        },
-        {
-            "name": "Launch Only",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/Imcodec.Cli/bin/Debug/net9.0/win-x64/Imcodec.Cli.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "console": "internalConsole",
-            "stopAtEntry": false
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Build and Launch (Linux)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "rebuild-linux",
+      "program": "${workspaceFolder}/src/Imcodec.Cli/bin/Debug/net9.0/linux-x64/imcodec",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "name": "Launch Only (Linux)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Imcodec.Cli/bin/Debug/net9.0/linux-x64/imcodec",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "name": "Build and Launch (Windows)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "rebuild-win",
+      "program": "${workspaceFolder}/src/Imcodec.Cli/bin/Debug/net9.0/win-x64/imcodec.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "name": "Launch Only (Windows)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Imcodec.Cli/bin/Debug/net9.0/win-x64/imcodec.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
 }
