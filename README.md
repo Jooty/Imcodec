@@ -14,7 +14,6 @@ Two of the most common usages will be:
 Imcodec is built with .NET 9.0 and packaged as a self-contained executable for Windows x64. Simply download the latest release and run the executable from the command line.
 
 ## Command Structure
-Imcodec employs Cocona to provide a structured command-line interface with the following main commands:
 
 ### Archive Commands (`wad`)
 ```
@@ -45,6 +44,45 @@ When deserializing files, Imcodec produces JSON output with metadata including:
 * Original filename
 * Serialization flags
 * Class name & hash
+
+### Binary Collision Data Commands (`bcd`)
+Binary Collision Data (`.bcd`) files contain geometric collision shapes for zones.
+
+```
+imcodec bcd parse <inputPath> [outputPath] [--verbose]
+```
+
+* `inputPath`: Path to the BCD file to parse
+* `outputPath`: Optional path to save JSON output (defaults to input path with .json extension)
+* `--verbose`: Show detailed information about each collision object during parsing
+
+```
+imcodec bcd create <inputPath> [outputPath] [--verbose]
+```
+
+* `inputPath`: Path to JSON file (previously exported from BCD) to convert back to BCD format
+* `outputPath`: Optional path to save BCD output (defaults to input path with .bcd extension)
+* `--verbose`: Enable detailed output during creation
+
+```
+imcodec bcd info <inputPath>
+```
+
+* `inputPath`: Path to the BCD file to inspect
+* Displays comprehensive statistics including:
+  * File size and collision object count
+  * Geometry type distribution (Box, Sphere, Cylinder, Mesh, etc.)
+  * Collision and category flag usage
+  * Mesh statistics (vertices, faces, averages)
+
+#### BCD Output Format
+When parsing BCD files, Imcodec produces JSON output with metadata including:
+* Original filename and parsing timestamp
+* Total collision object count
+* Complete collision data with geometry parameters, transformation matrices, and mesh data
+* Collision flags (Object, Walkable, Hitscan, Water, Trigger, etc.)
+
+**Note**: BCD files within WAD archives are automatically detected and can be deserialized using the `--deser` flag with archive commands.
 
 ## Building
 1. Clone the repository
