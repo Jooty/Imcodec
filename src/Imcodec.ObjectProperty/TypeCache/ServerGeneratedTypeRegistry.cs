@@ -193,7 +193,7 @@ public partial record ResPlayCinematic : TypeCache.Result {
 
     public override uint GetHash() => 16312488;
 
-    [PropertyField(2611527497, 134217735)] public ByteString m_cinematicName { get; set; }
+    [PropertyField(0x9BA8BF49, 134217735)] public ByteString m_cinematicName { get; set; }
     [PropertyField(0x444373FA, 31)] public ZoneRouter m_router { get; set; } = new();
     [PropertyField(0x1D70805C, 31)] public bool m_unknown_bool_1 { get; set; }
     [PropertyField(0x3AAF6E2F, 31)] public bool m_unknown_bool_2 { get; set; }
@@ -218,13 +218,13 @@ public partial record ResActorDialog : TypeCache.Result {
 
     // PropertyField: m_dialogPrefix (unknown)
 
-    [PropertyField(1972573231, 7)] public ByteString m_activePersona { get; set; }
-    [PropertyField(3056380390, 7)] public ByteString m_registryEntry { get; set; }
-    [PropertyField(1310859212, 7)] public ActorDialog m_dialog { get; set; } = new();
-    [PropertyField(2305471533, 31)] public ByteString m_quest { get; set; }
-    [PropertyField(2057644325, 7)] public bool m_broadcastToZone { get; set; }
-    [PropertyField(482239118, 7)] public bool m_displayInQuestList { get; set; }
-    [PropertyField(707400068, 7)] public bool m_oneShot { get; set; }
+    [PropertyField(0x7593142F, 7)] public ByteString m_activePersona { get; set; }
+    [PropertyField(0xB62CA9E6, 7)] public ByteString m_registryEntry { get; set; }
+    [PropertyField(0x4E221FCC, 7)] public ActorDialog m_dialog { get; set; } = new();
+    [PropertyField(0x896AB42D, 31)] public ByteString m_quest { get; set; }
+    [PropertyField(0x7AA52925, 7)] public bool m_broadcastToZone { get; set; }
+    [PropertyField(0x1CBE628E, 7)] public bool m_displayInQuestList { get; set; }
+    [PropertyField(0x2A2A1184, 7)] public bool m_oneShot { get; set; }
 
 }
 
@@ -233,8 +233,8 @@ public partial record ResAddGold : TypeCache.Result {
 
     public override uint GetHash() => 703672453;
 
-    [PropertyField(219423808, 7)] public int m_gold { get; set; }
-    [PropertyField(2305508654, 7)] public ByteString m_sourceType { get; set; }
+    [PropertyField(0xD142440, 7)] public int m_gold { get; set; }
+    [PropertyField(0x896B452E, 7)] public ByteString m_sourceType { get; set; }
 
 }
 
@@ -243,9 +243,9 @@ public partial record ResAddMagicXP : TypeCache.Result {
 
     public override uint GetHash() => 1320311385;
 
-    // PropertyField: m_experience (int)
-    // PropertyField: m_magicSchool (string)
-    [PropertyField(2305508654, 7)] public ByteString m_sourceType { get; set; }
+    [PropertyField(0x896B452E, 7)] public ByteString m_sourceType { get; set; }
+    [PropertyField(0x0, 7)] public int m_experience { get; set; }
+    [PropertyField(0x0, 7)] public float m_magicSchool { get; set; }
 
 }
 
@@ -263,7 +263,7 @@ public partial record ResPostQuestEvent : TypeCache.Result {
 
     public override uint GetHash() => 1936095675;
 
-    [PropertyField(3493260286, 7)] public ByteString m_eventName { get; set; }
+    [PropertyField(0xD036EBFE, 7)] public ByteString m_eventName { get; set; }
     // PropertyField: m_subEventName (unknown)
 
 }
@@ -294,10 +294,10 @@ public partial record ResModifyEntry : TypeCache.Result {
 
     // PropertyField: m_questName (unknown)
 
-    [PropertyField(2055270734, 7)] public ByteString m_entryName { get; set; }
-    [PropertyField(1388902362, 7)] public bool m_isQuestRegistry { get; set; }
-    [PropertyField(812990455, 7)] public int m_value { get; set; }
-    [PropertyField(1702112846, 7)] public ByteString m_questName { get; set; }
+    [PropertyField(0x7A80F14E, 7)] public ByteString m_entryName { get; set; }
+    [PropertyField(0x52C8F7DA, 7)] public bool m_isQuestRegistry { get; set; }
+    [PropertyField(0x30753FF7, 7)] public int m_value { get; set; }
+    [PropertyField(0x65742E4E, 7)] public ByteString m_questName { get; set; }
 
 }
 
@@ -377,7 +377,7 @@ public partial record ResPostEvent : TypeCache.Result {
     // PropertyField: m_eventName (string)
     // PropertyField: m_subEventName (unknown) // Deserialization fails if this is made a string. 72 bits
 
-    [PropertyField(3493260286, 31)] public string m_eventName { get; set; } = "";
+    [PropertyField(0xD036EBFE, 31)] public string m_eventName { get; set; } = "";
 
 }
 
@@ -386,8 +386,8 @@ public partial record ResRemoveDynaMod : TypeCache.Result {
 
     public override uint GetHash() => 552459800;
 
-    [PropertyField(1601665858, 31)] public ByteString m_dynaModClientTag { get; set; }
-    [PropertyField(1110452292, 31)] public bool m_useQuestAsOriginator { get; set; }
+    [PropertyField(0x5F777B42, 31)] public ByteString m_dynaModClientTag { get; set; }
+    [PropertyField(0x42302844, 31)] public bool m_useQuestAsOriginator { get; set; }
 
 }
 
@@ -396,11 +396,11 @@ public partial record ResAddDynaMod : TypeCache.Result {
 
     public override uint GetHash() => 3938346;
 
-    [PropertyField(1601665858, 31)] public ByteString m_dynaModClientTag { get; set; }
-    [PropertyField(1110452292, 31)] public bool m_dynaModRemove { get; set; }
-    [PropertyField(1494302749, 31)] public bool m_useQuestAsOriginator { get; set; }
-    [PropertyField(2072855560, 31)] public ByteString m_dynaModState { get; set; }
-    [PropertyField(2171167736, 8388615)] public ByteString m_zoneName { get; set; }
+    [PropertyField(0x5F777B42, 31)] public ByteString m_dynaModClientTag { get; set; }
+    [PropertyField(0x42302844, 31)] public bool m_dynaModRemove { get; set; }
+    [PropertyField(0x5911401D, 31)] public bool m_useQuestAsOriginator { get; set; }
+    [PropertyField(0x7B8D4408, 31)] public ByteString m_dynaModState { get; set; }
+    [PropertyField(0x816963F8, 8388615)] public ByteString m_zoneName { get; set; }
 
 }
 
@@ -409,7 +409,7 @@ public partial record ResWait : TypeCache.Result {
 
     public override uint GetHash() => 526762782;
 
-    [PropertyField(2403101108, 31)] public uint m_secondsToWait { get; set; }
+    [PropertyField(0x8F3C69B4, 31)] public uint m_secondsToWait { get; set; }
 
 }
 
@@ -452,7 +452,7 @@ public partial record ResDownloadPackage : TypeCache.Result {
 
     public override uint GetHash() => 807468757;
 
-    [PropertyField(2325737891, 31)] public List<ByteString>? m_packageList { get; set; }
+    [PropertyField(0x8A9FF1A3, 31)] public List<ByteString>? m_packageList { get; set; }
 
 }
 
@@ -471,14 +471,13 @@ public partial record ResModifyTriggerObject : TypeCache.Result {
 
     public override uint GetHash() => 1263108441;
 
-    [PropertyField(3336963211, 31)] public ByteString m_triggerObjName { get; set; }
-    [PropertyField(2067625387, 31)] public bool m_triggerObjState { get; set; }
+    [PropertyField(0xC6E6048B, 31)] public ByteString m_triggerObjName { get; set; }
+    [PropertyField(0x7B3D75AB, 31)] public bool m_triggerObjState { get; set; }
 
 }
 
 [PropertySerializationTarget]
-public partial record ResSpawn : TypeCache.Result
-{
+public partial record ResSpawn : TypeCache.Result {
 
     public override uint GetHash() => 723600258;
 
@@ -552,9 +551,9 @@ public partial record ResDespawn : TypeCache.Result {
 
     public override uint GetHash() => 1383450208;
 
-    // PropertyField: m_despawnEffect (unknown) // uint perhaps?
-    // PropertyField: m_spawnID (int)
-    // PropertyField: m_templateID (int)
+    [PropertyField(0x585139AE, 31)] public ulong m_spawnID { get; set; }
+    [PropertyField(0x0, 31)] public bool m_despawnEffect { get; set; }
+    [PropertyField(0x40183401, 31)] public new ulong m_templateID { get; set; }
 
 }
 
@@ -805,12 +804,12 @@ public partial record ResAddMana : TypeCache.Result {
 
     public override uint GetHash() => 1980688359;
 
-    [PropertyField(2305508654, 7)] public ByteString m_sourceType { get; set; }
-    [PropertyField(1926272286, 7)] public int m_manaFlat { get; set; }
-    [PropertyField(1293619909, 7)] public float m_manaPercent { get; set; }
-    [PropertyField(138922614, 7)] public int m_overfill { get; set; }
-    [PropertyField(2040055687, 7)] public bool m_useFlat { get; set; }
-    
+    [PropertyField(0x896B452E, 7)] public ByteString m_sourceType { get; set; }
+    [PropertyField(0x72D0951E, 7)] public int m_manaFlat { get; set; }
+    [PropertyField(0x4D1B12C5, 7)] public float m_manaPercent { get; set; }
+    [PropertyField(0x847CA76, 7)] public int m_overfill { get; set; }
+    [PropertyField(0x7998C787, 7)] public bool m_useFlat { get; set; }
+
 }
 
 [PropertySerializationTarget]
@@ -832,8 +831,8 @@ public partial record ResShowGUI : TypeCache.Result {
 
     public override uint GetHash() => 742393364;
 
-    [PropertyField(2274463339, 31)] public ByteString m_guiDisplay { get; set; }
-    [PropertyField(2717603296, 31)] public ByteString m_guiFile { get; set; }
+    [PropertyField(0x87918E6B, 31)] public ByteString m_guiDisplay { get; set; }
+    [PropertyField(0x0, 31)] public ByteString m_guiFile { get; set; }
 
 }
 
@@ -889,7 +888,7 @@ public partial record ResControlBackgroundMusic : TypeCache.Result {
     // PropertyField: m_fadeTime (int)
     // PropertyField: m_router (string)
 
-    [PropertyField(1734553689, 31)] public ByteString m_action { get; set; }
+    [PropertyField(0x67633059, 31)] public ByteString m_action { get; set; }
 
 }
 
@@ -989,13 +988,13 @@ public partial record WizBangPriorityTemplate : PropertyClass {
 
     public override uint GetHash() => 511049413;
 
-    [PropertyField(2003411223, 31)] public List<ByteString> m_priorityList { get; set; } = [];
+    [PropertyField(0x7769A117, 31)] public List<ByteString> m_priorityList { get; set; } = [];
 
 }
 
 [PropertySerializationTarget]
 public partial record UnknownSpawnObjectInfo : SpawnObjectInfo {
-    
+
     public override uint GetHash() => 1839222684;
 
     [PropertyField(0x975DE361, 268435463)] public List<ByteString> m_lootTable { get; set; } = [];
@@ -1006,7 +1005,7 @@ public partial record MobDeckBehaviorTemplate : BehaviorTemplate {
 
     public override uint GetHash() => 1451865413;
 
-    [PropertyField(2688422295, 268435463)] public List<ByteString> m_spellList { get; set; } = [];
+    [PropertyField(0xA03E1197, 268435463)] public List<ByteString> m_spellList { get; set; } = [];
 
 }
 
