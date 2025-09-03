@@ -869,17 +869,6 @@ public partial record ResAddRecipe : TypeCache.Result {
 }
 
 [PropertySerializationTarget]
-public partial record ResClientNotifyText : TypeCache.Result {
-
-    public override uint GetHash() => 2001472307;
-
-    // PropertyField: m_allInZone (int)
-    // PropertyField: m_text (string)
-    // PropertyField: m_type (int)
-
-}
-
-[PropertySerializationTarget]
 public partial record ResControlBackgroundMusic : TypeCache.Result {
 
     public override uint GetHash() => 1144211986;
