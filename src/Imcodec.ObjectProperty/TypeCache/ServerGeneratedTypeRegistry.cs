@@ -1074,3 +1074,12 @@ public partial record MinigameSigilInfo : CoreObjectInfo {
     // SIZE : 65 bits
 
 }
+
+public sealed record ResDropTable : Result {
+
+    public override uint GetHash() => 0x1C5E3D8D;
+
+    [PropertyField(0x0, 1)] public string m_tableName { get; set; } = "";
+    [PropertyField(0x1, 1)] public int m_maxRolls { get; set; } = 0;
+
+}
