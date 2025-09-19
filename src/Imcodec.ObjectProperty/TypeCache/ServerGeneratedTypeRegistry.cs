@@ -254,7 +254,7 @@ public partial record ResLoot : TypeCache.Result {
 
     public override uint GetHash() => 475964190;
 
-    // PropertyField: m_lootTable (string)
+    [PropertyField(0x0, 7)] public LootInfoList m_lootTable { get; set; }
 
 }
 
