@@ -273,6 +273,7 @@ public partial record ResAddSpell : TypeCache.Result {
 
     public override uint GetHash() => 1774023420;
 
+    public ulong m_templateID { get; set; }
     // PropertyField: m_spellName (string)
 
 }
