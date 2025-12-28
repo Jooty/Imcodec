@@ -741,6 +741,13 @@ public partial record ResGiveSpell : TypeCache.Result {
 }
 
 [PropertySerializationTarget]
+public partial record ResDrawHand : TypeCache.Result {
+
+    public ulong m_templateID { get; set; }
+
+}
+
+[PropertySerializationTarget]
 public partial record ResUpdatePips : TypeCache.Result {
 
     public override uint GetHash() => 266932982;
