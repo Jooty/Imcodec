@@ -733,7 +733,7 @@ public partial record ResGiveSpell : TypeCache.Result {
 
     public override uint GetHash() => 151650171;
     public ulong m_templateID { get; set; }
-    public ulong m_spellID { get; set; }
+    public uint m_spellID { get; set; }
 
     // PropertyField: m_spellName (string)
     // PropertyField: m_subCircle (int)
