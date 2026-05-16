@@ -21,6 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using Imcodec.ObjectProperty;
 using Imcodec.CoreObject;
 using Imcodec.BCD;
+using Imcodec.POI;
 using Newtonsoft.Json;
 
 namespace Imcodec.Cli;
@@ -60,6 +61,15 @@ internal class DeserializedBcdInfo {
 
 }
 
+internal class DeserializedPoiInfo {
+
+    public required string _fileName { get; set; }
+    public required string _deserializedOn { get; set; }
+    public required string _imcodecVersion { get; set; }
+    public required Poi _poiData { get; set; }
+
+}
+
 public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
@@ -87,6 +97,14 @@ public static class Deserialization {
         var fileExt = IOUtility.ExtractFileExtension(fileName).ToLowerInvariant();
         if (fileExt == "bcd") {
             return TryDeserializeBcdFile(fileName, fileData);
+        }
+
+        // Try to parse as POI file if the extension suggests it
+        if (fileExt is "poi" or "dat") {
+            var poiResult = TryDeserializePoiFile(fileName, fileData);
+            if (poiResult != null) {
+                return poiResult;
+            }
         }
 
         // Otherwise, try the original property class deserialization
@@ -164,6 +182,42 @@ public static class Deserialization {
     }
 
     /// <summary>
+    /// Attempts to deserialize the given file data as a POI file.
+    /// </summary>
+    /// <param name="fileName">The name of the file being deserialized.</param>
+    /// <param name="fileData">The data of the file being deserialized.</param>
+    /// <returns>The deserialized POI object as a JSON string, or null if deserialization failed.</returns>
+    public static string? TryDeserializePoiFile(string fileName, byte[] fileData) {
+        try {
+            using var stream = new MemoryStream(fileData);
+            var poi = Poi.Parse(stream);
+
+            // Wrap the deserialized POI with additional information
+            var deserializedPoiInfo = new DeserializedPoiInfo {
+                _fileName = fileName,
+                _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
+                _poiData = poi
+            };
+
+            var jsonSerializerSettings = new JsonSerializerSettings {
+                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
+                Formatting = Formatting.Indented
+            };
+            var jsonObj = JsonConvert.SerializeObject(deserializedPoiInfo, jsonSerializerSettings);
+
+            return jsonObj;
+        }
+        catch (Exception ex) {
+            Console.WriteLine("=== POI Deserialization failed ===");
+            Console.WriteLine($"Failed to deserialize POI file ({fileName}): {ex.Message}");
+            Console.WriteLine("===================================");
+            
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Attempts to deserialize the given hex blob into a PropertyClass object. If successful, the
     /// deserialized object will be returned as a JSON string.
     /// </summary>
@@ -198,40 +252,32 @@ public static class Deserialization {
             var serializer = Factory();
 
             foreach (var flag in s_commonPropertyFlags) {
-                try {
-                    if (serializer.Deserialize<PropertyClass>(buffer, flag, out var propertyClass)) {
-                        var info = new {
-                            _rawBlob = hexBlob,
-                            _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                            _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
-                            _flags = flag,
-                            _serializerType = Name,
-                            _verbose = IsVerbose,
-                            _objectType = propertyClass!.GetType().Name,
-                            _object = propertyClass
-                        };
+                serializer.SerializerFlags = (SerializerFlags) flag;
 
-                        // Ensure that enums are written as strings.
-                        var jsonSerializerSettings = new JsonSerializerSettings {
-                            Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
-                        };
-                        var jsonObj = JsonConvert.SerializeObject(info, Formatting.Indented, jsonSerializerSettings);
+                var success = serializer.Deserialize<PropertyClass>(buffer, out var propertyClass);
+                if (success) {
+                    var deserializedObjectInfo = new DeserializedBlobInfo {
+                        _rawBlob = hexBlob,
+                        _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                        _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
+                        _flags = (uint) flag,
+                        _serializerType = Name,
+                        _verbose = IsVerbose,
+                        _objectType = propertyClass.GetType().Name,
+                        _object = propertyClass
+                    };
 
-                        return jsonObj;
-                    }
-                }
-                catch {
-                    continue;
+                    var jsonSerializerSettings = new JsonSerializerSettings {
+                        Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                    };
+                    var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
+
+                    return jsonObj;
                 }
             }
         }
 
-        // If no deserialization was successful, return null.
-        Console.WriteLine("=== Deserialization failed ===");
-        Console.WriteLine($"Failed to deserialize hex blob: {hexBlob}");
-        Console.WriteLine("===============================");
-        
         return null;
     }
-    
+
 }

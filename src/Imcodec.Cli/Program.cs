@@ -1,4 +1,4 @@
-﻿/*
+/*
 BSD 3-Clause License
 
 Copyright (c) 2024, Jooty
@@ -25,6 +25,7 @@ namespace Imcodec.Cli;
 [HasSubCommands(typeof(ArchiveCommands), commandName: "wad", Description = "Archive related commands.")]
 [HasSubCommands(typeof(ObjectPropertyCommands), commandName: "op", Description = "Serialization related commands.")]
 [HasSubCommands(typeof(BcdCommands), commandName: "bcd", Description = "Binary Collision Data (BCD) file commands.")]
+[HasSubCommands(typeof(PoiCommands), commandName: "poi", Description = "Point of Interest (POI) file commands.")]
 public class Program {
 
     public static void Main(string[] args)
