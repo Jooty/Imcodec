@@ -74,6 +74,12 @@ public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
 
+    private static JsonSerializerSettings CreateJsonSerializerSettings() => new() {
+        ContractResolver = new BaseFirstContractResolver(),
+        Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
+        Formatting = Formatting.Indented
+    };
+
     private static readonly List<uint> s_commonPropertyFlags = [
         1, 6, 7, 16, 19, 23, 24, 25, 27, 30, 31, 39,
         55, 59, 63, 71, 134, 135, 159, 263, 287, 519, 551,
@@ -122,10 +128,7 @@ public static class Deserialization {
                     _object = propertyClass
                 };
 
-                // Ensure that enums are written as strings.
-                var jsonSerializerSettings = new JsonSerializerSettings {
-                    Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
-                };
+                var jsonSerializerSettings = CreateJsonSerializerSettings();
                 var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
 
                 return jsonObj;
@@ -163,11 +166,7 @@ public static class Deserialization {
                 _bcdData = bcd
             };
 
-            // Ensure that enums are written as strings
-            var jsonSerializerSettings = new JsonSerializerSettings {
-                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
-                Formatting = Formatting.Indented
-            };
+            var jsonSerializerSettings = CreateJsonSerializerSettings();
             var jsonObj = JsonConvert.SerializeObject(deserializedBcdInfo, jsonSerializerSettings);
 
             return jsonObj;
@@ -200,10 +199,7 @@ public static class Deserialization {
                 _poiData = poi
             };
 
-            var jsonSerializerSettings = new JsonSerializerSettings {
-                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
-                Formatting = Formatting.Indented
-            };
+            var jsonSerializerSettings = CreateJsonSerializerSettings();
             var jsonObj = JsonConvert.SerializeObject(deserializedPoiInfo, jsonSerializerSettings);
 
             return jsonObj;
@@ -252,27 +248,27 @@ public static class Deserialization {
             var serializer = Factory();
 
             foreach (var flag in s_commonPropertyFlags) {
-                serializer.SerializerFlags = (SerializerFlags) flag;
+                try {
+                    if (serializer.Deserialize<PropertyClass>(buffer, flag, out var propertyClass)) {
+                        var deserializedObjectInfo = new DeserializedBlobInfo {
+                            _rawBlob = hexBlob,
+                            _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                            _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
+                            _flags = (uint) flag,
+                            _serializerType = Name,
+                            _verbose = IsVerbose,
+                            _objectType = propertyClass!.GetType().Name,
+                            _object = propertyClass
+                        };
 
-                var success = serializer.Deserialize<PropertyClass>(buffer, (PropertyFlags) flag, out var propertyClass);
-                if (success) {
-                    var deserializedObjectInfo = new DeserializedBlobInfo {
-                        _rawBlob = hexBlob,
-                        _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                        _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
-                        _flags = (uint) flag,
-                        _serializerType = Name,
-                        _verbose = IsVerbose,
-                        _objectType = propertyClass.GetType().Name,
-                        _object = propertyClass
-                    };
+                        var jsonSerializerSettings = CreateJsonSerializerSettings();
+                        var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
 
-                    var jsonSerializerSettings = new JsonSerializerSettings {
-                        Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
-                    };
-                    var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
-
-                    return jsonObj;
+                        return jsonObj;
+                    }
+                }
+                catch {
+                    continue;
                 }
             }
         }
