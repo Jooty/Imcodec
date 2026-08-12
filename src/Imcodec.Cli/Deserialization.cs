@@ -254,7 +254,7 @@ public static class Deserialization {
             foreach (var flag in s_commonPropertyFlags) {
                 serializer.SerializerFlags = (SerializerFlags) flag;
 
-                var success = serializer.Deserialize<PropertyClass>(buffer, out var propertyClass);
+                var success = serializer.Deserialize<PropertyClass>(buffer, (PropertyFlags) flag, out var propertyClass);
                 if (success) {
                     var deserializedObjectInfo = new DeserializedBlobInfo {
                         _rawBlob = hexBlob,
