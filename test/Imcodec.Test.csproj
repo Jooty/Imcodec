@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\src\Imcodec.Cli\Imcodec.Cli.csproj" />
     <ProjectReference Include="..\src\Imcodec.Cryptography\Imcodec.Cryptography.csproj" />
     <ProjectReference Include="..\src\Imcodec.ObjectProperty\Imcodec.ObjectProperty.csproj" />
     <ProjectReference Include="..\src\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj" />
