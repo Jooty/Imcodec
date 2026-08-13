@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System;
+using System.Collections.Concurrent;
 using Cocona;
 using Imcodec.ObjectProperty;
 using Imcodec.Wad;
@@ -85,27 +86,27 @@ public sealed class ArchiveCommands {
     }
 
     public static Dictionary<FileEntry, byte[]?> UnpackArchiveFiles(Archive archive) {
-        // Files within the archive are lazy loaded. We'll iterate through each file and extract the data.
-        var files = new Dictionary<FileEntry, byte[]?>();
-        foreach (var entry in archive.Files) {
+        // Files within the archive are lazy loaded. Extract each file in parallel.
+        var files = new ConcurrentDictionary<FileEntry, byte[]?>();
+        Parallel.ForEach(archive.Files, entry => {
             var fileData = archive.OpenFile(entry.Key);
-            var fileEntry = entry.Value.Value;
             if (fileData == null) {
                 Console.WriteLine($"Failed to extract file '{entry.Key}'.");
-                continue;
+                return;
             }
 
-            files.Add(fileEntry, fileData.Value.ToArray());
-        }
+            files[entry.Value.Value] = fileData.Value.ToArray();
+        });
 
-        return files;
+        return new Dictionary<FileEntry, byte[]?>(files);
     }
 
     public static void WriteArchiveFilesToDisk(Dictionary<FileEntry, byte[]?> files,
                                                string outputPath,
                                                bool attemptDeserialization,
                                                bool verbose) {
-        foreach (var file in files) {
+        // Write (and optionally deserialize) each file in parallel.
+        Parallel.ForEach(files, file => {
             var fileEntry = file.Key;
             var fileData = file.Value;
             var fileExt = IOUtility.ExtractFileExtension(fileEntry.FileName!);
@@ -126,7 +127,7 @@ public sealed class ArchiveCommands {
                         Console.WriteLine($"Deserialized '{fileEntry.FileName}' to '{fileOutputPath}'.");
                     }
 
-                    continue;
+                    return;
                 }
             }
 
@@ -135,7 +136,7 @@ public sealed class ArchiveCommands {
             if (verbose) {
                 Console.WriteLine($"Extracted '{fileEntry.FileName}' to '{fileOutputPath}'.");
             }
-        }
+        });
     }
 
     private static string CreateFileOutputPath(string basePath, string fileName) {

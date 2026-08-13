@@ -18,6 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Collections.Concurrent;
 using Imcodec.ObjectProperty;
 using Imcodec.CoreObject;
 using Imcodec.BCD;
@@ -74,8 +75,13 @@ public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
 
+    // Shared instance so Newtonsoft's per-resolver contract cache survives
+    // across serialization calls. A fresh resolver per call re-reflects every
+    // type in the object graph on every file, which is catastrophic in bulk.
+    private static readonly BaseFirstContractResolver s_contractResolver = new();
+
     private static JsonSerializerSettings CreateJsonSerializerSettings() => new() {
-        ContractResolver = new BaseFirstContractResolver(),
+        ContractResolver = s_contractResolver,
         Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
         Formatting = Formatting.Indented
     };
@@ -242,38 +248,54 @@ public static class Deserialization {
             ("CoreObjectVerboseCompressed", static () => new CoreObjectSerializer(true, SerializerFlags.Compress), true)
         };
 
-        // Attempt to deserialize the blob using a number of methods.
-        // Return the first successful deserialization.
-        foreach (var (Name, Factory, IsVerbose) in serializerConfigs) {
-            var serializer = Factory();
+        // Attempt to deserialize the blob using all serializer/flag combinations in parallel.
+        // Results are ordered by the original scan order so the reported success is deterministic.
+        var results = new ConcurrentBag<(int ConfigIndex, int FlagIndex, string Json)>();
+        var configs = serializerConfigs.Select((config, index) => (config, index)).ToList();
 
-            foreach (var flag in s_commonPropertyFlags) {
+        Parallel.ForEach(configs, entry => {
+            var (config, configIndex) = entry;
+            var (name, factory, isVerbose) = config;
+
+            for (var flagIndex = 0; flagIndex < s_commonPropertyFlags.Count; flagIndex++) {
+                var flag = s_commonPropertyFlags[flagIndex];
                 try {
+                    var serializer = factory();
                     if (serializer.Deserialize<PropertyClass>(buffer, flag, out var propertyClass)) {
-                        var deserializedObjectInfo = new DeserializedBlobInfo {
-                            _rawBlob = hexBlob,
-                            _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                            _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
-                            _flags = (uint) flag,
-                            _serializerType = Name,
-                            _verbose = IsVerbose,
-                            _objectType = propertyClass!.GetType().Name,
-                            _object = propertyClass
-                        };
+                        results.Add((configIndex, flagIndex, CreateBlobJson(hexBlob, name, isVerbose, flag, propertyClass!)));
 
-                        var jsonSerializerSettings = CreateJsonSerializerSettings();
-                        var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
-
-                        return jsonObj;
+                        break;
                     }
                 }
                 catch {
-                    continue;
+                    // Invalid serializer/flag combination; try the next one.
                 }
             }
-        }
+        });
 
-        return null;
+        var bestResult = results
+            .OrderBy(result => result.ConfigIndex)
+            .ThenBy(result => result.FlagIndex)
+            .FirstOrDefault();
+
+        return bestResult.Json;
+
+        string CreateBlobJson(string rawBlob, string serializerType, bool verbose, uint flag, PropertyClass propertyClass) {
+            var deserializedObjectInfo = new DeserializedBlobInfo {
+                _rawBlob = rawBlob,
+                _deserializedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                _imcodecVersion = typeof(ArchiveCommands).Assembly.GetName()?.Version?.ToString() ?? "Unknown",
+                _flags = flag,
+                _serializerType = serializerType,
+                _verbose = verbose,
+                _objectType = propertyClass.GetType().Name,
+                _object = propertyClass
+            };
+
+            var jsonSerializerSettings = CreateJsonSerializerSettings();
+
+            return JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
+        }
     }
 
 }
