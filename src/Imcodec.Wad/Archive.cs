@@ -29,6 +29,7 @@ public sealed class Archive {
 
     public Dictionary<string, Lazy<FileEntry>> Files { get; private set; } = [];
     private readonly Stream _archiveStream;
+    private readonly object _streamLock = new();
     private readonly uint _version;
 
     /// <summary>
@@ -127,22 +128,29 @@ public sealed class Archive {
     }
 
     private Memory<byte> ReadFileData(FileEntry fileEntry) {
-        _ = _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
-        var readLen = fileEntry.IsCompressed ? fileEntry.CompressedSize : fileEntry.UncompressedSize;
-        var fileSpan = ReadFromStream(_archiveStream, readLen);
+        Memory<byte> fileData;
+        lock (_streamLock) {
+            _ = _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
+            var readLen = fileEntry.IsCompressed ? fileEntry.CompressedSize : fileEntry.UncompressedSize;
+            fileData = ReadFromStream(_archiveStream, readLen);
+        }
 
         return fileEntry.IsCompressed 
-            ? ZLibUtility.Inflate(fileSpan, (int) fileEntry.UncompressedSize) 
-            : fileSpan;
+            ? ZLibUtility.Inflate(fileData, (int) fileEntry.UncompressedSize) 
+            : fileData;
     }
 
     private async Task<Memory<byte>> ReadFileDataAsync(FileEntry fileEntry) {
-        _ = _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
-        var buffer = new byte[fileEntry.UncompressedSize];
-        await _archiveStream.ReadExactlyAsync(buffer);
+        byte[] buffer;
+        lock (_streamLock) {
+            _ = _archiveStream.Seek(fileEntry.Offset, SeekOrigin.Begin);
+            var readLen = fileEntry.IsCompressed ? fileEntry.CompressedSize : fileEntry.UncompressedSize;
+            buffer = new byte[readLen];
+            _archiveStream.ReadExactly(buffer);
+        }
 
         return fileEntry.IsCompressed 
-            ? await ZLibUtility.InflateAsync(buffer, (int) fileEntry.CompressedSize) 
+            ? await ZLibUtility.InflateAsync(buffer, (int) fileEntry.UncompressedSize) 
             : (Memory<byte>) buffer;
     }
 
