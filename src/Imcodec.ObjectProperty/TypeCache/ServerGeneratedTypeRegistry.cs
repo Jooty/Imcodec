@@ -1093,3 +1093,11 @@ public sealed record ResDropTable : Result {
     [PropertyField(0x1, 1)] public int m_maxRolls { get; set; } = 0;
 
 }
+
+public sealed record ResLearnSpell : Result {
+
+    public override uint GetHash() => 0x1C5E3D8D;
+
+    [PropertyField(0x0, 1)] public uint m_templateID { get; set; } = 0;
+
+}
