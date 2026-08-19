@@ -11,7 +11,7 @@ Two of the most common usages will be:
 * Deserializing binary serialized files (known internally as Object Property)
 
 ## Installation
-Imcodec is built with .NET 9.0 and packaged as a self-contained executable for Windows x64. Simply download the latest release and run the executable from the command line.
+Imcodec is built with .NET 10.0 and packaged as a self-contained executable for Windows x64. Simply download the latest release and run the executable from the command line.
 
 ## Command Structure
 
