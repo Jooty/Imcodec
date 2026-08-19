@@ -1101,3 +1101,11 @@ public sealed record ResLearnSpell : Result {
     [PropertyField(0x0, 1)] public uint m_templateID { get; set; } = 0;
 
 }
+
+// Quest results may be gated by requirements in the data (e.g. a school-gated learn-spell
+// reward); the server's result executor evaluates them before running the handler.
+public partial record Result {
+
+    public RequirementList? m_requirements { get; set; }
+
+}
