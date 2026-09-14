@@ -348,7 +348,12 @@ public class BitWriter : BitManipulator {
         }
     }
 
-    private void FlushBits() {
+    public override byte[] GetData() {
+        FlushBits();
+        return base.GetData();
+    }
+
+    public void FlushBits() {
         if (_writer is null) {
             throw new NullReferenceException($"Cannot flush bits. {nameof(_writer)} is null.");
         }

@@ -185,6 +185,7 @@ public partial class ObjectSerializer(bool Versionable = true,
             flagsWriter.WriteUInt32((uint) SerializerFlags);
             if (((int) SerializerFlags & 8) != 0) {
                 flagsWriter.WriteBit(true);
+                flagsWriter.FlushBits();
             }
 
             var flagsData = flagsWriter.GetData();

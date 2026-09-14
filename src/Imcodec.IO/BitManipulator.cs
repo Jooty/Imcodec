@@ -62,7 +62,7 @@ public abstract class BitManipulator : IDisposable {
     /// Gets the current stream as an binary array.
     /// </summary>
     /// <returns>Returns the current stream as binary an array.</returns>
-    public byte[] GetData() {
+    public virtual byte[] GetData() {
         var data = new byte[Stream.Length];
         var pos = Stream.Position;
 
