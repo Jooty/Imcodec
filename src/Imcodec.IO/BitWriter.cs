@@ -148,29 +148,15 @@ public class BitWriter : BitManipulator {
     /// </summary>
     /// <param name="str">The UTF-8 encoded string to write to the stream.</param>
     public void WriteString(ByteString str) {
-        if (str.ToString() is null || str.ToString() == string.Empty) {
-            if (base.CompactLengths) {
-                WriteUInt8(0);
-            }
-            else {
-                WriteUInt16(0);
-            }
-
-            return;
-        }
-
         if (base.CompactLengths) {
-            if (str.Length >= 128) {
-                WriteBit(1);
-                WriteBits(str.Length, 15);
-            }
-            else {
-                WriteBit(0);
-                WriteBits(str.Length, 7);
-            }
+            WriteCompactLength(str.Length);
         }
         else {
-            WriteUInt16((ushort)str.Length);
+            WriteUInt16((ushort) str.Length);
+        }
+
+        // An empty string writes no characters, so it does not byte align the stream either.
+        if (str.Length > 0) {
             WriteBytes(str);
         }
     }
@@ -181,20 +167,26 @@ public class BitWriter : BitManipulator {
     /// <param name="str">The UTF-16 encoded string to write to the stream.</param>
     public void WriteWString(string str) {
         if (base.CompactLengths) {
-            if (str.Length >= 128) {
-                WriteBit(1);
-                WriteBits(str.Length, 15);
-            }
-            else {
-                WriteBit(0);
-                WriteBits(str.Length, 7);
-            }
+            WriteCompactLength(str.Length);
         }
         else {
             WriteUInt16((ushort) str.Length);
-            var bytes = Encoding.Unicode.GetBytes(str);
-            WriteBytes(bytes);
         }
+
+        if (str.Length > 0) {
+            WriteBytes(Encoding.Unicode.GetBytes(str));
+        }
+    }
+
+    /// <summary>
+    /// Writes a compact length prefix: one bit selecting the size, then the length in 7 bits
+    /// (below 128) or 31 bits. The bits will not be flushed prior or after.
+    /// </summary>
+    /// <param name="length">The length to write.</param>
+    public void WriteCompactLength(int length) {
+        var isLong = length >= 0x80;
+        WriteBit(isLong);
+        WriteBits(length, isLong ? 31 : 7);
     }
 
     /// <summary>

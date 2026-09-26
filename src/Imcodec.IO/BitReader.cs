@@ -144,16 +144,14 @@ public class BitReader : BitManipulator {
     /// <returns>A <see cref="string"/> representation of the string,
     /// which is interpreted as UTF-8</returns>
     public ByteString ReadString() {
-        // If the compact string length bit is flagged, attempt to read a
-        // compressed length. If the length MSB is 1,
-        // it is not compressed and still uses 16-bits.
-        var length = base.CompactLengths
-            ? ReadBits<int>(ReadBit() ? 15 : 7)
-            : _reader.ReadUInt16();
+        var length = ReadStringLength();
 
-        var bytes = ReadBytes(length);
+        // An empty string has no characters, so the writer never byte aligned the stream.
+        if (length == 0) {
+            return new ByteString([]);
+        }
 
-        return new ByteString(bytes);
+        return new ByteString(ReadBytes(length));
     }
 
     /// <summary>
@@ -174,13 +172,7 @@ public class BitReader : BitManipulator {
     /// </summary>
     /// <returns>The string that was read, interpreted as Unicode.</returns>
     public string ReadWString() {
-        // If the compact string length bit is flagged, attempt to read a
-        // compressed length. If the length MSB is 1,
-        // it is not compressed and still uses 16-bits.
-        var length = base.CompactLengths
-            ? ReadBits<int>(ReadBit() ? 15 : 7)
-            : _reader.ReadUInt16();
-
+        var length = ReadStringLength();
         if (length == 0) {
             return string.Empty;
         }
@@ -191,6 +183,17 @@ public class BitReader : BitManipulator {
 
         return Encoding.Unicode.GetString(bytes);
     }
+
+    /// <summary>
+    /// Reads a compact length prefix: one bit selecting the size, then the length in 7 bits
+    /// or 31 bits. Will not reset the bit position.
+    /// </summary>
+    /// <returns>The length that was read.</returns>
+    public int ReadCompactLength()
+        => ReadBits<int>(ReadBit() ? 31 : 7);
+
+    private int ReadStringLength()
+        => base.CompactLengths ? ReadCompactLength() : ReadUInt16();
 
     /// <summary>
     /// Reads a boolean value. Will reset the bit position.
