@@ -33,6 +33,9 @@ public class LootTableTest {
     private const string LootTableBlob = "2A0367480100000089876B65050000000000050000005E39841B010000000200000000000000";
     private const string LootTableBlobCompressed = "2600000078DAD3624EF760646060E86CCF4E65650001101967D9220D12656280000067CB0401";
 
+    // Same table with compact lengths: the u32 list count becomes a zero bit and 7 bits of length.
+    private const string LootTableBlobCompact = "2A0367480289876B650500000000050000005E39841B010000000200000000000000";
+
     [Fact]
     public void TryDeserializeLootTableBlob() {
         // Deserialize a loot info list.
@@ -111,6 +114,52 @@ public class LootTableTest {
         Assert.True(lootTable.m_loot.Count == 1);
         Assert.True(lootTable.m_loot[0] is MagicXPLootInfo);
         Assert.True(lootTable.m_loot[0].m_lootType == LOOT_TYPE.LOOT_TYPE_MAGIC_XP);
+    }
+
+    [Fact]
+    public void TrySerializeWithCompactLengths() {
+        // Serialize a loot info list with compact lengths, match the expected blob and read it back.
+        var lootTable = new LootInfoList {
+            m_loot = [
+                new MagicXPLootInfo { m_lootType = LOOT_TYPE.LOOT_TYPE_MAGIC_XP, m_experience = 5 }
+            ],
+            m_goldInfo = new GoldLootInfo {
+                m_goldAmount = 2,
+                m_lootType = LOOT_TYPE.LOOT_TYPE_GOLD
+            }
+        };
+
+        var serializeSuccess = new ObjectSerializer(false, SerializerFlags.CompactLength)
+            .Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
+        Assert.True(serializeSuccess);
+        Assert.Equal(LootTableBlobCompact, Convert.ToHexString(byteBlob));
+
+        var deserializeSuccess = new ObjectSerializer(false, SerializerFlags.CompactLength)
+            .Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var decoded);
+        Assert.True(deserializeSuccess);
+        Assert.NotNull(decoded);
+        Assert.True(decoded.m_loot.Count == 1);
+        Assert.True(decoded.m_goldInfo.m_goldAmount == 2);
+    }
+
+    [Fact]
+    public void TrySerializeLongListWithCompactLengths() {
+        // A list of 128 items or more gets a set bit followed by 31 bits of count.
+        var lootTable = new LootInfoList {
+            m_loot = [.. Enumerable.Range(0, 200).Select(static i => (LootInfo) new MagicXPLootInfo { m_experience = i })],
+            m_goldInfo = new GoldLootInfo { m_goldAmount = 2 }
+        };
+
+        var serializeSuccess = new ObjectSerializer(false, SerializerFlags.CompactLength)
+            .Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
+        Assert.True(serializeSuccess);
+        Assert.Equal("91010000", Convert.ToHexString(byteBlob, 4, 4));
+
+        var deserializeSuccess = new ObjectSerializer(false, SerializerFlags.CompactLength)
+            .Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var decoded);
+        Assert.True(deserializeSuccess);
+        Assert.Equal(200, decoded!.m_loot.Count);
+        Assert.Equal(199, ((MagicXPLootInfo) decoded.m_loot[199]).m_experience);
     }
 
 }

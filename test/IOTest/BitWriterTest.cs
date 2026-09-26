@@ -122,4 +122,106 @@ public class BitWriterTest {
         Assert.True(bit);
     }
 
+    [Fact]
+    public void CompactString_WritesCharacters() {
+        // Arrange. A compact length is one bit (long or short) and 7 bits of length.
+        var writer = new BitWriter();
+        writer.WithCompactLengths();
+
+        // Act
+        writer.WriteString("Female");
+        writer.WriteUInt8(0xAB);
+        var data = writer.GetData();
+
+        // Assert
+        Assert.Equal("0C46656D616C65AB", Convert.ToHexString(data));
+    }
+
+    [Fact]
+    public void CompactString_LengthContinuesBitRun_CharactersAreAligned() {
+        // Arrange
+        var writer = new BitWriter();
+        writer.WithCompactLengths();
+
+        // Act
+        writer.WriteBits((byte) 0b101, 3);
+        writer.WriteString("Human");
+        var data = writer.GetData();
+
+        var reader = new BitReader(data);
+        reader.WithCompactLengths();
+        var bits = reader.ReadBits<byte>(3);
+        var value = reader.ReadString();
+
+        // Assert
+        Assert.Equal("550048756D616E", Convert.ToHexString(data));
+        Assert.Equal(0b101, bits);
+        Assert.Equal("Human", (string) value);
+    }
+
+    [Fact]
+    public void CompactString_LongString_Uses31BitLength() {
+        // Arrange. The client writes 128 characters and up as a set bit followed by 31 bits of length.
+        var text = new string('a', 200);
+        var writer = new BitWriter();
+        writer.WithCompactLengths();
+
+        // Act
+        writer.WriteString(text);
+        var data = writer.GetData();
+
+        var reader = new BitReader(data);
+        reader.WithCompactLengths();
+        var value = reader.ReadString();
+
+        // Assert
+        Assert.Equal(204, data.Length);
+        Assert.Equal("91010000", Convert.ToHexString(data, 0, 4));
+        Assert.Equal(text, (string) value);
+    }
+
+    [Fact]
+    public void CompactString_Empty_DoesNotAlignFollowingBits() {
+        // Arrange. With no characters to write, the client never byte aligns after the length.
+        var writer = new BitWriter();
+        writer.WithCompactLengths();
+
+        // Act
+        writer.WriteBits((byte) 0b101, 3);
+        writer.WriteString(string.Empty);
+        writer.WriteBit(true);
+        var data = writer.GetData();
+
+        var reader = new BitReader(data);
+        reader.WithCompactLengths();
+        var bits = reader.ReadBits<byte>(3);
+        var value = reader.ReadString();
+        var bit = reader.ReadBit();
+
+        // Assert
+        Assert.Equal("0508", Convert.ToHexString(data));
+        Assert.Equal(0b101, bits);
+        Assert.Equal(string.Empty, (string) value);
+        Assert.True(bit);
+    }
+
+    [Fact]
+    public void CompactWString_WritesCharacters() {
+        // Arrange. The length counts characters, not bytes.
+        var writer = new BitWriter();
+        writer.WithCompactLengths();
+
+        // Act
+        writer.WriteWString("Hi");
+        var data = writer.GetData();
+
+        var reader = new BitReader(data);
+        reader.WithCompactLengths();
+        var value = reader.ReadWString();
+
+        // Assert
+        Assert.Equal("0448006900", Convert.ToHexString(data));
+        Assert.Equal("Hi", value);
+    }
+
 }
