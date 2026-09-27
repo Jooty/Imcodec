@@ -1009,6 +1009,26 @@ public partial record MobDeckBehaviorTemplate : BehaviorTemplate {
 }
 
 [PropertySerializationTarget]
+public partial record InteractableBehaviorTemplate : BehaviorTemplate {
+
+    public override uint GetHash() => 0x42CF875B;
+
+    [PropertyField(0x1E1748E2, 31)] public List<InteractOptionTemplate?> m_interactOptions { get; set; } = [];
+
+}
+
+[PropertySerializationTarget]
+public partial record InteractOptionTemplate : PropertyClass {
+
+    public override uint GetHash() => 0x0F3D1A6B;
+
+    [PropertyField(0x6A94A9CF, 31)] public string m_questEvent { get; set; } = "";
+    // Usage goals whose m_clientTags name one of these tags can use this option.
+    [PropertyField(0x5AB57C2D, 31)] public List<string> m_goalTags { get; set; } = [];
+
+}
+
+[PropertySerializationTarget]
 public partial record MinigameSigilInfo : CoreObjectInfo {
 
     public override uint GetHash() => 234614075;
