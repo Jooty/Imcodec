@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.IO;
+using Imcodec.Math;
 using Imcodec.ObjectProperty.Attributes;
 
 namespace Imcodec.ObjectProperty.TypeCache;
@@ -185,29 +186,6 @@ public partial record ZoneRouter : PropertyClass {
         ROUTING_ZONE,
         ROUTING_PROXIMITY,
     }
-
-}
-
-[PropertySerializationTarget]
-public partial record ResPlayCinematic : TypeCache.Result {
-
-    public override uint GetHash() => 16312488;
-
-    [PropertyField(0x9BA8BF49, 134217735)] public ByteString m_cinematicName { get; set; }
-    [PropertyField(0x444373FA, 31)] public ZoneRouter m_router { get; set; } = new();
-    [PropertyField(0x1D70805C, 31)] public bool m_unknown_bool_1 { get; set; }
-    [PropertyField(0x3AAF6E2F, 31)] public bool m_unknown_bool_2 { get; set; }
-    [PropertyField(0x61436E16, 31)] public bool m_unknown_bool_3 { get; set; }
-    [PropertyField(0x78B7B1EE, 31)] public ByteString m_unknown_string_1 { get; set; }
-    [PropertyField(0x3C1B4C58, 31)] public bool m_unknown_bool_4 { get; set; }
-    [PropertyField(0x5BB196FF, 31)] public bool m_unknown_bool_5 { get; set; }
-    [PropertyField(0x7B00E397, 31)] public ByteString m_unknown_string_2 { get; set; }
-    [PropertyField(0x197BBD69, 31)] public bool m_unknown_bool_6 { get; set; }
-    [PropertyField(0x4FA58BBA, 31)] public float m_unknown_float_1 { get; set; }
-    [PropertyField(0x3DAC4C0A, 31)] public bool m_unknown_bool_7 { get; set; }
-    [PropertyField(0x66ECE9B3, 31)] public ByteString m_unknown_string_3 { get; set; }
-    [PropertyField(0xA4092DFC, 31)] public bool m_unknown_bool_8 { get; set; }
-    [PropertyField(0x61437E16, 31)] public bool m_unknown_bool_9 { get; set; }
 
 }
 
@@ -574,20 +552,23 @@ public partial record ResCinematicActor : TypeCache.Result {
 
     public override uint GetHash() => 16312488;
 
-    // PropertyField: m_blocking (int)
-    // PropertyField: m_cinematicName (string)
-    // PropertyField: m_endAtActor (int)
-    // PropertyField: m_endAtTargetActor (int)
-    // PropertyField: m_endLoc (string)
-    // PropertyField: m_objectTemplateID (int)
-    // PropertyField: m_router (string)
-    // PropertyField: m_routing (string)
-    // PropertyField: m_startAtActor (int)
-    // PropertyField: m_startAtTargetActor (int)
-    // PropertyField: m_startLoc (string)
-    // PropertyField: m_unique (int)
-    // PropertyField: m_uniqueBusyMsg (unknown)
-    // PropertyField: m_uniqueName (unknown)
+    // Hashes are StringHash.HashPropertyName(name, type), in the order the client's zone triggers write them.
+    [PropertyField(0x9BA8BF49, 134217735)] public ByteString m_cinematicName { get; set; }
+    [PropertyField(0x444373FA, 31)] public ZoneRouter m_router { get; set; } = new();
+    [PropertyField(0x1D70805C, 31)] public bool m_blocking { get; set; }
+    [PropertyField(0x3AAF6E2F, 31)] public bool m_startAtActor { get; set; }
+    [PropertyField(0x61437E16, 31)] public bool m_startAtTargetActor { get; set; }
+    [PropertyField(0x78B7B1EE, 31)] public Vector3 m_startLoc { get; set; }
+    [PropertyField(0x3C1B4C58, 31)] public bool m_endAtActor { get; set; }
+    [PropertyField(0x5BB196FF, 31)] public bool m_endAtTargetActor { get; set; }
+    [PropertyField(0x7B00E397, 31)] public Vector3 m_endLoc { get; set; }
+    // Name unknown: 0x197BBD69 is a bool, false in every client trigger. The old field list named m_routing
+    // here, but m_routing does not hash to it as any type.
+    [PropertyField(0x197BBD69, 31)] public bool m_unknown_bool_1 { get; set; }
+    [PropertyField(0x4FA58BBA, 31)] public int m_objectTemplateID { get; set; }
+    [PropertyField(0x3DAC4C0A, 31)] public bool m_unique { get; set; }
+    [PropertyField(0x66ECE9B3, 31)] public ByteString m_uniqueName { get; set; }
+    [PropertyField(0xA4092DFC, 31)] public ByteString m_uniqueBusyMsg { get; set; }
 
 }
 
