@@ -20,7 +20,8 @@ modification, are permitted provided that the following conditions are met:
 
 using Cocona;
 using Imcodec.BCD;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Imcodec.Cli;
 
@@ -76,12 +77,12 @@ public sealed class BcdCommands {
             };
 
             // Serialize to JSON with nice formatting
-            var jsonSettings = new JsonSerializerSettings {
-                Formatting = Formatting.Indented,
-                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            var jsonOptions = new JsonSerializerOptions {
+                WriteIndented = true,
+                Converters = { new JsonStringEnumConverter() }
             };
+            var json = JsonSerializer.Serialize(bcdInfo, jsonOptions);
 
-            var json = JsonConvert.SerializeObject(bcdInfo, jsonSettings);
             File.WriteAllText(outputPath, json);
 
             Console.WriteLine($"Successfully converted '{Path.GetFileName(inputPath)}' to JSON: '{outputPath}'");
@@ -111,47 +112,38 @@ public sealed class BcdCommands {
         // Validate input file exists
         if (!File.Exists(inputPath)) {
             Console.WriteLine($"The specified JSON file '{inputPath}' does not exist.");
-
             return;
         }
-
         try {
-            // Read and parse JSON
-            var json = File.ReadAllText(inputPath);
-            var jsonSettings = new JsonSerializerSettings {
-                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            var jsonOptions = new JsonSerializerOptions {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
             };
-
-            // Try to deserialize as our BCD info wrapper first
-            try {
-                var bcdInfo = JsonConvert.DeserializeObject<dynamic>(json, jsonSettings);
-                var bcd = new Bcd();
-
-                // Extract collisions from the wrapper object
-                if (bcdInfo?._collisions != null) {
-                    var collisionsJson = JsonConvert.SerializeObject(bcdInfo._collisions);
-                    bcd.Collisions = JsonConvert.DeserializeObject<List<Collision>>(collisionsJson, jsonSettings) ?? new List<Collision>();
+            var bcd = new Bcd();
+            // Parse JSON using JsonDocument for fast, zero-allocation inspection
+            using (var stream = File.OpenRead(inputPath))
+            using (var doc = JsonDocument.Parse(stream)) {
+                var root = doc.RootElement;
+                // Extract collisions from the wrapper object (_collisions) if present
+                if (root.TryGetProperty("_collisions", out var collisionsEl)) {
+                    bcd.Collisions = collisionsEl.Deserialize<List<Collision>>(jsonOptions) ?? [];
                 }
                 else {
-                    // Fallback: try to deserialize as direct BCD object
-                    bcd = JsonConvert.DeserializeObject<Bcd>(json, jsonSettings) ?? new Bcd();
+                    // Fallback: try to deserialize root as direct BCD object
+                    bcd = root.Deserialize<Bcd>(jsonOptions) ?? new Bcd();
                 }
-
-                if (verbose) {
-                    Console.WriteLine($"Loaded {bcd.Collisions.Count} collision objects from JSON");
-                }
-
-                // Determine output path
-                outputPath = GetOutputFilePath(inputPath, outputPath, ".bcd");
-
-                // Write BCD file
-                bcd.WriteToFile(outputPath);
-
-                Console.WriteLine($"Successfully created BCD file '{outputPath}' from '{Path.GetFileName(inputPath)}'");
             }
-            catch (JsonException ex) {
-                Console.WriteLine($"Invalid JSON format: {ex.Message}");
+            if (verbose) {
+                Console.WriteLine($"Loaded {bcd.Collisions.Count} collision objects from JSON");
             }
+            // Determine output path
+            outputPath = GetOutputFilePath(inputPath, outputPath, ".bcd");
+            // Write BCD file
+            bcd.WriteToFile(outputPath);
+            Console.WriteLine($"Successfully created BCD file '{outputPath}' from '{Path.GetFileName(inputPath)}'");
+        }
+        catch (JsonException ex) {
+            Console.WriteLine($"Invalid JSON format: {ex.Message}");
         }
         catch (Exception ex) {
             Console.WriteLine($"Failed to create BCD file: {ex.Message}");

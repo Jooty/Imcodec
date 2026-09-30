@@ -18,9 +18,10 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Imcodec.IO;
 
@@ -62,17 +63,9 @@ public readonly struct WideByteString {
 
 }
 
-public class WideByteStringJsonConverter : JsonConverter<WideByteString> {
-
-    public override WideByteString ReadJson(JsonReader reader, Type objectType, WideByteString existingValue, bool hasExistingValue, JsonSerializer serializer) {
-        if (reader.Value is null) {
-            return new WideByteString();
-        }
-
-        return new WideByteString(reader.Value?.ToString() ?? string.Empty);
-    }
-
-    public override void WriteJson(JsonWriter writer, WideByteString value, JsonSerializer serializer) 
-        => writer.WriteValue(value.ToString());
-
+public sealed class WideByteStringJsonConverter : JsonConverter<WideByteString> {
+    public override WideByteString Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => new(reader.GetString() ?? string.Empty);
+    public override void Write(Utf8JsonWriter writer, WideByteString value, JsonSerializerOptions options)
+        => writer.WriteStringValue(value.ToString() ?? string.Empty);
 }

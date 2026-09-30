@@ -18,7 +18,8 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Imcodec.ObjectProperty.Bit;
 
@@ -50,20 +51,9 @@ public struct Bui7(byte value) : IConvertible {
 
 }
 
-public class SevenBitByteConverter : JsonConverter {
-
-    public override bool CanConvert(Type objectType)
-      => objectType == typeof(Bui7);
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
-        if (value is Bui7 sevenBitByte) {
-            writer.WriteValue(sevenBitByte.Value);
-        }
-    }
-
-    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-      => reader.Value != null && byte.TryParse(reader.Value.ToString(), out var byteValue)
-         ? new Bui7(byteValue)
-         : null;
-
+public sealed class SevenBitByteConverter : JsonConverter<Bui7> {
+    public override Bui7 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => new((byte) reader.GetUInt32());
+    public override void Write(Utf8JsonWriter writer, Bui7 value, JsonSerializerOptions options)
+        => writer.WriteNumberValue(value.Value);
 }
