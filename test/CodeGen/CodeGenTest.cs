@@ -24,7 +24,7 @@ namespace Imcodec.Test.CodeGen;
 
 public class CodeGenTest {
 
-    private const string JSON_DUMP_PATH = "CodeGen/Inputs/r756936_WizardDev.json";
+    private const string JSON_DUMP_PATH = "CodeGen/Inputs/r806919_Wizard_1_610.json";
 
     [Fact]
     public void GenerateFromJsonManifestTest() {
