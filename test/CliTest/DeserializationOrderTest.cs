@@ -20,7 +20,8 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.Cli;
 using Imcodec.ObjectProperty.TypeCache;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Imcodec.Test.CliTest;
 
@@ -33,10 +34,14 @@ public sealed class DeserializationOrderTest {
             m_description = "Test Description"
         };
 
-        var settings = new JsonSerializerSettings {
-            ContractResolver = new BaseFirstContractResolver()
+        var resolver = new DefaultJsonTypeInfoResolver();
+        resolver.Modifiers.Add(BaseFirstTypeResolver.OrderProperties);
+
+        var options = new JsonSerializerOptions {
+            TypeInfoResolver = resolver,
+            WriteIndented = true
         };
-        var json = JsonConvert.SerializeObject(spellTemplate, Formatting.Indented, settings);
+        var json = JsonSerializer.Serialize(spellTemplate, options);
 
         // m_behaviors is declared on CoreTemplate, the base class of SpellTemplate.
         var firstPropertyStart = json.IndexOf('{') + 1;

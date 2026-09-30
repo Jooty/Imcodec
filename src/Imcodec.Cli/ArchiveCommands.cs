@@ -21,9 +21,7 @@ modification, are permitted provided that the following conditions are met:
 using System;
 using System.Collections.Concurrent;
 using Cocona;
-using Imcodec.ObjectProperty;
 using Imcodec.Wad;
-using Newtonsoft.Json;
 
 namespace Imcodec.Cli;
 

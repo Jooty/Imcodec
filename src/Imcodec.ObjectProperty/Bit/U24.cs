@@ -18,7 +18,8 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Imcodec.ObjectProperty.Bit;
 
@@ -53,21 +54,9 @@ public struct U24 : IConvertible {
     public readonly object ToType(Type conversionType, IFormatProvider? provider) => Convert.ChangeType(Value, conversionType);
 
 }
-
-public class ULongWordConverter : JsonConverter {
-
-    public override bool CanConvert(Type objectType)
-      => objectType == typeof(U24);
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
-        if (value is U24 ulongWord) {
-            writer.WriteValue(ulongWord.Value);
-        }
-    }
-
-    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-      => reader.Value != null && uint.TryParse(reader.Value.ToString(), out var uintValue)
-         ? new U24(uintValue)
-         : null;
-
+public sealed class ULongWordConverter : JsonConverter<U24> {
+    public override U24 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => new(reader.GetUInt32());
+    public override void Write(Utf8JsonWriter writer, U24 value, JsonSerializerOptions options)
+        => writer.WriteNumberValue(value.Value);
 }

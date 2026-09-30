@@ -20,7 +20,8 @@ modification, are permitted provided that the following conditions are met:
 
 using Cocona;
 using Imcodec.POI;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Imcodec.Cli;
 
@@ -77,12 +78,12 @@ public sealed class PoiCommands {
             };
 
             // Serialize to JSON with nice formatting
-            var jsonSettings = new JsonSerializerSettings {
-                Formatting = Formatting.Indented,
-                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            var jsonOptions = new JsonSerializerOptions {
+                WriteIndented = true,
+                Converters = { new JsonStringEnumConverter() }
             };
+            var json = JsonSerializer.Serialize(poiInfo, jsonOptions);
 
-            var json = JsonConvert.SerializeObject(poiInfo, jsonSettings);
             File.WriteAllText(outputPath, json);
 
             Console.WriteLine($"Successfully converted '{Path.GetFileName(inputPath)}' to JSON: '{outputPath}'");

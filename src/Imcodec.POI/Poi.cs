@@ -18,7 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using System.Text;
 
 namespace Imcodec.POI;
@@ -33,37 +33,37 @@ public class Poi {
     /// <summary>
     /// A list of all zone names described by this file.
     /// </summary>
-    [JsonProperty("zone_names")]
+    [JsonPropertyName("zone_names")]
     public List<string> ZoneNames { get; set; } = [];
 
     /// <summary>
     /// A mapping of goal IDs to the respective <see cref="Point"/>s.
     /// </summary>
-    [JsonProperty("goals")]
+    [JsonPropertyName("goals")]
     public Dictionary<ulong, Point> Goals { get; set; } = [];
 
     /// <summary>
     /// A mapping of zone IDs to lists of interactable template IDs.
     /// </summary>
-    [JsonProperty("interactive_goals")]
+    [JsonPropertyName("interactive_goals")]
     public Dictionary<uint, List<ulong>> InteractiveGoals { get; set; } = [];
 
     /// <summary>
     /// Teleporter entries between zones in this file.
     /// </summary>
-    [JsonProperty("teleporters")]
+    [JsonPropertyName("teleporters")]
     public Dictionary<uint, List<Teleporter>> Teleporters { get; set; } = [];
 
     /// <summary>
     /// A mapping of goal IDs to goal adjectives.
     /// </summary>
-    [JsonProperty("goal_adjectives")]
+    [JsonPropertyName("goal_adjectives")]
     public Dictionary<ulong, List<uint>> GoalAdjectives { get; set; } = [];
 
     /// <summary>
     /// A list of zone mobs for each zone ID in the file.
     /// </summary>
-    [JsonProperty("zone_mobs")]
+    [JsonPropertyName("zone_mobs")]
     public Dictionary<uint, List<string>> ZoneMobs { get; set; } = [];
 
     /// <summary>

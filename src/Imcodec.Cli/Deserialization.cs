@@ -23,7 +23,9 @@ using Imcodec.ObjectProperty;
 using Imcodec.CoreObject;
 using Imcodec.BCD;
 using Imcodec.POI;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Imcodec.Cli;
 
@@ -78,13 +80,16 @@ public static class Deserialization {
     // Shared instance so Newtonsoft's per-resolver contract cache survives
     // across serialization calls. A fresh resolver per call re-reflects every
     // type in the object graph on every file, which is catastrophic in bulk.
-    private static readonly BaseFirstContractResolver s_contractResolver = new();
-
-    private static JsonSerializerSettings CreateJsonSerializerSettings() => new() {
-        ContractResolver = s_contractResolver,
-        Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
-        Formatting = Formatting.Indented
-    };
+    private static readonly JsonSerializerOptions s_jsonOptions = CreateJsonSerializerOptions();
+    private static JsonSerializerOptions CreateJsonSerializerOptions() {
+        var resolver = new DefaultJsonTypeInfoResolver();
+        resolver.Modifiers.Add(BaseFirstTypeResolver.OrderProperties);
+        return new JsonSerializerOptions {
+            TypeInfoResolver = resolver,
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+    }
 
     private static readonly List<uint> s_commonPropertyFlags = [
         1, 6, 7, 16, 19, 23, 24, 25, 27, 30, 31, 39,
@@ -134,9 +139,7 @@ public static class Deserialization {
                     _object = propertyClass
                 };
 
-                var jsonSerializerSettings = CreateJsonSerializerSettings();
-                var jsonObj = JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
-
+                var jsonObj = JsonSerializer.Serialize(deserializedObjectInfo, s_jsonOptions);
                 return jsonObj;
             }
             else {
@@ -172,8 +175,7 @@ public static class Deserialization {
                 _bcdData = bcd
             };
 
-            var jsonSerializerSettings = CreateJsonSerializerSettings();
-            var jsonObj = JsonConvert.SerializeObject(deserializedBcdInfo, jsonSerializerSettings);
+            var jsonObj = JsonSerializer.Serialize(deserializedBcdInfo, s_jsonOptions);
 
             return jsonObj;
         }
@@ -205,9 +207,7 @@ public static class Deserialization {
                 _poiData = poi
             };
 
-            var jsonSerializerSettings = CreateJsonSerializerSettings();
-            var jsonObj = JsonConvert.SerializeObject(deserializedPoiInfo, jsonSerializerSettings);
-
+            var jsonObj = JsonSerializer.Serialize(deserializedPoiInfo, s_jsonOptions);
             return jsonObj;
         }
         catch (Exception ex) {
@@ -292,9 +292,7 @@ public static class Deserialization {
                 _object = propertyClass
             };
 
-            var jsonSerializerSettings = CreateJsonSerializerSettings();
-
-            return JsonConvert.SerializeObject(deserializedObjectInfo, Formatting.Indented, jsonSerializerSettings);
+            return JsonSerializer.Serialize(deserializedObjectInfo, s_jsonOptions);
         }
     }
 

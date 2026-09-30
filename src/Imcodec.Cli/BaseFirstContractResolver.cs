@@ -18,27 +18,21 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Imcodec.Cli;
 
-/// <summary>
-/// Orders serialized properties so that properties declared in base classes
-/// appear before properties declared in derived classes. Property classes
-/// declare their inherited properties first in the wire format, so this keeps
-/// the JSON dump in the same order as the binary data.
-/// </summary>
-internal sealed class BaseFirstContractResolver : DefaultContractResolver {
+internal static class BaseFirstTypeResolver {
 
-    protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization) {
-        var properties = base.CreateProperties(type, memberSerialization);
-
-        // OrderBy is stable, so properties declared in the same type keep
-        // their declaration order.
-        return properties
-            .OrderBy(property => InheritanceDepth(property.DeclaringType))
-            .ToList();
+    public static void OrderProperties(JsonTypeInfo typeInfo) {
+        if (typeInfo.Kind != JsonTypeInfoKind.Object) {
+            return;
+        }
+        for (int i = 0; i < typeInfo.Properties.Count; i++) {
+            var prop = typeInfo.Properties[i];
+            var depth = InheritanceDepth(prop.DeclaringType);
+            prop.Order = depth * 1000 + i;
+        }
     }
 
     private static int InheritanceDepth(Type? type) {

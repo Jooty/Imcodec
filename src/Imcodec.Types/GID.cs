@@ -19,7 +19,8 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Runtime.InteropServices;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Imcodec.Types;
 
@@ -68,18 +69,14 @@ public struct GID(ulong full) : IConvertible {
 
 }
 
-public class GIDConverter : JsonConverter<GID> {
-
-    public override GID ReadJson(JsonReader reader, Type objectType, GID existingValue, bool hasExistingValue, JsonSerializer serializer) {
-        if (reader.TokenType == JsonToken.Integer) {
-            var value = Convert.ToUInt64(reader.Value);
-            return new GID(value);
-        }
-
-        throw new JsonSerializationException($"Unexpected token type {reader.TokenType} when parsing GID");
-    }
-
-    public override void WriteJson(JsonWriter writer, GID value, JsonSerializer serializer) 
-        => writer.WriteValue(value.Full);
-
+public sealed class GIDConverter : JsonConverter<GID> {
+    public override GID Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        reader.TokenType switch {
+            JsonTokenType.Number when reader.TryGetUInt64(out var val) => new GID(val),
+            JsonTokenType.String when ulong.TryParse(reader.GetString(), out var val) => new GID(val),
+            JsonTokenType.Null => new GID(0),
+            _ => throw new JsonException($"Cannot convert {reader.TokenType} to GID.")
+        };
+    public override void Write(Utf8JsonWriter writer, GID value, JsonSerializerOptions options)
+        => writer.WriteNumberValue(value.Full);
 }
