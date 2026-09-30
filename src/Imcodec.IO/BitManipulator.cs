@@ -52,7 +52,7 @@ public abstract class BitManipulator : IDisposable {
     /// Returns where the current bit position of the read stream is.
     /// </summary>
     /// <returns>The bit position of the read stream.</returns>
-    public int BitPos() {
+    public virtual int BitPos() {
         var offset = (int) Stream.Position - (BitPosition != 0 ? 1 : 0);
 
         return BitPosition + 8 * offset;
@@ -139,7 +139,7 @@ public abstract class BitManipulator : IDisposable {
     /// Seeks the bit to a certain position on the internal stream.
     /// </summary>
     /// <param name="bit">The bit position to seek to.</param>
-    public void SeekBit(int bit) {
+    public virtual void SeekBit(int bit) {
         Stream.Position = bit >> 3;
         ResetBitPos();
 

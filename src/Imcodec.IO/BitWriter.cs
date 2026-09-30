@@ -340,6 +340,33 @@ public class BitWriter : BitManipulator {
         }
     }
 
+    /// <summary>The write position in bits: flushed bytes plus the bits still pending in the current byte.</summary>
+    public override int BitPos()
+        => checked((int) (Stream.Position * 8 + (base.BitPosition == 8 ? 0 : 8 - base.BitPosition)));
+
+    /// <summary>Moves the write position to a bit; the bits of the partly covered byte stay pending so writing can continue.</summary>
+    public override void SeekBit(int bit) {
+        FlushBits();
+        Stream.Position = bit >> 3;
+        var rem = bit & 7;
+        if (rem == 0) {
+            base.BitPosition = 8;
+            base.BitValue = 0;
+            return;
+        }
+
+        int existing = 0;
+        if (Stream.Position < Stream.Length) {
+            existing = Stream.ReadByte();
+            Stream.Position = bit >> 3;
+        }
+
+        // The first written bit sits highest in BitValue (flush reverses the byte).
+        var kept = (byte) (Reverse((byte) existing) & (0xFF << (8 - rem)));
+        base.BitValue = kept;
+        base.BitPosition = (byte) (8 - rem);
+    }
+
     public override byte[] GetData() {
         FlushBits();
 
