@@ -18,7 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using System.Text;
 
 namespace Imcodec.POI;
@@ -31,13 +31,13 @@ public class Teleporter {
     /// <summary>
     /// The destination zone for the teleport.
     /// </summary>
-    [JsonProperty("destination")]
+    [JsonPropertyName("destination")]
     public string Destination { get; set; } = string.Empty;
 
     /// <summary>
     /// The exact teleport position in the zone (X, Y, Z).
     /// </summary>
-    [JsonProperty("position")]
+    [JsonPropertyName("position")]
     public float[] Position { get; set; } = new float[3];
 
     internal static Teleporter ReadFrom(BinaryReader reader) {

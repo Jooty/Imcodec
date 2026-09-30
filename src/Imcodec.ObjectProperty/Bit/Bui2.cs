@@ -18,8 +18,8 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
-
+using System.Text.Json;
+using System.Text.Json.Serialization;
 namespace Imcodec.ObjectProperty.Bit;
 
 [JsonConverter(typeof(TwoBitByteConverter))]
@@ -50,20 +50,9 @@ public struct Bui2(byte value) : IConvertible {
 
 }
 
-public class TwoBitByteConverter : JsonConverter {
-
-    public override bool CanConvert(Type objectType)
-      => objectType == typeof(Bui2);
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
-        if (value is Bui2 twoBitByte) {
-            writer.WriteValue(twoBitByte.Value);
-        }
-    }
-
-    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-      => reader.Value != null && byte.TryParse(reader.Value.ToString(), out var byteValue)
-         ? new Bui2(byteValue)
-         : null;
-
+public sealed class TwoBitByteConverter : JsonConverter<Bui2> {
+    public override Bui2 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => new((byte) reader.GetUInt32());
+    public override void Write(Utf8JsonWriter writer, Bui2 value, JsonSerializerOptions options)
+        => writer.WriteNumberValue(value.Value);
 }

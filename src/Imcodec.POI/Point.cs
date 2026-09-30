@@ -18,8 +18,7 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using Newtonsoft.Json;
-
+using System.Text.Json.Serialization;
 namespace Imcodec.POI;
 
 /// <summary>
@@ -31,37 +30,37 @@ public class Point {
     /// <summary>
     /// Whether the quest helper references this point.
     /// </summary>
-    [JsonProperty("no_quest_helper")]
+    [JsonPropertyName("no_quest_helper")]
     public bool NoQuestHelper { get; set; }
 
     /// <summary>
     /// The ID of the zone this point is part of.
     /// </summary>
-    [JsonProperty("zone_id")]
+    [JsonPropertyName("zone_id")]
     public ushort ZoneId { get; set; }
 
     /// <summary>
     /// The template ID associated with this point.
     /// </summary>
-    [JsonProperty("template_id")]
+    [JsonPropertyName("template_id")]
     public ulong TemplateId { get; set; }
 
     /// <summary>
     /// The location of this point (X, Y, Z).
     /// </summary>
-    [JsonProperty("location")]
+    [JsonPropertyName("location")]
     public float[] Location { get; set; } = new float[3];
 
     /// <summary>
     /// Whether this point is an interactable NPC.
     /// </summary>
-    [JsonProperty("interactable")]
+    [JsonPropertyName("interactable")]
     public bool Interactable { get; set; }
 
     /// <summary>
     /// Whether this point is a collectable item.
     /// </summary>
-    [JsonProperty("collectable")]
+    [JsonPropertyName("collectable")]
     public bool Collectable { get; set; }
 
     internal static Point ReadFrom(BinaryReader reader) {
