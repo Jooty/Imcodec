@@ -280,11 +280,7 @@ internal static class XmlMessageReader {
             }
         }
 
-        // Special case for GlobalID
-        if (element.Name == "GlobalID") {
-            return "GID";
-        }
-
-        return string.Empty;
+        // The client's DML record parser gives a field without a TYPE attribute the STR type.
+        return "STR";
     }
 }
