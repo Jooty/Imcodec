@@ -37,7 +37,7 @@ internal class DeserializedObjectInfo {
     public uint _hash { get; set; }
     public required string _deserializedOn { get; set; }
     public required string _imcodecVersion { get; set; }
-    public required PropertyClass _object { get; set; }
+    public required object _object { get; set; }
 
 }
 
@@ -50,7 +50,7 @@ internal class DeserializedBlobInfo {
     public required string _serializerType { get; set; }
     public required bool _verbose { get; set; }
     public required string _objectType { get; set; }
-    public required PropertyClass _object { get; set; }
+    public required object _object { get; set; }
 
 }
 
