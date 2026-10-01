@@ -40,14 +40,33 @@ public sealed class CoreObjectSerializer(
     bool UseServerTypeRegistry = true
 ) : ObjectSerializer(versionable, behaviors, typeRegistry, UseServerTypeRegistry) {
 
+    // It seems like non-item objects have block == type
+    private static readonly Dictionary<(byte, byte), int> s_blockAndTypeToHashMap = new() {
+        { (2, 2), 350837933 },      // ClientObject
+        { (104, 2), 766500222 },    // WizClientObject
+        { (106, 2), 1167581154 },   // WizClientPet
+        { (108, 2), 2109552587 },   // WizClientMount
+        { (115, 9), 1653772158 },   // WizClientObjectItem
+        { (131, 131), 958775582 },  // ClientRecipe
+        { (132, 9), 398229815 },    // ClientReagentItem
+        { (133, 133), 813337157 },  // CraftingSlot
+        { (148, 9), 1748894102 },   // ClientPetSnackItem
+
+        // 186 and 189 both resolve to WizClientObjectItem:
+        { (186, 9), 1653772158 },   // WizClientObjectItem
+        { (189, 9), 1653772158 },   // WizClientObjectItem
+    };
+
     private static readonly Dictionary<int, (byte, byte)> s_blockAndTypeMap = new() {
       { 350837933, (2, 2) }, // ClientObject
       { 766500222, (104, 2) }, // WizClientObject
-      { 1653772158, (115, 9) }, // WizClientObjectItem
       { 1167581154, (106, 2) }, // WizClientPet
       { 2109552587, (108, 2) }, // WizClientMount
+      { 1653772158, (115, 9) }, // WizClientObjectItem
+      { 958775582, (131, 131) }, // ClientRecipe
       { 398229815, (132, 9) }, // ClientReagentItem
-      { 958775582, (131, 131) } // ClientRecipe
+      { 813337157, (133, 133) }, // CraftingSlot
+      { 1748894102, (148, 9 ) }, // ClientPetSnackItem
    };
 
     public override PreloadResult PreloadObject(BitReader inputBuffer, out PropertyClass? propertyClass) {
@@ -67,6 +86,12 @@ public sealed class CoreObjectSerializer(
         // We can dispatch the type based on the template ID.
         var hash = GetHashFromBlockAndType(block, type);
         propertyClass = DispatchType(hash);
+
+        // The clients SerializerCoreObjects::PreLoadObject stores that templateId directly into the object
+        // Without that, any deserialized CoreObject would have its m_templateID default to 0 instead of the template ID read.
+        if (propertyClass is ObjectProperty.TypeCache.CoreObject co) {
+            co.m_templateID = templateIdOrHash;
+        }
 
         return propertyClass == null
             ? PreloadResult.NotFound
@@ -107,14 +132,7 @@ public sealed class CoreObjectSerializer(
                : (0, 0))
             );
 
-    private static uint GetHashFromBlockAndType(byte block, byte type) {
-        foreach (var (key, value) in s_blockAndTypeMap) {
-            if (value == (block, type)) {
-                return (uint) key;
-            }
-        }
-
-        return 0;
-    }
+    private static uint GetHashFromBlockAndType(byte block, byte type)
+        => s_blockAndTypeToHashMap.TryGetValue((block, type), out var hash) ? (uint) hash : 0;
 
 }
