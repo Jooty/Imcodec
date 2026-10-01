@@ -1051,8 +1051,8 @@ public partial record InteractStateOptionTemplate : InteractOptionTemplate {
     public override uint GetHash() => 0x6BEDFAC0;
 
     // The generator does not flatten a server base type into a derived one, so the base fields repeat here.
-    [PropertyField(0x6A94A9CF, 31)] public new string m_questEvent { get; set; } = "";
-    [PropertyField(0x5AB57C2D, 31)] public new List<string> m_goalTags { get; set; } = [];
+    [PropertyField(0x6A94A9CF, 31)] public new string m_questEvent { get => base.m_questEvent; set => base.m_questEvent = value; }
+    [PropertyField(0x5AB57C2D, 31)] public new List<string> m_goalTags { get => base.m_goalTags; set => base.m_goalTags = value; }
     [PropertyField(0x92DEF557, 31)] public RequirementList m_requirements { get; set; } = new();
     // Results run when a player uses the option (a ResPostEvent raising "LeverUsed", for example).
     [PropertyField(0xCA3EBE94, 31)] public ResultList m_results { get; set; } = new();
