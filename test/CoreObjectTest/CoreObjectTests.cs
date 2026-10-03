@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.CoreObject;
+using Imcodec.ObjectProperty;
 using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.Test.CoreObjectTest;
@@ -44,7 +45,7 @@ public class CoreObjectSerializerTest {
         }
 
         // Assert
-        Assert.Equal(CoreObjectBlob, string.Join(" ", ((byte[]) bytes).Select(static b => b.ToString("X2"))));
+        Assert.Equal(CoreObjectBlob, string.Join(" ", Compression.CompressWithLength((byte[]) bytes).Select(static b => b.ToString("X2"))));
     }
 
 }

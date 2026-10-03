@@ -76,35 +76,17 @@ public class LootTableTest {
         Assert.Equal(LootTableBlob, hexBlob);
     }
 
-    [Fact]
-    public void TrySerializeWithCompression() {
-        // Serialize a loot info list with compression and see if it matches the expected blob.
-        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
-        var lootTable = new LootInfoList {
-            m_goldInfo = new GoldLootInfo {
-                m_goldAmount = 2,
-                m_lootType = LOOT_TYPE.LOOT_TYPE_GOLD
-            },
-            m_loot = [
-                new MagicXPLootInfo { m_lootType = LOOT_TYPE.LOOT_TYPE_MAGIC_XP, m_experience = 5 }
-            ]
-        };
+    private static LootInfoList CreateLootTable() => new() {
+        m_goldInfo = new GoldLootInfo {
+            m_goldAmount = 2,
+            m_lootType = LOOT_TYPE.LOOT_TYPE_GOLD
+        },
+        m_loot = [
+            new MagicXPLootInfo { m_lootType = LOOT_TYPE.LOOT_TYPE_MAGIC_XP, m_experience = 5 }
+        ]
+    };
 
-        var serializeSuccess = serializer.Serialize(lootTable, (PropertyFlags) 31, out var byteBlob);
-        Assert.True(serializeSuccess);
-
-        var hexBlob = Convert.ToHexString(byteBlob);
-        Assert.Equal(LootTableBlobCompressed, hexBlob);
-    }
-
-    [Fact]
-    public void TryDeserializeWithCompression() {
-        // Deserialize a compressed loot info list.
-        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
-        var byteBlob = Convert.FromHexString(LootTableBlobCompressed);
-        var deserializeSuccess = serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable);
-
-        Assert.True(deserializeSuccess);
+    private static void AssertLootTable(LootInfoList? lootTable) {
         Assert.NotNull(lootTable);
         Assert.NotNull(lootTable.m_goldInfo);
         Assert.True(lootTable.m_goldInfo.m_goldAmount == 2);
@@ -114,6 +96,69 @@ public class LootTableTest {
         Assert.True(lootTable.m_loot.Count == 1);
         Assert.True(lootTable.m_loot[0] is MagicXPLootInfo);
         Assert.True(lootTable.m_loot[0].m_lootType == LOOT_TYPE.LOOT_TYPE_MAGIC_XP);
+    }
+
+    [Fact]
+    public void TrySerializeWithManualCompression() {
+        // The manual framing is a length prefix and zlib stream around the plain bytes.
+        var serializer = new ObjectSerializer(false, SerializerFlags.None);
+
+        Assert.True(serializer.Serialize(CreateLootTable(), (PropertyFlags) 31, out var byteBlob));
+
+        var compressed = Compression.CompressWithLength((byte[]) byteBlob);
+        Assert.Equal(LootTableBlobCompressed, Convert.ToHexString(compressed));
+    }
+
+    [Fact]
+    public void TryDeserializeWithManualCompression() {
+        var serializer = new ObjectSerializer(false, SerializerFlags.None);
+        var plain = Compression.DecompressWithLength(Convert.FromHexString(LootTableBlobCompressed));
+
+        Assert.Equal(LootTableBlob, Convert.ToHexString(plain));
+        Assert.True(serializer.Deserialize<LootInfoList>(plain, (PropertyFlags) 31, out var lootTable));
+        AssertLootTable(lootTable);
+    }
+
+    [Fact]
+    public void TrySerializeWithCompressFlag() {
+        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
+
+        Assert.True(serializer.Serialize(CreateLootTable(), (PropertyFlags) 31, out var byteBlob));
+        Assert.Equal("01" + LootTableBlobCompressed, Convert.ToHexString(byteBlob));
+
+        var reader = new ObjectSerializer(false, SerializerFlags.Compress);
+        Assert.True(reader.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable));
+        AssertLootTable(lootTable);
+    }
+
+    [Fact]
+    public void TryDeserializeCompressFlagWithMarkerClear() {
+        var serializer = new ObjectSerializer(false, SerializerFlags.Compress);
+        var byteBlob = Convert.FromHexString("00" + LootTableBlob);
+
+        Assert.True(serializer.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable));
+        AssertLootTable(lootTable);
+    }
+
+    [Fact]
+    public void TrySerializeFlagsWithCompressFlag() {
+        var serializer = new ObjectSerializer(false, SerializerFlags.SerializeFlags | SerializerFlags.Compress);
+
+        Assert.True(serializer.Serialize(CreateLootTable(), (PropertyFlags) 31, out var byteBlob));
+        Assert.Equal("0900000001" + LootTableBlobCompressed, Convert.ToHexString(byteBlob));
+
+        var reader = new ObjectSerializer(false, SerializerFlags.SerializeFlags);
+        Assert.True(reader.Deserialize<LootInfoList>(byteBlob, (PropertyFlags) 31, out var lootTable));
+        AssertLootTable(lootTable);
+    }
+
+    [Fact]
+    public void TryDecompressWithLengthRawFlag() {
+        var raw = Convert.FromHexString(LootTableBlob);
+        var framed = BitConverter.GetBytes((uint) raw.Length | 0x80000000u).Concat(raw).ToArray();
+
+        Assert.Equal(raw, Compression.DecompressWithLength(framed));
+        Assert.Throws<ArgumentException>(() => Compression.DecompressWithLength([1, 0, 0]));
     }
 
     [Fact]
