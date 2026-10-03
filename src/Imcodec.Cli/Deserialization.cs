@@ -253,15 +253,24 @@ public static class Deserialization {
         var results = new ConcurrentBag<(int ConfigIndex, int FlagIndex, string Json)>();
         var configs = serializerConfigs.Select((config, index) => (config, index)).ToList();
 
+        byte[]? inflated = null;
+        try {
+            inflated = Compression.DecompressWithLength(buffer);
+        }
+        catch {
+            // Not in the length-prefixed framing.
+        }
+
         Parallel.ForEach(configs, entry => {
             var (config, configIndex) = entry;
             var (name, factory, isVerbose) = config;
+            var input = inflated is not null && !name.EndsWith("Compressed") ? inflated : buffer;
 
             for (var flagIndex = 0; flagIndex < s_commonPropertyFlags.Count; flagIndex++) {
                 var flag = s_commonPropertyFlags[flagIndex];
                 try {
                     var serializer = factory();
-                    if (serializer.Deserialize<PropertyClass>(buffer, flag, out var propertyClass)) {
+                    if (serializer.Deserialize<PropertyClass>(input, flag, out var propertyClass)) {
                         results.Add((configIndex, flagIndex, CreateBlobJson(hexBlob, name, isVerbose, flag, propertyClass!)));
 
                         break;

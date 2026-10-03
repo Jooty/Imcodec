@@ -72,14 +72,14 @@ public class ObjectSerializerBenchmarks {
 
     [Benchmark]
     public void SerializeWithCompression() {
-        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress);
-        _ = compressedSerializer.Serialize(_lootTable, (PropertyFlags) 31, out var _);
+        _ = _serializer.Serialize(_lootTable, (PropertyFlags) 31, out var bytes);
+        _ = Compression.CompressWithLength((byte[]) bytes);
     }
 
     [Benchmark]
     public void DeserializeWithCompression() {
-        var compressedSerializer = new ObjectSerializer(false, SerializerFlags.Compress);
-        _ = compressedSerializer.Deserialize<LootInfoList>(_compressedData, (PropertyFlags) 31, out var _);
+        var plain = Compression.DecompressWithLength(_compressedData);
+        _ = _serializer.Deserialize<LootInfoList>(plain, (PropertyFlags) 31, out var _);
     }
 
 }

@@ -171,10 +171,15 @@ public partial class ObjectSerializer(bool Versionable = true,
             return false;
         }
 
-        // If the behaviors flag is set to use compression,
-        // compress the output buffer.
+        // The compress flag writes a marker bit, then the length-prefixed
+        // compressed buffer from the next byte boundary.
         if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
-            writer = Compress(writer);
+            var compressed = Compress(writer);
+            var markedWriter = new BitWriter();
+
+            markedWriter.WriteBit(true);
+            markedWriter.WriteBytes(compressed.GetData());
+            writer = markedWriter;
         }
 
         // If serializer flags are set to serialize, write the flags
@@ -183,9 +188,6 @@ public partial class ObjectSerializer(bool Versionable = true,
             var flagsWriter = new BitWriter();
 
             flagsWriter.WriteUInt32((uint) SerializerFlags);
-            if (((int) SerializerFlags & 8) != 0) {
-                flagsWriter.WriteBit(true);
-            }
 
             var flagsData = flagsWriter.GetData();
             var writerData = writer.GetData();
@@ -241,14 +243,11 @@ public partial class ObjectSerializer(bool Versionable = true,
         // If the flags request it, ensure that the serializer flags are read.
         if (SerializerFlags.HasFlag(SerializerFlags.SerializeFlags)) {
             SerializerFlags = (SerializerFlags) reader.ReadUInt32();
-
-            if (((int) SerializerFlags & 8) != 0) {
-                _ = reader.ReadBit();
-            }
         }
 
-        // If the behaviors flag is set to use compression, decompress the input buffer.
-        if (SerializerFlags.HasFlag(SerializerFlags.Compress)) {
+        // The compress flag is followed by a marker bit. When it is clear the
+        // object follows uncompressed from the next byte.
+        if (SerializerFlags.HasFlag(SerializerFlags.Compress) && reader.ReadBit()) {
             reader = Decompress(reader);
         }
 
@@ -322,20 +321,8 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// <param name="writer">The <see cref="BitWriter"/> containing the data
     /// to compress.</param>
     /// <returns>A <see cref="BitWriter"/> containing the compressed data.</returns>
-    protected virtual BitWriter Compress(BitWriter writer) {
-        var writerData = writer.GetData();
-        var uncompressedSize = writerData.Length;
-        var compressedData = Compression.Compress(writerData);
-
-        var deflatedBuffer = new byte[sizeof(int) + compressedData.Length];
-
-        var sizeSpan = new Span<byte>(deflatedBuffer, 0, sizeof(int));
-        BitConverter.TryWriteBytes(sizeSpan, uncompressedSize);
-
-        compressedData.CopyTo(new Span<byte>(deflatedBuffer, sizeof(int), compressedData.Length));
-
-        return new BitWriter(deflatedBuffer);
-    }
+    protected virtual BitWriter Compress(BitWriter writer)
+        => new(Compression.CompressWithLength(writer.GetData()));
 
     /// <summary>
     /// Decompresses the data using the specified <see cref="BitReader"/>.
@@ -344,14 +331,9 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// the compressed data.</param>
     /// <returns>A <see cref="BitReader"/> containing the decompressed data.</returns>
     protected virtual BitReader Decompress(BitReader inputBuffer) {
-        // Read the uncompressed length from the first 4 bytes of the input buffer.
-        // The rest of the buffer is the compressed data.
-        var uncompressedLength = inputBuffer.ReadInt32();
-        var decompressedData = Compression.Decompress(inputBuffer.GetRelativeData());
+        var length = inputBuffer.ReadInt32();
 
-        return decompressedData.Length != uncompressedLength
-            ? throw new Exception("Decompressed data length does not match the recorded length.")
-            : new BitReader(decompressedData);
+        return new BitReader(Compression.DecompressWithLength(length, inputBuffer.GetRelativeData()));
     }
 
     /// <summary>

@@ -64,4 +64,51 @@ public static class Compression {
         return resStream.ToArray();
     }
 
+    /// <summary>
+    /// Compresses the given bytes and prefixes them with the uncompressed length
+    /// as a little-endian 32-bit integer.
+    /// </summary>
+    /// <param name="bytes">The byte array to compress.</param>
+    /// <returns>The length prefix followed by the compressed bytes.</returns>
+    public static byte[] CompressWithLength(byte[] bytes) {
+        var compressed = Compress(bytes);
+        var result = new byte[sizeof(int) + compressed.Length];
+
+        BitConverter.TryWriteBytes(new Span<byte>(result, 0, sizeof(int)), bytes.Length);
+        compressed.CopyTo(result, sizeof(int));
+
+        return result;
+    }
+
+    /// <summary>
+    /// Reverses <see cref="CompressWithLength(byte[])"/>. When bit 31 of the
+    /// length is set, the remaining bytes are stored uncompressed and the
+    /// length is the lower 31 bits.
+    /// </summary>
+    /// <param name="bytes">The length prefix followed by the payload.</param>
+    /// <returns>The uncompressed bytes.</returns>
+    public static byte[] DecompressWithLength(byte[] bytes) {
+        if (bytes.Length < sizeof(int)) {
+            throw new ArgumentException("Input is too short to hold a length prefix.", nameof(bytes));
+        }
+
+        return DecompressWithLength(BitConverter.ToInt32(bytes, 0), bytes.AsSpan(sizeof(int)).ToArray());
+    }
+
+    /// <summary>
+    /// Decompresses a payload whose length prefix has already been read.
+    /// </summary>
+    /// <param name="length">The length prefix, including the raw flag in bit 31.</param>
+    /// <param name="payload">The bytes that follow the length prefix.</param>
+    /// <returns>The uncompressed bytes.</returns>
+    public static byte[] DecompressWithLength(int length, byte[] payload) {
+        var isRaw = (length & int.MinValue) != 0;
+        var expected = length & 0x7fffffff;
+        var result = isRaw ? payload : Decompress(payload);
+
+        return result.Length != expected
+            ? throw new InvalidDataException("Decompressed data length does not match the recorded length.")
+            : result;
+    }
+
 }
