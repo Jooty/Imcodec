@@ -56,8 +56,30 @@ public readonly struct ByteString : IEquatable<ByteString> {
     public static implicit operator ByteString(byte[] buffer)
         => new(buffer);
 
-    public override readonly string? ToString()
-        => _bytes is null ? null : Encoding.UTF8.GetString(_bytes);
+    public static ByteString Empty => default;
+
+    public readonly bool IsEmpty => _bytes is null || _bytes.Length == 0;
+
+    public override readonly string ToString()
+        => _bytes is null ? string.Empty : Encoding.UTF8.GetString(_bytes);
+
+    public static bool operator ==(ByteString left, ByteString right)
+        => left.Equals(right);
+
+    public static bool operator !=(ByteString left, ByteString right)
+        => !left.Equals(right);
+
+    public static bool operator ==(ByteString left, string right)
+        => left.Equals((ByteString)right);
+
+    public static bool operator !=(ByteString left, string right)
+        => !left.Equals((ByteString)right);
+
+    public static bool operator ==(string left, ByteString right)
+        => ((ByteString)left).Equals(right);
+
+    public static bool operator !=(string left, ByteString right)
+        => !((ByteString)left).Equals(right);
 
     public readonly bool Equals(ByteString other)
         => (_bytes ?? Array.Empty<byte>()).AsSpan().SequenceEqual(other._bytes ?? Array.Empty<byte>());

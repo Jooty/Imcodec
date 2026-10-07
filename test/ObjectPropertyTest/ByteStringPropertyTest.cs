@@ -66,4 +66,26 @@ public class ByteStringPropertyTest {
         Assert.Equal(default(ByteString).GetHashCode(), empty.GetHashCode());
     }
 
+    [Fact]
+    public void EmptyMembers() {
+        Assert.True(ByteString.Empty.IsEmpty);
+        Assert.True(default(ByteString).IsEmpty);
+        Assert.True(new ByteString(new byte[0]).IsEmpty);
+        Assert.False(((ByteString) "a").IsEmpty);
+        Assert.Equal(string.Empty, default(ByteString).ToString());
+    }
+
+    [Fact]
+    public void EqualityOperators() {
+        ByteString quest = "quest";
+
+        Assert.True(quest == (ByteString) "quest");
+        Assert.True(quest != (ByteString) "other");
+        Assert.True(quest == "quest");
+        Assert.True("quest" == quest);
+        Assert.True(quest != "other");
+        Assert.True("other" != quest);
+        Assert.True(default(ByteString) == "");
+    }
+
 }
