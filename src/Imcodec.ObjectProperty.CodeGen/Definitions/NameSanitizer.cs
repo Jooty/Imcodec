@@ -154,6 +154,12 @@ internal static class NameSanitizer {
             return isVector ? $"List<{type}>" : type;
         }
 
+        // Namespace-qualified names such as `std::string` are keyed with dots; match those before the
+        // sanitizer trims them down to the right-most accessor.
+        if (s_internalTypeTranslationDict.TryGetValue(cppType.Replace("::", "."), out type)) {
+            return isVector ? $"List<{type}>" : type;
+        }
+
         // We still didn't find it? Let's try to sanitize it.
         cppType = SanitizeIdentifier(cppType);
 
