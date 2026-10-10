@@ -175,17 +175,93 @@ public class MessageStreamDecoderTests {
     [InlineData(new byte[] { 0x0E, 0xF0, 0x05, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00 })]
     [InlineData(new byte[] { 0x0D, 0x00, 0x05, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00 })]
     [InlineData(new byte[] { 0x41 })]
-    public void BadMagic_ThrowsAndClears(byte[] junk) {
+    public void BadMagic_NoFrameFound_SkipsAllBytes(byte[] junk) {
         // Arrange
         var decoder = new MessageStreamDecoder();
 
         // Act
-        Assert.Throws<InvalidDataException>(() => decoder.Feed(junk));
+        var skippedMessages = decoder.Feed(junk);
+        var skippedBytes = decoder.SkippedBytes;
+        var messages = decoder.Feed(MessageEncoder.Encode(new GAME_5_PROTOCOL.MSG_QUERY_LOGOUT { IsInstance = 1 }));
 
         // Assert
-        Assert.Equal(0, decoder.PendingBytes);
-        var messages = decoder.Feed(MessageEncoder.Encode(new GAME_5_PROTOCOL.MSG_QUERY_LOGOUT { IsInstance = 1 }));
+        Assert.Empty(skippedMessages);
+        Assert.Equal(junk.Length, skippedBytes);
         Assert.Single(messages);
+        Assert.Equal(0, decoder.SkippedBytes);
+        Assert.Equal(0, decoder.PendingBytes);
+    }
+
+    [Fact]
+    public void GarbageThenValidFrame_FrameIsDecoded() {
+        // Arrange
+        var garbage = new byte[] { 0x41, 0x42, 0x0D, 0x00, 0x99 };
+        var decoder = new MessageStreamDecoder();
+
+        // Act
+        var messages = decoder.Feed(Concat(garbage, MessageEncoder.Encode(CreateAttach())));
+
+        // Assert
+        var message = Assert.Single(messages);
+        AssertAttachEqual(CreateAttach(), Assert.IsType<GAME_5_PROTOCOL.MSG_ATTACH>(message));
+        Assert.Equal(garbage.Length, decoder.SkippedBytes);
+        Assert.Equal(0, decoder.PendingBytes);
+    }
+
+    [Fact]
+    public void GarbageBetweenFrames_BothFramesAreDecoded() {
+        // Arrange
+        var garbage = new byte[] { 0x01, 0x02, 0x03 };
+        var decoder = new MessageStreamDecoder();
+
+        // Act
+        var messages = decoder.Feed(Concat(
+            MessageEncoder.Encode(new GAME_5_PROTOCOL.MSG_QUERY_LOGOUT { IsInstance = 1 }),
+            garbage,
+            MessageEncoder.Encode(CreateAttach())));
+
+        // Assert
+        Assert.Equal(2, messages.Count);
+        Assert.IsType<GAME_5_PROTOCOL.MSG_QUERY_LOGOUT>(messages[0]);
+        Assert.IsType<GAME_5_PROTOCOL.MSG_ATTACH>(messages[1]);
+        Assert.Equal(garbage.Length, decoder.SkippedBytes);
+    }
+
+    [Fact]
+    public void GarbageEndingInMagicStart_KeepsItForTheNextRead() {
+        // Arrange
+        var garbage = new byte[] { 0x41, 0x42 };
+        var frame = MessageEncoder.Encode(CreateAttach());
+        var decoder = new MessageStreamDecoder();
+
+        // Act
+        var head = decoder.Feed(Concat(garbage, frame[..1]));
+        var pendingAfterHead = decoder.PendingBytes;
+        var skippedAfterHead = decoder.SkippedBytes;
+        var tail = decoder.Feed(frame[1..]);
+
+        // Assert
+        Assert.Empty(head);
+        Assert.Equal(1, pendingAfterHead);
+        Assert.Equal(garbage.Length, skippedAfterHead);
+        var message = Assert.Single(tail);
+        AssertAttachEqual(CreateAttach(), Assert.IsType<GAME_5_PROTOCOL.MSG_ATTACH>(message));
+    }
+
+    [Fact]
+    public void MagicWithTooShortLength_SkipsToNextFrame() {
+        // Arrange
+        // A magic header whose length field cannot hold a frame header, followed by a valid frame.
+        var falseHeader = new byte[] { 0x0D, 0xF0, 0x02, 0x00 };
+        var decoder = new MessageStreamDecoder();
+
+        // Act
+        var messages = decoder.Feed(Concat(falseHeader, MessageEncoder.Encode(CreateAttach())));
+
+        // Assert
+        Assert.IsType<GAME_5_PROTOCOL.MSG_ATTACH>(Assert.Single(messages));
+        Assert.Equal(falseHeader.Length, decoder.SkippedBytes);
+        Assert.Equal(0, decoder.PendingBytes);
     }
 
     [Fact]

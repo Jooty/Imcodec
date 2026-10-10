@@ -42,6 +42,7 @@ public sealed class MessageStreamDecoder {
     private const int MessageLayerHeaderLength = 4;
     private const int LongFormControlFlagOffset = 8;
     private const int InitialBufferSize = 512;
+    private static readonly byte[] s_magicHeader = [MagicHeaderFirstByte, MagicHeaderSecondByte];
 
     private readonly Action<byte, byte, Exception>? _onDecodeFailure;
     private byte[] _buffer = new byte[InitialBufferSize];
@@ -61,6 +62,11 @@ public sealed class MessageStreamDecoder {
     /// Gets the number of buffered bytes that do not yet form a complete frame.
     /// </summary>
     public int PendingBytes => _count;
+
+    /// <summary>
+    /// Gets the number of bytes the most recent <see cref="Feed"/> discarded while looking for the next frame start.
+    /// </summary>
+    public int SkippedBytes { get; private set; }
 
     /// <summary>
     /// Reads the total length of the frame at the start of <paramref name="data"/>.
@@ -97,20 +103,24 @@ public sealed class MessageStreamDecoder {
     /// <summary>
     /// Adds received bytes and decodes every frame that is now complete.
     /// </summary>
+    /// <remarks>
+    /// Bytes that do not start a frame are skipped up to the next magic header, see <see cref="SkippedBytes"/>.
+    /// A trailing magic header byte is kept in case the rest arrives with the next read.
+    /// </remarks>
     /// <param name="data">The bytes of one socket read.</param>
     /// <returns>The messages of all completed frames, in the order they were sent.</returns>
-    /// <exception cref="InvalidDataException">The stream does not start a frame with the magic header. The buffer is cleared.</exception>
     public IReadOnlyList<IMessage> Feed(ReadOnlySpan<byte> data) {
         Append(data);
+        SkippedBytes = 0;
 
         var messages = new List<IMessage>();
         var consumed = 0;
         while (consumed < _count) {
             var window = new ReadOnlySpan<byte>(_buffer, consumed, _count - consumed);
             if (!HasMagicHeaderPrefix(window)) {
-                Clear();
+                consumed += SkipToNextFrameStart(window, searchFrom: 0);
 
-                throw new InvalidDataException("Frame does not start with the magic header.");
+                continue;
             }
 
             if (!TryGetFrameLength(window, out var frameLength)) {
@@ -118,9 +128,10 @@ public sealed class MessageStreamDecoder {
             }
 
             if (frameLength < MinimumFrameLength) {
-                Clear();
+                // The magic header was a false hit, so look for the next one behind it.
+                consumed += SkipToNextFrameStart(window, searchFrom: 1);
 
-                throw new InvalidDataException($"Frame length {frameLength} is smaller than the frame header.");
+                continue;
             }
 
             if (window.Length < frameLength) {
@@ -139,6 +150,19 @@ public sealed class MessageStreamDecoder {
         return messages;
     }
 
+    private int SkipToNextFrameStart(ReadOnlySpan<byte> window, int searchFrom) {
+        var found = window[searchFrom..].IndexOf(s_magicHeader);
+        var endsWithMagicStart = window[^1] == MagicHeaderFirstByte;
+
+        // Without a hit, a trailing first magic byte stays: its second byte may come with the next read.
+        var skipped = found >= 0 ? searchFrom + found
+            : endsWithMagicStart ? window.Length - 1
+            : window.Length;
+        SkippedBytes += skipped;
+
+        return skipped;
+    }
+
     private void Append(ReadOnlySpan<byte> data) {
         var required = _count + data.Length;
         if (required > _buffer.Length) {
@@ -147,10 +171,6 @@ public sealed class MessageStreamDecoder {
 
         data.CopyTo(_buffer.AsSpan(_count));
         _count = required;
-    }
-
-    private void Clear() {
-        _count = 0;
     }
 
     private static bool HasMagicHeaderPrefix(ReadOnlySpan<byte> window)
