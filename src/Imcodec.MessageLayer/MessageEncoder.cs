@@ -29,6 +29,7 @@ namespace Imcodec.MessageLayer;
 public static class MessageEncoder {
 
     private const ushort MagicHeader = 0xF00D;
+    internal const ushort LongPacketMarker = 0x8000;
     private const byte ControlMessageServiceId = 0;
     private const byte PacketHeaderLengthSmall = 5; // +1 from the trailing null byte
     private const byte PacketHeaderLengthLarge = 9; // +1 from the trailing null byte
@@ -67,7 +68,16 @@ public static class MessageEncoder {
     /// </summary>
     /// <param name="buffer">The byte array to decode.</param>
     /// <returns>A collection of decoded messages if successful, otherwise null.</returns>
-    public static IReadOnlyCollection<IMessage>? Decode(byte[] buffer) {
+    public static IReadOnlyCollection<IMessage>? Decode(byte[] buffer)
+        => Decode(buffer, null);
+
+    /// <summary>
+    /// Decodes a byte array into a collection of messages, reporting messages that could not be decoded.
+    /// </summary>
+    /// <param name="buffer">The byte array to decode.</param>
+    /// <param name="onDecodeFailure">Called with the service id, message id and exception of a message that was skipped.</param>
+    /// <returns>A collection of decoded messages if successful, otherwise null.</returns>
+    public static IReadOnlyCollection<IMessage>? Decode(byte[] buffer, Action<byte, byte, Exception>? onDecodeFailure) {
         if (buffer is null || buffer.Length <= 0) {
             return null;
         }
@@ -79,7 +89,7 @@ public static class MessageEncoder {
             return null;
         }
 
-        var (packetLength, isControl, opCode) = DecodePacketHeader(reader);
+        var (packetLength, isControl, opCode, isLongPacket) = DecodePacketHeader(reader);
 
         // Control messages are never squashed.
         if (isControl) {
@@ -95,7 +105,7 @@ public static class MessageEncoder {
         // For non-control messages, we may have multiple messages in one packet.
         var messages = new List<IMessage>();
         while (reader.BitPos() < packetLength * 8) {
-            var message = DecodeMessage(reader);
+            var message = DecodeMessage(reader, buffer, !isLongPacket, onDecodeFailure);
             if (message != null) {
                 messages.Add(message);
             }
@@ -123,7 +133,7 @@ public static class MessageEncoder {
             ? bodyDataLength + PacketHeaderLengthSmall
             : bodyDataLength + PacketHeaderLengthLarge;
 
-        writer.WriteUInt16((ushort) (isLongPacket ? 0x8000 : smallPacketLength));
+        writer.WriteUInt16((ushort) (isLongPacket ? LongPacketMarker : smallPacketLength));
 
         // For large packets, write the full length.
         if (isLongPacket) {
@@ -166,26 +176,59 @@ public static class MessageEncoder {
         return header == MagicHeader;
     }
 
-    private static (ushort packetLength, bool isControl, byte opCode) DecodePacketHeader(BitReader reader) {
-        var packetLength = reader.ReadUInt16();
+    private static (long packetLength, bool isControl, byte opCode, bool isLongPacket) DecodePacketHeader(BitReader reader) {
+        long packetLength = reader.ReadUInt16();
+        var isLongPacket = packetLength == LongPacketMarker;
+        long longBodyLength = 0;
+        if (isLongPacket) {
+            longBodyLength = reader.ReadUInt32();
+        }
+
         var isControl = reader.ReadUInt8() == 1;
         var opCode = reader.ReadUInt8();
         _ = reader.ReadUInt16(); // Skip padding
 
-        return (packetLength, isControl, opCode);
+        if (isLongPacket) {
+            // Same value the small form would carry, see EncodePacketHeader.
+            packetLength = longBodyLength + (isControl ? PacketHeaderLengthSmall : PacketHeaderLengthLarge);
+        }
+
+        return (packetLength, isControl, opCode, isLongPacket);
     }
 
-    private static IMessage? DecodeMessage(BitReader reader) {
+    private static IMessage? DecodeMessage(BitReader reader, byte[] buffer, bool canUseMessageLength, Action<byte, byte, Exception>? onDecodeFailure) {
+        var headerStart = reader.BitPos() / 8;
         var (serviceId, messageId, messageLength) = DecodeMessageLayerHeader(reader);
+
+        // The length covers the message layer header. With a sane value, the message is decoded from its own
+        // bytes so one message can neither consume nor leave behind bytes of the next one.
+        var useMessageLength = canUseMessageLength
+            && messageLength >= MessageLayerHeaderLength
+            && messageLength <= buffer.Length - headerStart;
+        var messageEnd = headerStart + messageLength;
 
         try {
             var protocol = ProtocolList.Dispatch(serviceId);
             var messageTemplate = protocol.Dispatch(messageId);
 
-            return DecodeMessageBody(reader, messageTemplate);
+            if (!useMessageLength) {
+                return DecodeMessageBody(reader, messageTemplate, serviceId, messageId, onDecodeFailure);
+            }
+
+            var bodyStart = headerStart + MessageLayerHeaderLength;
+            var bodyReader = new BitReader(buffer[bodyStart..messageEnd]);
+
+            return DecodeMessageBody(bodyReader, messageTemplate, serviceId, messageId, onDecodeFailure);
         }
-        catch (NotSupportedException) {
+        catch (NotSupportedException ex) {
+            onDecodeFailure?.Invoke(serviceId, messageId, ex);
+
             return null;
+        }
+        finally {
+            if (useMessageLength) {
+                reader.SeekBit(messageEnd * 8);
+            }
         }
     }
 
@@ -197,12 +240,13 @@ public static class MessageEncoder {
         return (serviceId, messageId, length);
     }
 
-    private static IMessage? DecodeMessageBody(BitReader reader, IMessage message) {
+    private static IMessage? DecodeMessageBody(BitReader reader, IMessage message, byte serviceId, byte messageId, Action<byte, byte, Exception>? onDecodeFailure) {
         try {
             message.Decode(reader);
             return message;
         }
-        catch {
+        catch (Exception ex) {
+            onDecodeFailure?.Invoke(serviceId, messageId, ex);
             return null;
         }
     }
