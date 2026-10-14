@@ -197,10 +197,11 @@ public partial record ResActorDialog : TypeCache.Result {
     [PropertyField(0x7593142F, 7)] public ByteString m_activePersona { get; set; }
     [PropertyField(0xB62CA9E6, 7)] public ByteString m_registryEntry { get; set; }
     [PropertyField(0x4E221FCC, 7)] public ActorDialog m_dialog { get; set; } = new();
+    [PropertyField(0x2A2A1184, 7)] public bool m_randomDialog { get; set; }
     [PropertyField(0x896AB42D, 31)] public ByteString m_quest { get; set; }
     [PropertyField(0x7AA52925, 7)] public bool m_broadcastToZone { get; set; }
     [PropertyField(0x1CBE628E, 7)] public bool m_displayInQuestList { get; set; }
-    [PropertyField(0x2A2A1184, 7)] public bool m_oneShot { get; set; }
+    [PropertyField(0x2018A193, 7)] public bool m_oneShot { get; set; }
 
 }
 
@@ -211,6 +212,8 @@ public partial record ResAddGold : TypeCache.Result {
 
     [PropertyField(0xD142440, 7)] public int m_gold { get; set; }
     [PropertyField(0x896B452E, 7)] public ByteString m_sourceType { get; set; }
+    [PropertyField(0x3D544A05, 7)] public uint m_zoneLevelMin { get; set; }
+    [PropertyField(0x3D544907, 7)] public uint m_zoneLevelMax { get; set; }
 
 }
 
@@ -221,7 +224,9 @@ public partial record ResAddMagicXP : TypeCache.Result {
 
     [PropertyField(0x896B452E, 7)] public ByteString m_sourceType { get; set; }
     [PropertyField(0x0, 7)] public int m_experience { get; set; }
-    [PropertyField(0x0, 7)] public float m_magicSchool { get; set; }
+    [PropertyField(0x5F307BA4, 7)] public ByteString m_magicSchool { get; set; }
+    [PropertyField(0x3D544A05, 7)] public uint m_zoneLevelMin { get; set; }
+    [PropertyField(0x3D544907, 7)] public uint m_zoneLevelMax { get; set; }
 
 }
 
@@ -231,6 +236,7 @@ public partial record ResLoot : TypeCache.Result {
     public override uint GetHash() => 475964190;
 
     [PropertyField(0x0, 7)] public LootInfoList m_lootTable { get; set; }
+    [PropertyField(0x93FD2393, 7)] public ByteString m_overrideLoggingCause { get; set; }
 
 }
 
@@ -309,6 +315,9 @@ public partial record ResItemLoot : TypeCache.Result {
 
     [PropertyField(0x75F095D0, 31)] public ulong m_itemTemplateID { get; set; }
     // PropertyField: m_lootOptions (string)
+    [PropertyField(0x44933712, 7)] public bool m_ignoreBankLimit { get; set; }
+    [PropertyField(0x3D544A05, 7)] public uint m_zoneLevelMin { get; set; }
+    [PropertyField(0x3D544907, 7)] public uint m_zoneLevelMax { get; set; }
     [PropertyField(0x7C57B320, 31)] public bool m_sendLootMessage { get; set; }
     [PropertyField(0x896B452E, 31)] public string m_sourceType { get; set; } = "";
 
@@ -372,13 +381,12 @@ public partial record ResAddDynaMod : TypeCache.Result {
     public override uint GetHash() => 3938346;
 
     [PropertyField(0x5F777B42, 31)] public ByteString m_dynaModClientTag { get; set; }
-    [PropertyField(0x42302844, 31)] public bool m_dynaModRemove { get; set; }
-    [PropertyField(0x5911401D, 31)] public bool m_useQuestAsOriginator { get; set; }
+    [PropertyField(0x67EAA06D, 31)] public bool m_dynaModRemove { get; set; }
+    [PropertyField(0x42302844, 31)] public bool m_useQuestAsOriginator { get; set; }
     [PropertyField(0x7B8D4408, 31)] public ByteString m_dynaModState { get; set; }
     [PropertyField(0x816963F8, 8388615)] public ByteString m_zoneName { get; set; }
-    // Two more flags the data carries; their purpose is not known.
-    [PropertyField(0x0216BD40, 31)] public bool unknown_bool_0216BD40 { get; set; }
-    [PropertyField(0x67EAA06D, 31)] public bool unknown_bool_67EAA06D { get; set; }
+    [PropertyField(0x0216BD40, 31)] public bool m_bShowsObject { get; set; }
+    [PropertyField(0x5911401D, 31)] public bool m_persist { get; set; }
 
 }
 
@@ -609,7 +617,7 @@ public partial record ResFallthrough : TypeCache.Result {
 
     public override uint GetHash() => 1962253934;
 
-    // PropertyField: m_options (string)
+    [PropertyField(0x81BA52CC, 7)] public List<ResultOption?> m_options { get; set; } = [];
 
 }
 
@@ -618,8 +626,8 @@ public partial record ResultOption : TypeCache.Result {
 
     public override uint GetHash() => 1471095109;
 
-    // PropertyField: m_requirements (string)
-    // PropertyField: m_results (string)
+    [PropertyField(0xA955FFA6, 7)] public RequirementList m_requirements { get; set; } = new();
+    [PropertyField(0xE11C8ADA, 7)] public ResultList m_results { get; set; } = new();
 
 }
 
