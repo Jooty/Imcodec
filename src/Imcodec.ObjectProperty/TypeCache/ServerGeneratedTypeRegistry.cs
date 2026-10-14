@@ -1003,6 +1003,17 @@ public partial record CombatSigilObjectInfo : CoreObjectInfo {
 
 }
 
+/// <summary>
+/// The sigil object the PvP arenas place: a combat sigil object under the class hash of the client class
+/// <c>PvPCombatSigilInfo</c>.
+/// </summary>
+[PropertySerializationTarget]
+public partial record PvPCombatSigilObjectInfo : CombatSigilObjectInfo {
+
+    public override uint GetHash() => 744574030;
+
+}
+
 [PropertySerializationTarget]
 public partial record WizBangPriorityTemplate : PropertyClass {
 

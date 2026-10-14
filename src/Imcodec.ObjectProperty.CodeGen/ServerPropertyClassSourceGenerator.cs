@@ -146,13 +146,30 @@ Redistribution and use in source and binary forms, with or without
         }
 
         var typeDefinitions = new List<PropertyClassDefinition>();
+
+        // A server type may derive from another server type. This finds that base type's definition, with
+        // its own bases resolved, so that the derived type serializes the properties it inherits.
+        PropertyClassDefinition? ResolveServerBase(string baseName) {
+            var baseDeclaration = serverTypes.FirstOrDefault(type => type.Identifier.Text == baseName);
+            if (baseDeclaration == null) {
+                return null;
+            }
+
+            var baseDefinition = ProcessClass(compilation, baseDeclaration);
+            if (baseDefinition != null) {
+                ProcessClientTypesForClass(baseDefinition, allClientTypes, ResolveServerBase);
+            }
+
+            return baseDefinition;
+        }
+
         foreach (var typeDeclaration in serverTypes) {
             try {
                 // First process the class without client types
                 var classDefinition = ProcessClass(compilation, typeDeclaration);
                 if (classDefinition != null) {
                     // Then process client types manually
-                    ProcessClientTypesForClass(classDefinition, allClientTypes);
+                    ProcessClientTypesForClass(classDefinition, allClientTypes, ResolveServerBase);
 
                     typeDefinitions.Add(classDefinition);
 
@@ -217,7 +234,11 @@ Redistribution and use in source and binary forms, with or without
         }
     }
 
-    private void ProcessClientTypesForClass(PropertyClassDefinition classDefinition, List<Definition> allClientTypes) {
+    private void ProcessClientTypesForClass(
+        PropertyClassDefinition classDefinition,
+        List<Definition> allClientTypes,
+        Func<string, PropertyClassDefinition?> resolveServerBase) {
+
         foreach (var baseClassName in classDefinition.BaseClassNames) {
             foreach (var clientType in allClientTypes) {
                 if (clientType is PropertyClassDefinition propertyClassDef &&
@@ -232,6 +253,18 @@ Redistribution and use in source and binary forms, with or without
                     }
 
                     classDefinition.BaseClasses.Add(propertyClassDef);
+                }
+            }
+
+            // Add the properties of a server base type, which in turn holds those of its own bases.
+            var serverBase = resolveServerBase(baseClassName);
+            if (serverBase == null) {
+                continue;
+            }
+
+            foreach (var property in serverBase.AllProperties) {
+                if (!classDefinition.AllProperties.Any(p => p.Name == property.Name)) {
+                    classDefinition.AllProperties.Add(property);
                 }
             }
         }

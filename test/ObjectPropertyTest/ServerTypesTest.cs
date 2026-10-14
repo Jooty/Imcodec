@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.CoreObject;
+using Imcodec.Math;
 using Imcodec.ObjectProperty;
 using Imcodec.ObjectProperty.TypeCache;
 
@@ -42,6 +43,25 @@ public sealed class ServerTypesTest {
 
         Assert.True(deserializeSuccess);
         Assert.NotNull(serverTypes);
+    }
+
+    [Fact]
+    public void TryDispatchServerTypeDerivedFromServerType() {
+        var serializer = new ObjectSerializer(true, SerializerFlags.None);
+        var sigil = new PvPCombatSigilObjectInfo {
+            m_sigilType = "PvPSigil8Actor2Sides",
+            m_templateID = 123456,
+            m_location = new Vector3(1f, 2f, 3f),
+        };
+
+        Assert.True(serializer.Serialize(sigil, (PropertyFlags) 1, out var buffer));
+        Assert.True(serializer.Deserialize<CombatSigilObjectInfo>(buffer, (PropertyFlags) 1, out var decoded));
+
+        var pvpSigil = Assert.IsType<PvPCombatSigilObjectInfo>(decoded);
+        Assert.Equal(744574030u, pvpSigil.GetHash());
+        Assert.Equal("PvPSigil8Actor2Sides", (string) pvpSigil.m_sigilType);
+        Assert.Equal(123456ul, (ulong) pvpSigil.m_templateID);
+        Assert.Equal(3f, pvpSigil.m_location.Z);
     }
 
     private static byte[] ConvertFromHexString(string hexString) {
