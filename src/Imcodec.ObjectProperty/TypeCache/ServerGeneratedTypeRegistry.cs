@@ -2543,3 +2543,33 @@ public partial record InteractCooldownOptionTemplate : InteractOptionTemplate {
     [PropertyField(0x9274F5CD, 31)] public string m_iconKey { get; set; } = "";
 
 }
+
+/// <summary>
+/// A pet game kiosk. <c>m_petGameName</c> is the name of the pet game the kiosk opens, which is the name of one
+/// <c>PetGameInfo</c> of the pet game config; it is empty on an object that is not tied to a single game.
+/// The base property is declared again so that it is written before the new one, as the game data has it.
+/// </summary>
+[PropertySerializationTarget]
+public partial record PetGameKioskBehaviorTemplate : BehaviorTemplate {
+
+    public override uint GetHash() => 0x6550ADFB;
+
+    [PropertyField(0xBA9B842C, 7)] public new ByteString m_behaviorName { get => base.m_behaviorName; set => base.m_behaviorName = value; }
+    [PropertyField(0xABCBB13F, 31)] public string m_petGameName { get; set; } = "";
+
+}
+
+/// <summary>
+/// An object of the maze pet game that takes part in snack collection. <c>m_radius</c> is 200 on eight of the nine
+/// templates that carry it and 150 on the other; its use is not known.
+/// The base property is declared again so that it is written before the new one, as the game data has it.
+/// </summary>
+[PropertySerializationTarget]
+public partial record PetSnackCollectorBehaviorTemplate : BehaviorTemplate {
+
+    public override uint GetHash() => 0x6ABEDCD3;
+
+    [PropertyField(0xBA9B842C, 7)] public new ByteString m_behaviorName { get => base.m_behaviorName; set => base.m_behaviorName = value; }
+    [PropertyField(0x3AF933DF, 31)] public float m_radius { get; set; }
+
+}

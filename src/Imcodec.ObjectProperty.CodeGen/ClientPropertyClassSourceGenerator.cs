@@ -141,6 +141,7 @@ Redistribution and use in source and binary forms, with or without
                     .ToList();
 
                 CombineDuplicateEnumOptions(ref enumDefs);
+                AddMissingEnumOptions(enumDefs);
 
                 // Generate source code for each definition.
                 foreach (var definition in propertyClassDefs.Cast<Definition>().Concat(enumDefs)) {
@@ -224,6 +225,31 @@ Redistribution and use in source and binary forms, with or without
         }
 
         enumDefinitions = combinedEnums;
+    }
+
+    // Enum options that the game data uses but the type dump lacks, by enum name. The value of an option is the
+    // string hash of its name, as for every other option of the enum.
+    internal static readonly Dictionary<string, Dictionary<string, int>> MissingEnumOptions = new() {
+        ["eRace"] = new() {
+            ["PP_FuzzyMonster"] = 1509040609,
+            ["PP_YarnBall"] = 557169203,
+            ["MNT_Fuzzy_Monster"] = 283323511,
+            ["MNT_WhaleBird"] = 1152429415,
+        },
+    };
+
+    private static void AddMissingEnumOptions(List<EnumDefinition> enumDefinitions) {
+        foreach (var enumDefinition in enumDefinitions) {
+            if (!MissingEnumOptions.TryGetValue(enumDefinition.Name!, out var options)) {
+                continue;
+            }
+
+            foreach (var option in options) {
+                if (!enumDefinition.Options.ContainsKey(option.Key)) {
+                    enumDefinition.Options.Add(option.Key, option.Value);
+                }
+            }
+        }
     }
 
     private static List<Definition> GetAbstractDefinitionsFromJson(string jsonInput) {
