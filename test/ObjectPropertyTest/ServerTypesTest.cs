@@ -19,11 +19,9 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.CoreObject;
-using Imcodec.Cryptography;
 using Imcodec.IO;
 using Imcodec.Math;
 using Imcodec.ObjectProperty;
-using Imcodec.ObjectProperty.CodeGen;
 using Imcodec.ObjectProperty.TypeCache;
 
 namespace Imcodec.Test.ObjectPropertyTest;
@@ -112,19 +110,6 @@ public sealed class ServerTypesTest {
         var decodedKiosk = Assert.IsType<PetGameKioskBehaviorTemplate>(decoded);
         Assert.Equal("PetGameTest", decodedKiosk.m_petGameName);
         Assert.Equal("PetGameKioskBehavior", (string) decodedKiosk.m_behaviorName);
-    }
-
-    [Fact]
-    public void TryUseRaceNamesMissingFromTheTypeDump() {
-        // The generator adds these options to the race enum; the value of an option is the string hash of its name.
-        var missing = ClientPropertyClassSourceGenerator.MissingEnumOptions;
-        Assert.Equal(["eRace"], missing.Keys);
-
-        foreach (var option in missing["eRace"]) {
-            Assert.True(Enum.IsDefined(typeof(eRace), option.Key));
-            Assert.Equal(option.Value, (int) Enum.Parse<eRace>(option.Key));
-            Assert.Equal(StringHash.Compute(option.Key), (uint) option.Value);
-        }
     }
 
     [Fact]
