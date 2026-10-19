@@ -42,6 +42,8 @@ public readonly struct ByteString {
             ? string.Empty
             : Encoding.Latin1.GetString(byteString._bytes);
 
+    public readonly bool IsEmpty => _bytes is null || _bytes.Length == 0;
+
     public static implicit operator ByteString(string str) {
         if (str is null) {
             return new ByteString();
