@@ -29,11 +29,12 @@ namespace Imcodec.ObjectProperty.TypeCache;
 
 public sealed class WishlistData {
 
-    public const uint Magic = 0xFACEDE17;
+    public const uint Magic = 0xFACEACE7;
     public const uint Version = 1;
 
+    public static ByteString Empty { get; } = new WishlistData().ToByteString();
 
-    public bool KeepOnWishlistAfterPurchase { get; set; } = false;
+    public bool KeepOnWishlistAfterPurchase { get; set; } = true;
     public List<uint> Items { get; set; } = [];
 
     public void Encode(BitWriter writer) {
