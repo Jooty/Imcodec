@@ -95,6 +95,17 @@ public sealed class WishlistData {
         return TryDecode(reader, out data);
     }
 
+    public static bool TryRemoveItem(ByteString blob, uint templateId, out ByteString updatedBlob) {
+        updatedBlob = blob;
+
+        if (!TryFromByteString(blob, out var data) || data.Items.RemoveAll(id => id == templateId) == 0) {
+            return false;
+        }
+
+        updatedBlob = data.ToByteString();
+        return true;
+    }
+
     private static void WriteCount(BitWriter writer, int count) {
         if (count > ushort.MaxValue) {
             throw new InvalidOperationException($"A Wishlist holds {count} entries, at most {ushort.MaxValue} fit its u16 count.");
