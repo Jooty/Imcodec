@@ -20,8 +20,6 @@ modification, are permitted provided that the following conditions are met:
 
 using Imcodec.IO;
 using Imcodec.Types;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Imcodec.ObjectProperty.TypeCache;
