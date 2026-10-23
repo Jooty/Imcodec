@@ -1095,6 +1095,9 @@ public partial record MinigameSigilInfo : CoreObjectInfo {
     [PropertyField(0x62A2160A, 31)] public List<ByteString> m_deactivateEvents { get; set; } = [];
     [PropertyField(0x3BF5B2D, 31)] public bool m_unknown_boolean_2 { get; set; }
     [PropertyField(0xA955FFA6, 31)] public RequirementList m_requirements { get; set; } = new();
+    [PropertyField(0x5A66B8B0, 31)] public ByteString m_successZone { get; set; }
+    [PropertyField(0x8BAF14A0, 31)] public List<ByteString> m_successLocations { get; set; } = [];
+    [PropertyField(0x23716AB9, 31)] public float m_countdownTimer { get; set; }
 
     // HASH : 0xC8C87586
     // SIZE : 87 bits
@@ -1105,17 +1108,11 @@ public partial record MinigameSigilInfo : CoreObjectInfo {
     // HASH : 0x616A2C5E
     // SIZE : 80 bits
 
-    // HASH : 0x5A66B8B0
-    // SIZE: 432 bits
-
     // HASH : 0x916BBDD2
     // SIZE: 80 bits
 
     // HASH : 0x996A9C1F
     // SIZE : 80 bits
-
-    // HASH : 0x8BAF14A0
-    // SIZE: 440 bits
 
     // HASH : 0xAA85756F
     // SIZE: 96 bits
@@ -1131,9 +1128,6 @@ public partial record MinigameSigilInfo : CoreObjectInfo {
 
     // HASH : 0x721F110C
     // SIZE : 80 bits
-
-    // HASH : 0x23716AB9
-    // SIZE : 96 bits
 
     // HASH : 0x8976BB77
     // SIZE : 80 bits
