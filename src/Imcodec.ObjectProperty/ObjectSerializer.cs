@@ -123,6 +123,17 @@ public partial class ObjectSerializer(bool Versionable = true,
     /// </summary>
     public bool UseServerTypeRegistry { get; set; } = UseServerTypeRegistry;
 
+    /// <summary>
+    /// The deepest level of nested objects a decode may reach. The top-level
+    /// object is level 1.
+    /// </summary>
+    public int MaxObjectDepth { get; init; } = DEFAULT_MAX_OBJECT_DEPTH;
+
+    private const int DEFAULT_MAX_OBJECT_DEPTH = 128;
+
+    [ThreadStatic]
+    private static int s_objectDepth;
+
     private static readonly ClientGeneratedTypeRegistry s_defaultTypeRegistry = new();
     private static readonly ServerGeneratedTypeRegistry s_serverTypeRegistry = new();
 
@@ -256,17 +267,103 @@ public partial class ObjectSerializer(bool Versionable = true,
             reader.WithCompactLengths();
         }
 
-        var preloadResult = PreloadObject(reader, out var propertyClass);
-        if (   preloadResult == PreloadResult.NullHash 
-            || preloadResult == PreloadResult.NotFound) {
+        var depthEntered = false;
+        try {
+            var preloadResult = PreloadObject(reader, out var propertyClass);
+            if (   preloadResult == PreloadResult.NullHash 
+                || preloadResult == PreloadResult.NotFound) {
+                return false;
+            }
+
+            if (propertyClass is not T typedClass) {
+                return false;
+            }
+
+            if (s_objectDepth >= MaxObjectDepth) {
+                return false;
+            }
+
+            s_objectDepth++;
+            depthEntered = true;
+            typedClass.Decode(reader, this);
+            output = typedClass;
+
+            return true;
+        } catch (ObjectDecodeException) {
+            output = default;
+
             return false;
+        } catch (EndOfStreamException) {
+            output = default;
+
+            return false;
+        } finally {
+            if (depthEntered) {
+                s_objectDepth--;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Preloads and decodes a nested object, rejecting an instance that is not
+    /// a <typeparamref name="TExpected"/> before it is decoded.
+    /// </summary>
+    /// <typeparam name="TExpected">The type the nested object must be.</typeparam>
+    /// <param name="reader">The reader to decode from.</param>
+    /// <param name="item">The decoded object, when the result is
+    /// <see cref="PreloadResult.Success"/>.</param>
+    /// <returns>The <see cref="PreloadResult"/> of the preload.</returns>
+    /// <exception cref="ObjectDecodeException">The object is not a
+    /// <typeparamref name="TExpected"/>, or nesting is deeper than
+    /// <see cref="MaxObjectDepth"/>.</exception>
+    public PreloadResult DecodeObject<TExpected>(BitReader reader, out TExpected? item)
+        where TExpected : PropertyClass {
+        item = default;
+
+        var preloadResult = PreloadObject(reader, out var propertyClass);
+        if (preloadResult != PreloadResult.Success) {
+            return preloadResult;
         }
 
-        propertyClass?.Decode(reader, this);
+        if (propertyClass is not TExpected typedClass) {
+            throw new ObjectDecodeException(
+                $"Decoded type {propertyClass!.GetType().Name} is not {typeof(TExpected).Name}.");
+        }
 
-        output = (T) propertyClass!;
+        if (s_objectDepth >= MaxObjectDepth) {
+            throw new ObjectDecodeException($"Objects are nested deeper than {MaxObjectDepth}.");
+        }
 
-        return true;
+        s_objectDepth++;
+        try {
+            typedClass.Decode(reader, this);
+        } finally {
+            s_objectDepth--;
+        }
+
+        item = typedClass;
+
+        return PreloadResult.Success;
+    }
+
+    /// <summary>
+    /// Reads a list length and rejects one that needs more bits than the reader has left,
+    /// since every element takes at least one bit.
+    /// </summary>
+    /// <param name="reader">The reader to read the length from.</param>
+    /// <returns>The list length.</returns>
+    /// <exception cref="ObjectDecodeException">The length is larger than the bits left.</exception>
+    public uint ReadVectorLength(BitReader reader) {
+        var length = SerializerFlags.HasFlag(SerializerFlags.CompactLength)
+            ? (uint) reader.ReadCompactLength()
+            : reader.ReadUInt32();
+
+        var bitsLeft = reader.StreamSizeInBits() - reader.BitPos();
+        if (length > bitsLeft) {
+            throw new ObjectDecodeException($"List length {length} exceeds the {bitsLeft} bits left.");
+        }
+
+        return length;
     }
 
     /// <summary>

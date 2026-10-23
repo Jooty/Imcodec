@@ -257,10 +257,9 @@ internal static class PropertyClassSerializationGenerator {
         var reader = GetReaderMethodForType(elementType, $"var item_{property.Name}");
         if (string.IsNullOrEmpty(reader)) {
             // A reader was not found. Assume the element is a PropertyClass.
-            sb.AppendLine($"{indent}\t\tvar preloadResult = serializer.PreloadObject(reader, out var item_{property.Name});");
+            sb.AppendLine($"{indent}\t\tvar preloadResult = serializer.DecodeObject<{elementType.TrimEnd('?')}>(reader, out var item_{property.Name});");
             sb.AppendLine($"{indent}\t\tif (preloadResult == PreloadResult.Success) {{");
-            sb.AppendLine($"{indent}\t\t\titem_{property.Name}.Decode(reader, serializer);");
-            sb.AppendLine($"{indent}\t\t\t{property.Name}.Add(({elementType}) item_{property.Name});");
+            sb.AppendLine($"{indent}\t\t\t{property.Name}.Add(item_{property.Name});");
             sb.AppendLine($"{indent}\t\t}}");
             sb.AppendLine($"{indent}\t\telse if (preloadResult == PreloadResult.NullHash) {{");
             sb.AppendLine($"{indent}\t\t\t{property.Name}.Add(null);");
@@ -301,10 +300,9 @@ internal static class PropertyClassSerializationGenerator {
         if (string.IsNullOrEmpty(reader)) {
             // A reader was not found. Assume the property is a PropertyClass.
             sb.AppendLine($"{indent}// PropertyClass decoding");
-            sb.AppendLine($"{indent}serializer.PreloadObject(reader, out var item_{property.Name});");
+            sb.AppendLine($"{indent}serializer.DecodeObject<{property.CsharpType.TrimEnd('?')}>(reader, out var item_{property.Name});");
             sb.AppendLine($"{indent}if (item_{property.Name} != null) {{");
-            sb.AppendLine($"{indent}\t{property.Name} = ({property.CsharpType}) item_{property.Name};");
-            sb.AppendLine($"{indent}\t{property.Name}.Decode(reader, serializer);");
+            sb.AppendLine($"{indent}\t{property.Name} = item_{property.Name};");
             sb.AppendLine($"{indent}}}");
         } else {
             sb.AppendLine($"{indent}{reader}");
@@ -515,13 +513,8 @@ internal static class PropertyClassSerializationGenerator {
             .AppendLine("\t\t}")
             .AppendLine("\t}")
             .AppendLine()
-            .AppendLine("\tprivate static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer) {")
-            .AppendLine("\t\tif (serializer.SerializerFlags.HasFlag(SerializerFlags.CompactLength)) {")
-            .AppendLine("\t\t\treturn (uint)reader.ReadCompactLength();")
-            .AppendLine("\t\t} else {")
-            .AppendLine("\t\t\treturn reader.ReadUInt32();")
-            .AppendLine("\t\t}")
-            .AppendLine("\t}")
+            .AppendLine("\tprivate static uint ReadVectorSize(BitReader reader, ObjectSerializer serializer)")
+            .AppendLine("\t\t=> serializer.ReadVectorLength(reader);")
             .AppendLine()
             .AppendLine("\tprivate static string SanitizeStringEnum(string enumString) {")
             .AppendLine("\t\t// Client inconsistency: The client will sometimes use '-' and '_' interchangably.")

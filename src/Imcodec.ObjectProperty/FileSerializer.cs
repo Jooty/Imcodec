@@ -81,6 +81,10 @@ public class FileSerializer : ObjectSerializer {
             // If the BiND header is present, the serializer flags will be next.
             skipLen = sizeof(uint) * 2; // Skip the magic and flags.
 
+            if (inputBuffer.Length < skipLen) {
+                return false;
+            }
+
             var flags = (SerializerFlags) reader.ReadUInt32();
             if ((((uint) flags) & 8) != 0) {
                 _ = reader.ReadBit();
