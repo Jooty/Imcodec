@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using Imcodec.CoreObject;
+using Imcodec.Cryptography;
 using Imcodec.IO;
 using Imcodec.Math;
 using Imcodec.ObjectProperty;
@@ -63,6 +64,23 @@ public sealed class ServerTypesTest {
         Assert.Equal("PvPSigil8Actor2Sides", (string) pvpSigil.m_sigilType);
         Assert.Equal(123456ul, (ulong) pvpSigil.m_templateID);
         Assert.Equal(3f, pvpSigil.m_location.Z);
+    }
+
+    [Fact]
+    public void CombatSigilFieldsKeepTheirHashes() {
+        Assert.Equal(0x61B4E11Eu, StringHash.HashPropertyName("m_disablePlayerDecks", "bool"));
+
+        var serializer = new ObjectSerializer(true, SerializerFlags.None);
+        var sigil = new CombatSigilObjectInfo {
+            m_sigilType = "CombatSigil8Actor",
+            m_baseEnemyCount = -1,
+            m_disablePlayerDecks = true,
+        };
+
+        Assert.True(serializer.Serialize(sigil, (PropertyFlags) 1, out var buffer));
+        Assert.True(serializer.Deserialize<CombatSigilObjectInfo>(buffer, (PropertyFlags) 1, out var decoded));
+        Assert.Equal(-1, decoded.m_baseEnemyCount);
+        Assert.True(decoded.m_disablePlayerDecks);
     }
 
     [Fact]

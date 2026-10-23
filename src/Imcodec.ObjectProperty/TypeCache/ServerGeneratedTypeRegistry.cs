@@ -985,13 +985,13 @@ public partial record CombatSigilObjectInfo : CoreObjectInfo {
     // SIZE : 72 bits
     [PropertyField(0x3C345132, 31)] public bool m_unknown_boolean_3 { get; set; }
 
-    // HASH : 0x61B4E11E
-    // SIZE : 72 bits
-    [PropertyField(0x61B4E11E, 31)] public bool m_unknown_boolean_4 { get; set; }
+    // The name hashes to 0x61B4E11E as a bool. True only on the tutorial sigils.
+    [PropertyField(0x61B4E11E, 31)] public bool m_disablePlayerDecks { get; set; }
 
-    // HASH : 0x37BEB1CF
-    // SIZE : 8
-    [PropertyField(0x37BEB1CF, 31)] public int m_unknown_uint_2 { get; set; }
+    // Name unknown: the client ignores this class, and no client name hashes to 0x37BEB1CF. The value is the
+    // base number of enemies a fight takes in; each extra player adds one. -1 means one enemy per player, and 0
+    // (or any other negative value) means the server default.
+    [PropertyField(0x37BEB1CF, 31)] public int m_baseEnemyCount { get; set; }
 
     // HASH : 0x62794D39
     // SIZE : 8
