@@ -780,10 +780,11 @@ public partial record ResAddEnergy : TypeCache.Result {
 
     public override uint GetHash() => 43418311;
 
-    // PropertyField: m_energyFlat (int)
-    // PropertyField: m_energyPercent (int)
-    // PropertyField: m_sourceType (string)
-    // PropertyField: m_useFlat (int)
+    [PropertyField(0x896B452E, 7)] public ByteString m_sourceType { get; set; }
+    [PropertyField(0x49AF274B, 7)] public int m_energyFlat { get; set; }
+    [PropertyField(0x6F6111D2, 7)] public float m_energyPercent { get; set; }
+    [PropertyField(0x847CA76, 7)] public int m_overfill { get; set; }
+    [PropertyField(0x7998C787, 7)] public bool m_useFlat { get; set; }
 
 }
 
