@@ -30,6 +30,8 @@ namespace Imcodec.Cli;
 /// </summary>
 public sealed class PoiCommands {
 
+    private const int FAILURE_EXIT_CODE = 1;
+
     /// <summary>
     /// Parses a POI file and converts it to JSON format.
     /// </summary>
@@ -37,15 +39,14 @@ public sealed class PoiCommands {
     /// <param name="outputPath">The path where to save the JSON output. Defaults to the input path with .json extension.</param>
     /// <param name="verbose">Enable verbose output showing details of each section.</param>
     [Command("parse", Description = "Parse a POI file and convert it to JSON format.")]
-    public void ParsePoiFile(
+    public int ParsePoiFile(
         [Argument(Description = "The path to the POI file to parse.")] string inputPath,
         [Argument(Description = "The path where to save the JSON output.")] string outputPath = ".",
         [Option("verbose", Description = "Enable verbose output showing details of each section.")] bool verbose = false) {
-        // Validate input file exists
         if (!File.Exists(inputPath)) {
-            Console.WriteLine($"The specified POI file '{inputPath}' does not exist.");
+            Console.Error.WriteLine($"The specified POI file '{inputPath}' does not exist.");
 
-            return;
+            return FAILURE_EXIT_CODE;
         }
 
         try {
@@ -67,7 +68,7 @@ public sealed class PoiCommands {
             }
 
             // Determine output path
-            outputPath = GetOutputFilePath(inputPath, outputPath, ".json");
+            outputPath = IOUtility.ResolveOutputFilePath(inputPath, outputPath, ".json");
 
             // Create wrapper object with metadata
             var poiInfo = new {
@@ -87,18 +88,26 @@ public sealed class PoiCommands {
             File.WriteAllText(outputPath, json);
 
             Console.WriteLine($"Successfully converted '{Path.GetFileName(inputPath)}' to JSON: '{outputPath}'");
+
+            return 0;
         }
         catch (InvalidDataException ex) {
-            Console.WriteLine($"Invalid POI file format: {ex.Message}");
+            Console.Error.WriteLine($"Invalid POI file format: {ex.Message}");
+
+            return FAILURE_EXIT_CODE;
         }
         catch (EndOfStreamException ex) {
-            Console.WriteLine($"POI file ended unexpectedly: {ex.Message}");
+            Console.Error.WriteLine($"POI file ended unexpectedly: {ex.Message}");
+
+            return FAILURE_EXIT_CODE;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Failed to parse POI file: {ex.Message}");
+            Console.Error.WriteLine($"Failed to parse POI file: {ex.Message}");
             if (verbose) {
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
             }
+
+            return FAILURE_EXIT_CODE;
         }
     }
 
@@ -107,12 +116,11 @@ public sealed class PoiCommands {
     /// </summary>
     /// <param name="inputPath">The path to the POI file to inspect.</param>
     [Command("info", Description = "Display information about a POI file without converting it.")]
-    public void ShowPoiInfo([Argument(Description = "The path to the POI file to inspect.")] string inputPath) {
-        // Validate input file exists
+    public int ShowPoiInfo([Argument(Description = "The path to the POI file to inspect.")] string inputPath) {
         if (!File.Exists(inputPath)) {
-            Console.WriteLine($"The specified POI file '{inputPath}' does not exist.");
+            Console.Error.WriteLine($"The specified POI file '{inputPath}' does not exist.");
 
-            return;
+            return FAILURE_EXIT_CODE;
         }
 
         try {
@@ -156,29 +164,14 @@ public sealed class PoiCommands {
                     Console.WriteLine($"  Zone {zoneId}: {string.Join(", ", mobs)}");
                 }
             }
+
+            return 0;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Failed to read POI file: {ex.Message}");
-        }
-    }
+            Console.Error.WriteLine($"Failed to read POI file: {ex.Message}");
 
-    /// <summary>
-    /// Determines the output file path based on input path and user-specified output.
-    /// </summary>
-    private static string GetOutputFilePath(string inputPath, string outputPath, string newExtension) {
-        if (outputPath == ".") {
-            // Use input path but change extension
-            return Path.ChangeExtension(inputPath, newExtension);
+            return FAILURE_EXIT_CODE;
         }
-
-        if (Directory.Exists(outputPath)) {
-            // Output is a directory, use input filename with new extension
-            var fileName = Path.GetFileNameWithoutExtension(inputPath);
-            return Path.Combine(outputPath, fileName + newExtension);
-        }
-
-        // Use the specified output path as-is
-        return outputPath;
     }
 
 }

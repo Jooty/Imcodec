@@ -25,64 +25,65 @@ namespace Imcodec.Cli;
 
 public partial class ObjectPropertyCommands {
 
+    private const int FAILURE_EXIT_CODE = 1;
+
     [Command("file", Description = "Deserialize a BiND buffer to a JSON file.")]
-    public void DeserializeFile([Argument] string inputPath,
-                            [Argument] string outputPath = ".") {
-        // Ensure that the file exists.
+    public int DeserializeFile([Argument] string inputPath,
+                               [Argument] string outputPath = ".") {
         if (!File.Exists(inputPath)) {
-            Console.WriteLine("The input file does not exist.");
-            return;
+            Console.Error.WriteLine("The input file does not exist.");
+
+            return FAILURE_EXIT_CODE;
         }
 
-        // Read the file into a buffer and deserialize it.
         var buffer = File.ReadAllBytes(inputPath);
         var fileName = IOUtility.ExtractFileName(inputPath);
         var jsonObj = Deserialization.TryDeserializeFile(fileName, buffer);
         if (jsonObj == null) {
-            Console.WriteLine("Failed to deserialize the buffer.");
-            return;
+            Console.Error.WriteLine("Failed to deserialize the buffer.");
+
+            return FAILURE_EXIT_CODE;
         }
 
-        // Get the output file path. Suffix the file name with '_deser.json' if the output path is the default.
+        // Suffix the file name with '_deser.json' when the output path is the default.
         outputPath = GetOutputFile(inputPath, outputPath);
         outputPath = IOUtility.RemoveExtension(outputPath) + Deserialization.DeserializationSuffix;
 
-        // Write the deserialized object to the output file.
         File.WriteAllText(outputPath, jsonObj);
         Console.WriteLine($"Successfully deserialized the buffer to '{outputPath}'.");
+
+        return 0;
     }
 
     [Command("blob", Description = "Deserialize a hex byte blob as JSON.")]
-    private void DeserializeBlob([Argument] string hexBlob) {
-        // Ensure the hex blob is not empty, and matches the mattern of a hex blob.
+    public int DeserializeBlob([Argument] string hexBlob) {
         if (!IsHexBlob(hexBlob)) {
-            Console.WriteLine("The hex blob is empty or invalid.");
+            Console.Error.WriteLine("The hex blob is empty or is not valid hexadecimal.");
 
-            return;
+            return FAILURE_EXIT_CODE;
         }
 
-        // Deserialize the byte array.
         var jsonObj = Deserialization.TryDeserializeHexBlob(hexBlob);
         if (jsonObj == null) {
-            Console.WriteLine("Failed to deserialize the byte array.");
-            
-            return;
+            Console.Error.WriteLine("Failed to deserialize the byte array.");
+
+            return FAILURE_EXIT_CODE;
         }
 
         Console.WriteLine(jsonObj);
+
+        return 0;
     }
 
-    private static string GetOutputFile(string inputFilePath, string outputPath) {
-        // '.' denotes default. If the output path is the default, use the archive path.
-        if (outputPath == ".") {
-            outputPath = inputFilePath;
-        }
+    private static string GetOutputFile(string inputFilePath, string outputPath)
+        => outputPath == "." ? inputFilePath : outputPath;
 
-        return outputPath;
+    private static bool IsHexBlob(string hexBlob) {
+        var stripped = hexBlob.Where(static c => !char.IsWhiteSpace(c)).ToArray();
+
+        return stripped.Length > 0
+            && stripped.Length % 2 == 0
+            && stripped.All(static c => Uri.IsHexDigit(c));
     }
-
-    private static bool IsHexBlob(string hexBlob) =>
-        // Check if the string is empty or contains only valid hex characters.
-        !string.IsNullOrEmpty(hexBlob);
 
 }

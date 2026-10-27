@@ -30,6 +30,8 @@ namespace Imcodec.Cli;
 /// </summary>
 public sealed class BcdCommands {
 
+    private const int FAILURE_EXIT_CODE = 1;
+
     /// <summary>
     /// Parses a BCD file and converts it to JSON format.
     /// </summary>
@@ -37,15 +39,14 @@ public sealed class BcdCommands {
     /// <param name="outputPath">The path where to save the JSON output. Defaults to the input path with .json extension.</param>
     /// <param name="verbose">Enable verbose output showing details of each collision object.</param>
     [Command("parse", Description = "Parse a BCD file and convert it to JSON format.")]
-    public void ParseBcdFile(
+    public int ParseBcdFile(
         [Argument(Description = "The path to the BCD file to parse.")] string inputPath,
         [Argument(Description = "The path where to save the JSON output.")] string outputPath = ".",
         [Option("verbose", Description = "Enable verbose output showing details of each collision object.")] bool verbose = false) {
-        // Validate input file exists
         if (!File.Exists(inputPath)) {
-            Console.WriteLine($"The specified BCD file '{inputPath}' does not exist.");
+            Console.Error.WriteLine($"The specified BCD file '{inputPath}' does not exist.");
 
-            return;
+            return FAILURE_EXIT_CODE;
         }
 
         try {
@@ -65,7 +66,7 @@ public sealed class BcdCommands {
             }
 
             // Determine output path
-            outputPath = GetOutputFilePath(inputPath, outputPath, ".json");
+            outputPath = IOUtility.ResolveOutputFilePath(inputPath, outputPath, ".json");
 
             // Create wrapper object with metadata
             var bcdInfo = new {
@@ -86,15 +87,21 @@ public sealed class BcdCommands {
             File.WriteAllText(outputPath, json);
 
             Console.WriteLine($"Successfully converted '{Path.GetFileName(inputPath)}' to JSON: '{outputPath}'");
+
+            return 0;
         }
         catch (InvalidDataException ex) {
-            Console.WriteLine($"Invalid BCD file format: {ex.Message}");
+            Console.Error.WriteLine($"Invalid BCD file format: {ex.Message}");
+
+            return FAILURE_EXIT_CODE;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Failed to parse BCD file: {ex.Message}");
+            Console.Error.WriteLine($"Failed to parse BCD file: {ex.Message}");
             if (verbose) {
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
             }
+
+            return FAILURE_EXIT_CODE;
         }
     }
 
@@ -105,14 +112,14 @@ public sealed class BcdCommands {
     /// <param name="outputPath">The path where to save the BCD output. Defaults to the input path with .bcd extension.</param>
     /// <param name="verbose">Enable verbose output.</param>
     [Command("create", Description = "Create a BCD file from a JSON file that was previously exported.")]
-    public void CreateBcdFile(
+    public int CreateBcdFile(
         [Argument(Description = "The path to the JSON file to convert back to BCD.")] string inputPath,
         [Argument(Description = "The path where to save the BCD output.")] string outputPath = ".",
         [Option("verbose", Description = "Enable verbose output.")] bool verbose = false) {
-        // Validate input file exists
         if (!File.Exists(inputPath)) {
-            Console.WriteLine($"The specified JSON file '{inputPath}' does not exist.");
-            return;
+            Console.Error.WriteLine($"The specified JSON file '{inputPath}' does not exist.");
+
+            return FAILURE_EXIT_CODE;
         }
         try {
             var jsonOptions = new JsonSerializerOptions {
@@ -137,19 +144,25 @@ public sealed class BcdCommands {
                 Console.WriteLine($"Loaded {bcd.Collisions.Count} collision objects from JSON");
             }
             // Determine output path
-            outputPath = GetOutputFilePath(inputPath, outputPath, ".bcd");
+            outputPath = IOUtility.ResolveOutputFilePath(inputPath, outputPath, ".bcd");
             // Write BCD file
             bcd.WriteToFile(outputPath);
             Console.WriteLine($"Successfully created BCD file '{outputPath}' from '{Path.GetFileName(inputPath)}'");
+
+            return 0;
         }
         catch (JsonException ex) {
-            Console.WriteLine($"Invalid JSON format: {ex.Message}");
+            Console.Error.WriteLine($"Invalid JSON format: {ex.Message}");
+
+            return FAILURE_EXIT_CODE;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Failed to create BCD file: {ex.Message}");
+            Console.Error.WriteLine($"Failed to create BCD file: {ex.Message}");
             if (verbose) {
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
             }
+
+            return FAILURE_EXIT_CODE;
         }
     }
 
@@ -158,12 +171,11 @@ public sealed class BcdCommands {
     /// </summary>
     /// <param name="inputPath">The path to the BCD file to inspect.</param>
     [Command("info", Description = "Display information about a BCD file without converting it.")]
-    public void ShowBcdInfo([Argument(Description = "The path to the BCD file to inspect.")] string inputPath) {
-        // Validate input file exists
+    public int ShowBcdInfo([Argument(Description = "The path to the BCD file to inspect.")] string inputPath) {
         if (!File.Exists(inputPath)) {
-            Console.WriteLine($"The specified BCD file '{inputPath}' does not exist.");
+            Console.Error.WriteLine($"The specified BCD file '{inputPath}' does not exist.");
 
-            return;
+            return FAILURE_EXIT_CODE;
         }
 
         try {
@@ -223,29 +235,14 @@ public sealed class BcdCommands {
                 Console.WriteLine($"  Average vertices per mesh: {avgVertices:F1}");
                 Console.WriteLine($"  Average faces per mesh: {avgFaces:F1}");
             }
+
+            return 0;
         }
         catch (Exception ex) {
-            Console.WriteLine($"Failed to read BCD file: {ex.Message}");
-        }
-    }
+            Console.Error.WriteLine($"Failed to read BCD file: {ex.Message}");
 
-    /// <summary>
-    /// Determines the output file path based on input path and user-specified output.
-    /// </summary>
-    private static string GetOutputFilePath(string inputPath, string outputPath, string newExtension) {
-        if (outputPath == ".") {
-            // Use input path but change extension
-            return Path.ChangeExtension(inputPath, newExtension);
+            return FAILURE_EXIT_CODE;
         }
-
-        if (Directory.Exists(outputPath)) {
-            // Output is a directory, use input filename with new extension
-            var fileName = Path.GetFileNameWithoutExtension(inputPath);
-            return Path.Combine(outputPath, fileName + newExtension);
-        }
-
-        // Use the specified output path as-is
-        return outputPath;
     }
 
 }

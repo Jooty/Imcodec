@@ -18,7 +18,6 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
-using System;
 using System.Collections.Concurrent;
 using Cocona;
 using Imcodec.Wad;
@@ -27,60 +26,56 @@ namespace Imcodec.Cli;
 
 public sealed class ArchiveCommands {
 
+    private const int FAILURE_EXIT_CODE = 1;
     private static readonly List<string> s_deserExtIncludeList = ["xml", "bin", "bcd"];
 
     /// <summary>
-    /// Unpacks the given archive file to the specified output directory.
+    /// Unpacks the given archive file to the specified output directory. When the output path is omitted
+    /// the archive is extracted to a folder named after it, beside it.
     /// </summary>
-    /// <param name="archivePath">The path to the archive file.</param>
-    /// <param name="outputPath">The path to the output directory.</param>
-    /// <remarks>
-    /// If the output path is not specified, the current directory will be used.
-    /// </remarks>
     [Command("unpack")]
-    public void UnpackArchive(
+    public int UnpackArchive(
             [Argument(Description = "The path to the archive file.")] string archivePath,
             [Argument(Description = "The path to the output directory")] string outputPath = ".",
             [Option("deser", Description = "Attempt deserialization of archive files")] bool attemptDeserialization = false,
             [Option("verbose", Description = "Enable verbose output. Note that for larger archives, "
                 + "this can tremendously decrease performance.")] bool verbose = false) {
-        // Validate that a file exists at the given path. We'll also begin parsing the file as if it was
-        // an archive. If at any point we determine that the file is not a valid archive, we'll stop and
-        // inform the user.
         if (!File.Exists(archivePath)) {
-            Console.WriteLine($"The specified archive file '{archivePath}' does not exist.");
-            return;
+            Console.Error.WriteLine($"The specified archive file '{archivePath}' does not exist.");
+
+            return FAILURE_EXIT_CODE;
         }
 
-        // Read the file data and parse it as an archive. If the file is not a valid archive, we'll inform
-        // the user and stop.
-        var fileData = File.ReadAllBytes(archivePath);
-        Archive archive;
-        using var archiveStream = new MemoryStream(fileData);
+        // The archive is streamed, not read whole into memory: a root archive is hundreds of megabytes and
+        // entries are inflated lazily. The stream must stay open for the duration of the extraction.
+        using var archiveStream = File.OpenRead(archivePath);
+        Archive? archive;
         try {
-            archive = ArchiveParser.Parse(archiveStream)!;
-            if (archive == null) {
-                Console.WriteLine("The specified archive file is not a valid WAD archive.");
-                return;
-            }
+            archive = ArchiveParser.Parse(archiveStream);
         }
         catch (InvalidArchiveFormatException) {
-            Console.WriteLine("The specified archive file is not a valid WAD archive.");
-            return;
+            Console.Error.WriteLine("The specified archive file is not a valid WAD archive.");
+
+            return FAILURE_EXIT_CODE;
+        }
+
+        if (archive == null) {
+            Console.Error.WriteLine("The specified archive file is not a valid WAD archive.");
+
+            return FAILURE_EXIT_CODE;
         }
 
         var archiveName = IOUtility.ExtractFileName(archivePath);
 
-        // If the output directory does not exist, create it.
         outputPath = GetOutputDirectory(archivePath, outputPath, archiveName!);
-        if (!Directory.Exists(outputPath)) {
-            _ = Directory.CreateDirectory(outputPath);
-        }
+        _ = Directory.CreateDirectory(outputPath);
 
         var files = UnpackArchiveFiles(archive);
         WriteArchiveFilesToDisk(files, outputPath, attemptDeserialization, verbose);
 
         Console.WriteLine($"Successfully extracted '{archiveName}' to '{outputPath}'.");
+
+        return 0;
     }
 
     public static Dictionary<FileEntry, byte[]?> UnpackArchiveFiles(Archive archive) {

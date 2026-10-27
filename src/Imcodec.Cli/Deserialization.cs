@@ -77,11 +77,11 @@ public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
 
-    // Shared instance so Newtonsoft's per-resolver contract cache survives
-    // across serialization calls. A fresh resolver per call re-reflects every
-    // type in the object graph on every file, which is catastrophic in bulk.
     private static readonly JsonSerializerOptions s_jsonOptions = CreateJsonSerializerOptions();
     private static JsonSerializerOptions CreateJsonSerializerOptions() {
+        // A single shared resolver instance so the contract cache survives across serialization calls; a
+        // fresh resolver per call re-reflects every type in the object graph on every file, which is
+        // catastrophic in bulk.
         var resolver = new DefaultJsonTypeInfoResolver();
         resolver.Modifiers.Add(BaseFirstTypeResolver.OrderProperties);
         return new JsonSerializerOptions {
