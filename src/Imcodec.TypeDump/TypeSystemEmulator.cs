@@ -27,6 +27,12 @@ using UnicornEngine.Const;
 
 namespace Imcodec.TypeDump;
 
+/// <summary>
+/// Runs chosen functions from the client binary under a CPU emulator, faking just enough of the
+/// Windows x64 runtime - a bump heap, a thread environment block, and a handful of C runtime and
+/// kernel imports - for the type-registration code to run so its results can be read back out of
+/// emulated memory. Imports we do not model are answered by managed stand-ins (see OnTrap).
+/// </summary>
 internal sealed partial class TypeSystemEmulator : IDisposable {
 
     private const long TRAP_BASE = 0x1000_0000;
@@ -93,13 +99,10 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
     public long InstructionBudget { get; set; } = DEFAULT_INSTRUCTION_BUDGET;
 
     public ClientImage Exe { get; }
-
     public ClientImage Runtime { get; }
 
     public Dictionary<string, int> UnknownImports { get; } = [];
-
     public Dictionary<ulong, string> Failures { get; } = [];
-
     public List<string> UnmappedAccesses { get; } = [];
 
     public Func<string, byte[]?>? AssetProvider { get; set; }
@@ -110,6 +113,9 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
         _trapHook = OnTrap;
         _unmappedHook = OnUnmapped;
 
+        // Every import we do not provide is pointed at a unique address in this region. It is filled
+        // with `ret` so a stray fall-through is harmless, and a code hook turns each entry into a call
+        // to the matching managed stand-in in OnTrap.
         _unicorn.MemMap(TRAP_BASE, TRAP_REGION_SIZE, Common.UC_PROT_ALL);
         _unicorn.MemWrite(TRAP_BASE, Enumerable.Repeat((byte) 0xC3, (int) TRAP_REGION_SIZE).ToArray());
         _unicorn.MemMap(HEAP_BASE, HEAP_SIZE, Common.UC_PROT_ALL);
@@ -125,6 +131,10 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
         _unicorn.AddEventMemHook(_unmappedHook, Common.UC_HOOK_MEM_UNMAPPED, null);
     }
 
+    /// <summary>
+    /// Finds the C runtime library the client shipped. We run its real code rather than faking it, so
+    /// the exact copy that sits beside the client is required.
+    /// </summary>
     public static string FindRuntimeLibrary(string binDirectory)
         => Directory.EnumerateFiles(binDirectory)
             .FirstOrDefault(f => Path.GetFileName(f).Equals(RUNTIME_LIBRARY_FILE_NAME, StringComparison.OrdinalIgnoreCase))
@@ -141,14 +151,24 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
         return result;
     }
 
+    /// <summary>
+    /// Redirects the client's asset-request function to a managed handler, so emulated code that asks
+    /// for a file is answered from the real archives through <see cref="AssetProvider"/>.
+    /// </summary>
     public void InterceptAssetRequests(ulong requestFunction) {
         var slot = _nextTrap;
         _nextTrap += TRAP_SLOT_SIZE;
         _interceptors[slot] = ServeAssetRequest;
+
+        // Overwrite the function's first bytes with a `jmp [rip+0]` into the trap slot above it.
         byte[] jump = [0xFF, 0x25, 0, 0, 0, 0, .. BitConverter.GetBytes(slot)];
         WriteBytes(requestFunction, jump);
     }
 
+    /// <summary>
+    /// Hands out a fresh, aligned heap block. The heap only ever grows; nothing is freed, which is fine
+    /// for the short-lived registration run.
+    /// </summary>
     public ulong Allocate(long size) {
         var aligned = (size + HEAP_ALLOCATION_ALIGNMENT - 1) & ~(long) (HEAP_ALLOCATION_ALIGNMENT - 1);
         var address = (ulong) _heapTop;
@@ -187,6 +207,7 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
             try {
                 chunk = ReadBytes(address + (ulong) text.Count, CSTRING_CHUNK_SIZE);
             } catch (UnicornEngineException) {
+                // A whole chunk can run off the end of mapped memory; creep forward a byte at a time.
                 chunk = ReadBytes(address + (ulong) text.Count, 1);
             }
 
@@ -208,6 +229,8 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
             return string.Empty;
         }
 
+        // std::string keeps short text inline and only spills to a heap buffer once its capacity grows
+        // past the small-buffer limit; the capacity tells us which layout we are looking at.
         var capacity = U64(address + STD_STRING_CAPACITY_OFFSET);
         var data = capacity >= STD_STRING_SMALL_BUFFER_SIZE ? U64(address) : address;
         return Encoding.Latin1.GetString(ReadBytes(data, size));
@@ -236,6 +259,8 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
             _unicorn.RegWrite(argumentRegisters[i], (long) arguments[i]);
         }
 
+        // Plant a sentinel return address on the stack so the call returns into our stop point, which
+        // is how a successful run ends rather than by exhausting the instruction budget.
         var stackPointer = STACK_BASE + STACK_SIZE - STACK_TOP_MARGIN - 8;
         _unicorn.MemWrite(stackPointer, BitConverter.GetBytes(STOP_ADDRESS));
         _unicorn.RegWrite(X86.UC_X86_REG_RSP, stackPointer);
@@ -268,6 +293,8 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
     private void BindImports(ClientImage image, bool preferRuntimeExports) {
         foreach (var import in image.Imports) {
             long target;
+            // Where the client imports from its own runtime library, point the slot at that library's
+            // real exported code so we execute it instead of a stand-in; everything else gets a trap.
             if (preferRuntimeExports
                     && import.Dll.Equals(RUNTIME_LIBRARY_FILE_NAME, StringComparison.OrdinalIgnoreCase)
                     && Runtime.Exports.TryGetValue(import.Name, out var exportRva)) {
@@ -283,6 +310,8 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
     }
 
     private void BuildThreadEnvironment() {
+        // The runtime reads thread-local state through gs: a self-pointer, the TLS array, and the
+        // module's TLS template copied in so static initializers find their initialized data.
         var tls = Exe.Tls;
         var tlsArray = Allocate(64);
         if (tls is { } template) {
@@ -303,6 +332,8 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
             UnmappedAccesses.Add($"{address:x} at {unicorn.RegRead(X86.UC_X86_REG_RIP):x}");
         }
 
+        // Returning false lets the access fault and stops the run, rather than mapping a page to hide a
+        // genuine mistake in which function we chose to emulate.
         return false;
     }
 
@@ -317,6 +348,9 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
             return;
         }
 
+        // Hand the file back the way the client's loader returns it: a buffer pointer and a null second
+        // field in the out struct, the length through the out-size pointer, and the by-reference size
+        // argument on the stack cleared. A nonzero result means success.
         var buffer = Allocate(contents.Length + 1);
         WriteBytes(buffer, [.. contents, 0]);
         WriteBytes(outData, BitConverter.GetBytes(buffer));
@@ -327,6 +361,9 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
     }
 
     private void OnTrap(Unicorn unicorn, long address, int size, object? user) {
+        // Execution reached the trap region. A registered interceptor handles a specific slot;
+        // otherwise this stands in for the imported function recorded at this address, emulating just
+        // the behaviour the registration code depends on and leaving the result in rax.
         if (_interceptors.TryGetValue(address, out var interceptor)) {
             interceptor(unicorn);
             return;
@@ -393,6 +430,8 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
 
             SetResult((ulong) text.Length);
         } else if (SUCCEED_IMPORTS.Contains(name)) {
+            // These only need to look successful; the CRT onexit helpers and atexit report that as 0,
+            // the Win32 synchronisation calls as 1.
             SetResult(name.StartsWith('_') || name == "atexit" ? 0UL : 1UL);
         } else if (FATAL_IMPORTS.Contains(name)) {
             _fatalImport = name;
@@ -407,6 +446,8 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
     }
 
     private string FormatC(string format, ulong argumentList) {
+        // A minimal printf covering only the conversions the client's log format strings actually use,
+        // reading arguments straight from the emulated variadic list.
         var output = new StringBuilder();
         var position = 0;
         var slot = argumentList;

@@ -26,6 +26,10 @@ using Iced.Intel;
 
 namespace Imcodec.TypeDump;
 
+/// <summary>
+/// Reads the registered type system out of the emulated client memory - each type's name, hash, base
+/// classes, and properties - and turns it into the JSON manifest, checking the result as it goes.
+/// </summary>
 internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
 
     private const int NODE_LEFT_OFFSET = 0x0;
@@ -66,7 +70,6 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
     private readonly Dictionary<ulong, (string? Name, bool? Dynamic)> _accessorCache = [];
 
     public List<string> Problems { get; } = [];
-
     public SortedSet<string> EnumTypesWithoutOptions { get; } = [];
 
     public JsonDumpManifest Walk(ulong nameRegistryGetter) {
@@ -87,6 +90,8 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
     }
 
     private List<ulong> CollectTypes(ulong head) {
+        // The registry is a red-black tree (a std::map). Walk it iteratively from the root, skipping the
+        // shared nil sentinel the leaves point at.
         var types = new List<ulong>();
         var seen = new HashSet<ulong>();
         var pending = new Stack<ulong>();
@@ -117,10 +122,12 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
             return @class;
         }
 
+        // Each property list points at its parent's list; follow the chain to name the base classes.
         for (var parent = emulator.U64(list + LIST_PARENT_OFFSET); parent != 0; parent = emulator.U64(parent + LIST_PARENT_OFFSET)) {
             @class.BaseClasses.Add(emulator.StdString(parent + LIST_NAME_OFFSET));
         }
 
+        // The properties are a contiguous vector between the begin and end pointers.
         var begin = emulator.U64(list + LIST_PROPERTIES_BEGIN_OFFSET);
         var end = emulator.U64(list + LIST_PROPERTIES_END_OFFSET);
         for (var slot = begin; slot < end; slot += PROPERTY_LIST_ENTRY_SIZE) {
@@ -151,6 +158,7 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
             Problems.Add($"unreadable container for a property of type {typeName}");
         }
 
+        // An enum property carries its options inline, each a label paired with a value held as text.
         var begin = emulator.U64(property + PROPERTY_OPTIONS_BEGIN_OFFSET);
         var end = emulator.U64(property + PROPERTY_OPTIONS_END_OFFSET);
         if (begin != 0) {
@@ -169,6 +177,10 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
             return (null, null);
         }
 
+        // The container name and the dynamic flag are not stored as data; they are baked into two of the
+        // accessor's vtable methods. Recover them by decoding each method's first instruction: the name
+        // getter opens with a rip-relative lea of the string, and the dynamic check opens by loading its
+        // constant answer (mov r8, imm8, or xor to mean false). Cache per vtable, since many share one.
         var vtable = emulator.U64(accessor);
         if (_accessorCache.TryGetValue(vtable, out var cached)) {
             return cached;
@@ -195,6 +207,8 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
     }
 
     private void Verify(List<JsonDumpClass> classes) {
+        // Sanity-check the read: a plausible count, the root class present, and every hash recomputable
+        // from its name. A failure here means we followed a wrong offset, so the caller aborts the dump.
         if (classes.Count < MINIMUM_PLAUSIBLE_TYPE_COUNT) {
             Problems.Add($"only {classes.Count} types were registered");
         }
@@ -221,6 +235,8 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
     }
 
     private static object ToWizTypeEnumValue(string text, uint storedValue) {
+        // The option value is stored as text. Return it as a number when that text is an integer literal
+        // (wrapped to 32 bits), otherwise keep the text; empty text falls back to the stored number.
         if (text.Length == 0) {
             return storedValue;
         }

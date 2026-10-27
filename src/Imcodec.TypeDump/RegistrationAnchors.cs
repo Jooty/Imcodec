@@ -23,6 +23,12 @@ using Iced.Intel;
 
 namespace Imcodec.TypeDump;
 
+/// <summary>
+/// Locates, by scanning the executable's code and tables rather than by any fixed address, the few
+/// entry points the emulator needs: the static initializer table, the per-type getter stubs, the
+/// type-name registry getter, and the initializer that fills runtime enum options. Scanning instead
+/// of hard-coding addresses keeps the dumper working across client patches.
+/// </summary>
 internal sealed class RegistrationAnchors {
 
     private const string STATIC_INITIALIZER_TABLE_IMPORT = "_initterm";
@@ -89,6 +95,10 @@ internal sealed class RegistrationAnchors {
         }
     }
 
+    /// <summary>
+    /// Returns every near-call site and its target in a code range. This is a raw opcode scan, so it
+    /// can match a 0xE8 byte that is really operand data; callers lean on frequency to drown out the noise.
+    /// </summary>
     public List<(uint Offset, uint Target)> NearCalls(uint beginRva, uint endRva) {
         var calls = new List<(uint Offset, uint Target)>();
         var memory = _exe.Memory.AsSpan();
@@ -117,6 +127,9 @@ internal sealed class RegistrationAnchors {
             ? functionEnd
             : mainRva + MAIN_FUNCTION_FALLBACK_LENGTH;
 
+        // Startup calls _initterm(begin, end) to run the static initializers. Walk the startup function
+        // tracking the addresses the last lea loads into rcx and rdx, and grab them as the table bounds
+        // at the point execution reaches the call through the _initterm import thunk.
         ulong rcx = 0, rdx = 0;
         foreach (var instruction in Decode(mainRva, endRva)) {
             if (instruction.Code == Code.Lea_r64_m && instruction.MemoryBase == Register.RIP) {
@@ -141,6 +154,7 @@ internal sealed class RegistrationAnchors {
     private uint FollowEntryPointJump() {
         var rva = _exe.EntryPointRva;
         foreach (var instruction in Decode(rva, rva + ENTRY_POINT_DECODE_LIMIT * 8).Take(ENTRY_POINT_DECODE_LIMIT)) {
+            // The PE entry point is a short thunk that jumps to the real startup function; follow it.
             if (instruction.FlowControl == FlowControl.UnconditionalBranch && instruction.Op0Kind == OpKind.NearBranch64) {
                 return (uint) (instruction.NearBranchTarget - _exe.Base);
             }
@@ -150,6 +164,8 @@ internal sealed class RegistrationAnchors {
     }
 
     private uint? ImportSlotBehindThunk(uint thunkRva) {
+        // An import thunk is `jmp [rip+disp]` (FF 25); resolve the rip-relative displacement to the
+        // import slot it reads, or give up if the bytes are not that thunk.
         if (thunkRva + JUMP_THROUGH_IMPORT_LENGTH > _exe.Memory.Length
                 || _exe.Memory[thunkRva] != 0xFF || _exe.Memory[thunkRva + 1] != 0x25) {
             return null;
@@ -161,6 +177,8 @@ internal sealed class RegistrationAnchors {
     private void FindStubsAndInitialize() {
         var entries = ReadTable(InitializerTable).ToList();
         InitializerSlotCount = entries.Count;
+        // A getter stub has the fixed shape `sub rsp,28 / call <shared> / add rsp,28 / jmp <getter>`.
+        // Match it by those bytes, then read the shared callee it calls and the getter it tails into.
         var sharedCallees = new Dictionary<ulong, int>();
         var targets = new HashSet<ulong>();
         foreach (var entry in entries) {
@@ -184,6 +202,9 @@ internal sealed class RegistrationAnchors {
         StubSharedCallee = sharedCallees.MaxBy(p => p.Value).Key;
         StubTargets = [.. targets.Order()];
 
+        // Nearly every stub target calls the same handful of helpers. Of those, the one reached from the
+        // fewest call sites across the image is the property-list initializer, because only real getters
+        // call it; its call sites are then the getters the stubs did not already point us at.
         var calleeFrequency = new Dictionary<uint, int>();
         foreach (var target in StubTargets) {
             var targetRva = (uint) (target - _exe.Base);
@@ -222,6 +243,9 @@ internal sealed class RegistrationAnchors {
     }
 
     private void FindNameRegistryGetter() {
+        // The call that fetches the type-name registry is followed by a recognisable signature: a
+        // `mov rbp, imm64` (48 BD) and, ten bytes on, a fixed compare-and-branch tail. Count the calls
+        // whose return site carries it; the most frequent target is the getter.
         var hits = new Dictionary<uint, int>();
         foreach (var section in _exe.Sections.Where(s => s.Executable)) {
             foreach (var (site, target) in NearCalls(section.Rva, section.Rva + section.Size)) {
@@ -245,6 +269,9 @@ internal sealed class RegistrationAnchors {
     }
 
     private void FindRuntimeEnumInitializer() {
+        // The initializer that fills runtime enum options logs its own symbol name on entry. Find that
+        // string literal, then the functions that load its address with a rip-relative lea; the one we
+        // want is whichever of them also calls the asset loader (FindAssetRequestCallee).
         var needle = System.Text.Encoding.ASCII.GetBytes(RACE_INITIALIZER_LOGGED_FUNCTION_NAME + "\0");
         var literals = new HashSet<uint>();
         var memory = _exe.Memory.AsSpan();
@@ -269,6 +296,8 @@ internal sealed class RegistrationAnchors {
 
                 var site = offset + found;
                 offset = site + 1;
+                // Keep only a real rip-relative lea: REX.W or REX.R prefix (48/4C) and a modrm whose
+                // mod/rm bits select [rip+disp32] (the low bits are 05).
                 if (code[site] is not (0x48 or 0x4C) || (code[site + 2] & 0xC7) != 0x05) {
                     continue;
                 }
@@ -294,6 +323,8 @@ internal sealed class RegistrationAnchors {
             return null;
         }
 
+        // The asset loader is called with the data-file name moved into rcx from a rip-relative global,
+        // so return the first call that a recent `mov rcx, [rip+...]` sets up.
         var recent = new Queue<Instruction>();
         foreach (var instruction in Decode(begin, end)) {
             if (instruction.FlowControl == FlowControl.Call && instruction.Op0Kind == OpKind.NearBranch64

@@ -24,6 +24,10 @@ using System.Text;
 
 namespace Imcodec.TypeDump;
 
+/// <summary>
+/// A PE executable loaded into a flat image addressed by RVA, exposing the imports, exports,
+/// thread-local storage template, and the function boundaries recorded in its exception table.
+/// </summary>
 internal sealed class ClientImage {
 
     private const int RUNTIME_FUNCTION_SIZE = 12;
@@ -78,6 +82,8 @@ internal sealed class ClientImage {
             ?? throw new InvalidDataException($"{path} is not a PE image.");
         var memory = new byte[optional.SizeOfImage];
         Array.Copy(file, memory, System.Math.Min(optional.SizeOfHeaders, file.Length));
+        // A section's raw data can be shorter than the space it occupies in memory, or be truncated at
+        // the end of the file; copy only the bytes that are actually present and leave the rest zeroed.
         foreach (var section in headers.SectionHeaders) {
             var length = System.Math.Min(section.SizeOfRawData, section.VirtualSize == 0 ? section.SizeOfRawData : section.VirtualSize);
             if (section.PointerToRawData + length > file.Length) {
@@ -101,6 +107,10 @@ internal sealed class ClientImage {
         return Encoding.Latin1.GetString(Memory, (int) rva, end - (int) rva);
     }
 
+    /// <summary>
+    /// Finds the bounds of the function containing <paramref name="rva"/> from the exception table,
+    /// resolving a fragment back to the primary function that owns it.
+    /// </summary>
     public bool TryFindFunction(uint rva, out uint begin, out uint end) {
         begin = end = 0;
         var index = Array.BinarySearch(_functionBegins, rva);
@@ -112,6 +122,10 @@ internal sealed class ClientImage {
             return false;
         }
 
+        // The compiler splits some functions into separate table entries whose unwind info chains back
+        // to the primary one. Follow that chain (bounded, in case the data is malformed) so callers see
+        // the whole function. The chained-info pointer sits past the variable-length unwind codes, which
+        // are padded to an even count.
         for (var hops = 0; hops < 16; hops++) {
             var unwind = _functionUnwinds[index];
             if (unwind == 0 || (Memory[unwind] >> 3 & UNWIND_FLAG_CHAIN_INFO) == 0) {
@@ -139,6 +153,9 @@ internal sealed class ClientImage {
             return imports;
         }
 
+        // Each descriptor names a dll and two parallel thunk arrays: the names to resolve and the slots
+        // the loader writes the addresses into. An entry is either an ordinal (top bit set) or a pointer
+        // to the name, which follows a two-byte hint.
         for (var descriptor = directoryRva; U32(descriptor + 12) != 0; descriptor += IMPORT_DESCRIPTOR_SIZE) {
             var dll = CString(U32(descriptor + 12));
             var nameThunks = U32(descriptor) != 0 ? U32(descriptor) : U32(descriptor + 16);
@@ -161,6 +178,8 @@ internal sealed class ClientImage {
             return exports;
         }
 
+        // Offsets into the export directory: the name count, and the parallel function, name, and
+        // ordinal tables. Each name resolves through its ordinal to a function RVA.
         var nameCount = U32(directoryRva + 24);
         var functions = U32(directoryRva + 28);
         var names = U32(directoryRva + 32);
@@ -179,6 +198,8 @@ internal sealed class ClientImage {
             : new TlsTemplate(U64(directoryRva), U64(directoryRva + 8), U64(directoryRva + 16), U32(directoryRva + 32));
 
     private (uint[] Begins, uint[] Ends, uint[] Unwinds) ReadFunctionTable(uint directoryRva, uint size) {
+        // The exception table is an array of RUNTIME_FUNCTION records (begin, end, unwind-info RVAs).
+        // Read them into parallel arrays sorted by begin so TryFindFunction can binary-search them.
         var count = (int) (size / RUNTIME_FUNCTION_SIZE);
         var entries = new (uint Begin, uint End, uint Unwind)[count];
         for (var i = 0; i < count; i++) {

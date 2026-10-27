@@ -25,6 +25,11 @@ using Imcodec.Wad;
 
 namespace Imcodec.TypeDump;
 
+/// <summary>
+/// Extracts the client's property-class type system straight from its executable: it emulates the
+/// startup code that registers every type, then walks the registry left behind in emulated memory
+/// and writes it out as the JSON manifest the code generator consumes.
+/// </summary>
 public static class TypeDumper {
 
     private const int JSON_INDENT_SIZE = 2;
@@ -33,12 +38,17 @@ public static class TypeDumper {
     private const string BINARY_DIRECTORY_NAME = "Bin";
     private const string EXECUTABLE_FILE_PATTERN = "*.exe";
 
+    /// <summary>
+    /// Produces the type manifest for the client installed at <paramref name="clientDirectory"/>.
+    /// Progress and any emulation failures are reported to <paramref name="log"/>.
+    /// </summary>
     public static JsonDumpManifest Dump(string clientDirectory, TextWriter? log = null) {
         var binDirectory = Path.Combine(clientDirectory, BINARY_DIRECTORY_NAME);
         if (!Directory.Exists(binDirectory)) {
             binDirectory = clientDirectory;
         }
 
+        // The game client is the largest executable in the folder; smaller helpers sit beside it.
         var executable = new DirectoryInfo(binDirectory).EnumerateFiles(EXECUTABLE_FILE_PATTERN)
             .OrderByDescending(f => f.Length)
             .FirstOrDefault()
@@ -49,6 +59,8 @@ public static class TypeDumper {
         log?.WriteLine($"initializer slots {anchors.InitializerSlotCount}, getter stubs {anchors.StubCount}, " +
             $"stub targets {anchors.StubTargets.Length}, getters {anchors.AllGetters.Length}");
 
+        // The static initializers register every type and its properties; the getters that follow
+        // fill in the per-type detail the initializers leave for first access.
         using var emulator = new TypeSystemEmulator(exe, runtime);
         var started = DateTime.UtcNow;
         foreach (var function in anchors.ReadTable(anchors.InitializerTable)) {
@@ -65,6 +77,9 @@ public static class TypeDumper {
             log?.WriteLine($"  failed {function:x}: {reason}");
         }
 
+        // One initializer loads its enum options from a data file instead of hard-coding them, so it
+        // needs the client's archives. Bridge its asset requests to the real files on disk and give it
+        // a far larger instruction budget, since it parses a whole document rather than a few structs.
         if (anchors.RuntimeEnumInitializer is { } initializer && anchors.AssetRequestFunction is { } request) {
             emulator.AssetProvider = name => FindArchivedFile(clientDirectory, name);
             emulator.InterceptAssetRequests(request);
@@ -86,6 +101,10 @@ public static class TypeDumper {
         return manifest;
     }
 
+    /// <summary>
+    /// Writes <paramref name="manifest"/> to <paramref name="stream"/>. The relaxed encoder and the
+    /// explicit newline reproduce the manifest format exactly, so the output can be diffed byte for byte.
+    /// </summary>
     public static void WriteJson(JsonDumpManifest manifest, Stream stream, string newLine = "\n") {
         using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions {
             Indented = true,
@@ -121,6 +140,8 @@ public static class TypeDumper {
     }
 
     private static byte[]? FindArchivedFile(string clientDirectory, string name) {
+        // Shortest archive name first, then ordinal, so the same file wins no matter how the
+        // filesystem happens to order the enumeration.
         var archives = Directory.EnumerateFiles(clientDirectory, ARCHIVE_FILE_PATTERN, SearchOption.AllDirectories)
             .OrderBy(path => Path.GetFileName(path).Length)
             .ThenBy(path => path, StringComparer.Ordinal);
