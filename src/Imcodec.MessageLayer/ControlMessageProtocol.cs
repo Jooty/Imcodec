@@ -51,11 +51,18 @@ public class ControlMessageProtocol : MessageProtocol {
         public int TimestampLower { get; set; }
         public uint Milliseconds { get; set; }
 
+        /// <summary>
+        /// The signed crypto block followed by its signature, or a single byte when the session stays unencrypted.
+        /// </summary>
+        public byte[] CryptoPayload { get; set; } = SessionCryptoBlocks.NO_CRYPTO_PAYLOAD;
+
         void IMessage.Encode(BitWriter writer) {
             writer.WriteUInt16(SessionId);
             writer.WriteInt32(TimestampUpper);
             writer.WriteInt32(TimestampLower);
             writer.WriteUInt32(Milliseconds);
+            writer.WriteUInt32((uint) CryptoPayload.Length);
+            writer.WriteBytes(CryptoPayload);
         }
 
         void IMessage.Decode(BitReader reader) {
@@ -63,6 +70,7 @@ public class ControlMessageProtocol : MessageProtocol {
             TimestampUpper = reader.ReadInt32();
             TimestampLower = reader.ReadInt32();
             Milliseconds = reader.ReadUInt32();
+            CryptoPayload = reader.ReadBytes((int) reader.ReadUInt32());
         }
 
     }
@@ -148,12 +156,19 @@ public class ControlMessageProtocol : MessageProtocol {
         public uint Milliseconds { get; set; }
         public ushort SessionId { get; set; }
 
+        /// <summary>
+        /// A presence flag followed by the RSA-encrypted crypto block, or a single byte when the session stays unencrypted.
+        /// </summary>
+        public byte[] CryptoPayload { get; set; } = SessionCryptoBlocks.NO_CRYPTO_PAYLOAD;
+
         void IMessage.Encode(BitWriter writer) {
             writer.WriteUInt16(Reserved1);
             writer.WriteInt32(TimestampUpper);
             writer.WriteInt32(TimestampLower);
             writer.WriteUInt32(Milliseconds);
             writer.WriteUInt16(SessionId);
+            writer.WriteUInt32((uint) CryptoPayload.Length);
+            writer.WriteBytes(CryptoPayload);
         }
 
         void IMessage.Decode(BitReader reader) {
@@ -162,6 +177,7 @@ public class ControlMessageProtocol : MessageProtocol {
             TimestampLower = reader.ReadInt32();
             Milliseconds = reader.ReadUInt32();
             SessionId = reader.ReadUInt16();
+            CryptoPayload = reader.ReadBytes((int) reader.ReadUInt32());
         }
 
     }
