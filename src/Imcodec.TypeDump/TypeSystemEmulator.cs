@@ -50,6 +50,7 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
     private const int TEB_TLS_ARRAY_OFFSET = 0x58;
     private const int TLS_EXTRA_BYTES = 64;
     private const int HEAP_ALLOCATION_ALIGNMENT = 16;
+    private const int FIRST_STACK_ARGUMENT_OFFSET = 0x28;
     private const long DEFAULT_INSTRUCTION_BUDGET = 20_000_000;
     private const int VARIADIC_ARGUMENT_LIST_STACK_OFFSET = 0x30;
     private const int STD_STRING_SIZE_OFFSET = 16;
@@ -142,6 +143,9 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
 
     public bool Run(ulong function, params ulong[] arguments)
         => Execute(function, arguments, out _);
+
+    public bool TryCall(ulong function, ulong[] arguments, ulong[] stackArguments, out ulong result)
+        => Execute(function, arguments, out result, stackArguments);
 
     public ulong Call(ulong function, params ulong[] arguments) {
         if (!Execute(function, arguments, out var result)) {
@@ -253,7 +257,7 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
     public void Dispose()
         => _unicorn.Dispose();
 
-    private bool Execute(ulong function, ulong[] arguments, out ulong result) {
+    private bool Execute(ulong function, ulong[] arguments, out ulong result, ulong[]? stackArguments = null) {
         ReadOnlySpan<int> argumentRegisters = [X86.UC_X86_REG_RCX, X86.UC_X86_REG_RDX, X86.UC_X86_REG_R8, X86.UC_X86_REG_R9];
         for (var i = 0; i < arguments.Length && i < argumentRegisters.Length; i++) {
             _unicorn.RegWrite(argumentRegisters[i], (long) arguments[i]);
@@ -263,6 +267,10 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
         // is how a successful run ends rather than by exhausting the instruction budget.
         var stackPointer = STACK_BASE + STACK_SIZE - STACK_TOP_MARGIN - 8;
         _unicorn.MemWrite(stackPointer, BitConverter.GetBytes(STOP_ADDRESS));
+        for (var i = 0; i < (stackArguments?.Length ?? 0); i++) {
+            _unicorn.MemWrite(stackPointer + FIRST_STACK_ARGUMENT_OFFSET + i * sizeof(ulong), BitConverter.GetBytes(stackArguments![i]));
+        }
+
         _unicorn.RegWrite(X86.UC_X86_REG_RSP, stackPointer);
         _fatalImport = null;
         result = 0;

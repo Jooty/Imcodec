@@ -42,7 +42,14 @@ public static class TypeDumper {
     /// Produces the type manifest for the client installed at <paramref name="clientDirectory"/>.
     /// Progress and any emulation failures are reported to <paramref name="log"/>.
     /// </summary>
-    public static JsonDumpManifest Dump(string clientDirectory, TextWriter? log = null) {
+    public static JsonDumpManifest Dump(string clientDirectory, TextWriter? log = null)
+        => Dump(clientDirectory, extended: false, log).Manifest;
+
+    /// <summary>
+    /// Like <see cref="Dump(string, TextWriter?)"/>, and when <paramref name="extended"/> is set also
+    /// reads the extra per-type and per-property detail the client keeps beyond the base manifest.
+    /// </summary>
+    public static (JsonDumpManifest Manifest, ExtendedManifest? Extended) Dump(string clientDirectory, bool extended, TextWriter? log = null) {
         var binDirectory = Path.Combine(clientDirectory, BINARY_DIRECTORY_NAME);
         if (!Directory.Exists(binDirectory)) {
             binDirectory = clientDirectory;
@@ -98,14 +105,25 @@ public static class TypeDumper {
                 $"The type dump failed its self-check ({walker.Problems.Count} problems): {string.Join("; ", walker.Problems.Take(10))}");
         }
 
-        return manifest;
+        if (!extended) {
+            return (manifest, null);
+        }
+
+        var detail = walker.ReadExtended();
+        var properties = detail.Classes.Values.SelectMany(c => c.Properties.Values).ToList();
+        log?.WriteLine($"extended: {detail.Classes.Values.Sum(c => c.Methods.Count)} methods, " +
+            $"{properties.Count(p => p.Note is not null)} notes, {properties.Count(p => p.PersistenceInfo is not null)} persistence hints, " +
+            $"{properties.Count(p => p.Default is not null)} defaults, {properties.Count(p => p.Count > 1)} static arrays, " +
+            $"{properties.Count(p => p.AlternateHashes.Count > 0)} properties with alternate hashes");
+        return (manifest, detail);
     }
 
     /// <summary>
     /// Writes <paramref name="manifest"/> to <paramref name="stream"/>. The relaxed encoder and the
     /// explicit newline reproduce the manifest format exactly, so the output can be diffed byte for byte.
+    /// When <paramref name="extended"/> is given it follows the classes as an <c>extended</c> section.
     /// </summary>
-    public static void WriteJson(JsonDumpManifest manifest, Stream stream, string newLine = "\n") {
+    public static void WriteJson(JsonDumpManifest manifest, Stream stream, string newLine = "\n", ExtendedManifest? extended = null) {
         using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions {
             Indented = true,
             IndentSize = JSON_INDENT_SIZE,
@@ -136,6 +154,10 @@ public static class TypeDumper {
         }
 
         writer.WriteEndObject();
+        if (extended is not null) {
+            WriteExtended(writer, extended);
+        }
+
         writer.WriteEndObject();
     }
 
@@ -179,6 +201,87 @@ public static class TypeDumper {
             }
 
             writer.WriteEndObject();
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteExtended(Utf8JsonWriter writer, ExtendedManifest extended) {
+        writer.WriteStartObject("extended");
+        foreach (var (key, @class) in extended.Classes) {
+            writer.WriteStartObject(key);
+            writer.WriteNumber("type_id", @class.TypeId);
+            writer.WriteNumber("size", @class.Size);
+            writer.WriteBoolean("pointer", @class.Pointer);
+            writer.WriteBoolean("reference", @class.Reference);
+            writer.WriteBoolean("singleton", @class.Singleton);
+            writer.WriteNumber("base_offset", @class.BaseOffset);
+            writer.WriteStartObject("properties");
+            foreach (var (name, property) in @class.Properties) {
+                WriteExtendedProperty(writer, name, property);
+            }
+
+            writer.WriteEndObject();
+            writer.WriteStartArray("methods");
+            foreach (var method in @class.Methods) {
+                writer.WriteStartObject();
+                writer.WriteString("name", method.Name);
+                writer.WriteString("return_type", method.ReturnType);
+                writer.WriteStartArray("arguments");
+                foreach (var argument in method.Arguments) {
+                    writer.WriteStringValue(argument);
+                }
+
+                writer.WriteEndArray();
+                writer.WriteNumber("flags", method.Flags);
+                writer.WriteString("description", method.Description);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteExtendedProperty(Utf8JsonWriter writer, string name, ExtendedProperty property) {
+        writer.WriteStartObject(name);
+        if (property.Note is not null) {
+            writer.WriteString("note", property.Note);
+        }
+
+        if (property.PersistenceInfo is not null) {
+            writer.WriteString("persistence", property.PersistenceInfo);
+        }
+
+        if (property.PrimaryKey is { } primaryKey) {
+            writer.WriteBoolean("primary_key", primaryKey);
+        }
+
+        if (property.Nullable is { } nullable) {
+            writer.WriteBoolean("nullable", nullable);
+        }
+
+        if (property.PersistenceDefault is not null) {
+            writer.WriteString("persistence_default", property.PersistenceDefault);
+        }
+
+        if (property.Default is not null) {
+            writer.WriteString("default", property.Default);
+        }
+
+        if (property.Count is { } count) {
+            writer.WriteNumber("count", count);
+        }
+
+        if (property.AlternateHashes.Count > 0) {
+            writer.WriteStartArray("alternate_hashes");
+            foreach (var hash in property.AlternateHashes) {
+                writer.WriteNumberValue(hash);
+            }
+
+            writer.WriteEndArray();
         }
 
         writer.WriteEndObject();

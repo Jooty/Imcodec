@@ -75,6 +75,7 @@ internal sealed partial class TypeRegistryWalker(TypeSystemEmulator emulator) {
     public JsonDumpManifest Walk(ulong nameRegistryGetter) {
         var registry = emulator.Call(nameRegistryGetter);
         var types = CollectTypes(emulator.U64(registry));
+        TypeAddresses = types;
         var classes = new List<JsonDumpClass>();
         foreach (var type in types) {
             classes.Add(ReadClass(type));
