@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.BCD", "src\Imcodec.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.TypeDump", "src\Imcodec.TypeDump\Imcodec.TypeDump.csproj", "{98343D9E-6565-4452-8908-14BB4081CD6B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Proxy", "src\Imcodec.Proxy\Imcodec.Proxy.csproj", "{5D924993-DBA9-44D5-B190-9239B2E11EA1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -113,6 +115,10 @@ Global
 		{98343D9E-6565-4452-8908-14BB4081CD6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98343D9E-6565-4452-8908-14BB4081CD6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98343D9E-6565-4452-8908-14BB4081CD6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D924993-DBA9-44D5-B190-9239B2E11EA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D924993-DBA9-44D5-B190-9239B2E11EA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D924993-DBA9-44D5-B190-9239B2E11EA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D924993-DBA9-44D5-B190-9239B2E11EA1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
