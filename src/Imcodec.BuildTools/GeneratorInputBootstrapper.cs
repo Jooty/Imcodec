@@ -38,6 +38,7 @@ public static class GeneratorInputBootstrapper {
     private const string MESSAGE_DEFINITION_FILE_PATTERN = "*Messages*.xml";
     private const string PROTOCOL_SERVICE_ID_ELEMENT_NAME = "ServiceID";
     private const char WORLD_ARCHIVE_NAME_SEPARATOR = '-';
+    private const string TYPE_DUMP_FILE_NAME = "typedump.json";
     private static readonly byte[] EXCLUDED_PROTOCOL_SERVICE_IDS = [1, 19];
 
     /// <summary>
@@ -90,7 +91,13 @@ public static class GeneratorInputBootstrapper {
     public static string DumpTypes(string clientDirectory, string outputDirectory) {
         _ = Directory.CreateDirectory(outputDirectory);
 #if IMCODEC_TYPEDUMP_AVAILABLE
-        return Imcodec.TypeDump.TypeDumper.Dump(clientDirectory, outputDirectory);
+        var manifest = Imcodec.TypeDump.TypeDumper.Dump(clientDirectory);
+        var dumpPath = Path.Combine(outputDirectory, TYPE_DUMP_FILE_NAME);
+        using (var dumpStream = File.Create(dumpPath)) {
+            Imcodec.TypeDump.TypeDumper.WriteJson(manifest, dumpStream);
+        }
+
+        return dumpPath;
 #else
         _ = clientDirectory;
         throw new NotSupportedException(
