@@ -3,7 +3,7 @@
     "path": "Imcodec.sln",
     "projects": [
       "src\\Imcodec.BCD\\Imcodec.BCD.csproj",
-      "src\\Imcodec.Bootstrap\\Imcodec.Bootstrap.csproj",
+      "src\\Imcodec.BuildTools\\Imcodec.BuildTools.csproj",
       "src\\Imcodec.Cryptography\\Imcodec.Cryptography.csproj",
       "src\\Imcodec.IO\\Imcodec.IO.csproj",
       "src\\Imcodec.Math\\Imcodec.Math.csproj",

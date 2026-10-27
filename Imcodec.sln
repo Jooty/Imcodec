@@ -33,7 +33,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.MessageLayer.CodeGe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.POI", "src\Imcodec.POI\Imcodec.POI.csproj", "{C167FB44-3F22-4E2D-B7A1-206A72A23FE9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.Bootstrap", "src\Imcodec.Bootstrap\Imcodec.Bootstrap.csproj", "{F9DB023C-249F-45E4-9E34-9245E1A1E48D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.BuildTools", "src\Imcodec.BuildTools\Imcodec.BuildTools.csproj", "{F9DB023C-249F-45E4-9E34-9245E1A1E48D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Imcodec.BCD", "src\Imcodec.BCD\Imcodec.BCD.csproj", "{FC38967A-7083-4FCF-AC0F-5DE0F53CBC4B}"
 EndProject

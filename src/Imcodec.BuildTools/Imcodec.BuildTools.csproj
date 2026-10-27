@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <!-- Loaded in-process both by the MSBuild generator-input targets (as a task) and by the CLI. -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <!-- The type dumper is an input-free sibling project built in parallel. When it is present in the
+         tree it is referenced and the dump seam is compiled live; when it is absent the seam reports
+         that the dumper is not wired into this build. -->
+    <PropertyGroup Condition="Exists('..\Imcodec.TypeDump\Imcodec.TypeDump.csproj')">
+        <DefineConstants>$(DefineConstants);IMCODEC_TYPEDUMP_AVAILABLE</DefineConstants>
+    </PropertyGroup>
+
+    <!-- Compile the MSBuild task against the running SDK's own MSBuild assemblies rather than a NuGet
+         package: the task only ever runs inside that MSBuild, so this avoids a version mismatch and is
+         not copied to output. -->
+    <ItemGroup>
+        <Reference Include="Microsoft.Build.Framework">
+            <HintPath>$(MSBuildToolsPath)/Microsoft.Build.Framework.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Microsoft.Build.Utilities.Core">
+            <HintPath>$(MSBuildToolsPath)/Microsoft.Build.Utilities.Core.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Imcodec.Wad\Imcodec.Wad.csproj" />
+        <ProjectReference Include="..\Imcodec.TypeDump\Imcodec.TypeDump.csproj"
+                          Condition="Exists('..\Imcodec.TypeDump\Imcodec.TypeDump.csproj')" />
+    </ItemGroup>
+
+</Project>

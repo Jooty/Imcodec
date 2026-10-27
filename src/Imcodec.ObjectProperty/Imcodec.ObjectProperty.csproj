@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <ImcodecInputKind>types</ImcodecInputKind>
     </PropertyGroup>
 
     <ItemGroup>
@@ -27,14 +28,22 @@
         <ProjectReference Include="..\Imcodec.Math\Imcodec.Math.csproj" />
         <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
 
+        <!-- Built before this project so the in-process generator-input task is available; its output
+             assembly is not referenced by this project. -->
+        <ProjectReference Include="..\Imcodec.BuildTools\Imcodec.BuildTools.csproj"
+                          ReferenceOutputAssembly="false" />
+
         <ProjectReference Include="..\Imcodec.ObjectProperty.CodeGen\Imcodec.ObjectProperty.CodeGen.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>
-        <!-- This file below is what the source generator will use. Ensure that it is a WizWalker type dump. -->
-        <AdditionalFiles Include="./GeneratorInput/**/*.json" />
+        <!-- The type dump the source generator consumes. See the README 'Building' section for how it is
+             produced or supplied. -->
+        <AdditionalFiles Include="$(ImcodecTypeDumpDir)/**/*.json" />
     </ItemGroup>
+
+    <Import Project="..\..\build\Imcodec.GeneratorInputs.targets" />
 
 </Project>
