@@ -20,7 +20,9 @@ modification, are permitted provided that the following conditions are met:
 
 using System.Net.Sockets;
 using Imcodec.Cryptography;
+using Imcodec.IO;
 using Imcodec.MessageLayer;
+using Imcodec.MessageLayer.Generated;
 using static Imcodec.MessageLayer.ControlMessageProtocol;
 
 namespace Imcodec.Proxy;
@@ -90,8 +92,8 @@ internal sealed class ProxyConnection {
         await clientStream.WriteAsync(MessageEncoder.Encode(plainOffer), cancellationToken);
         await ReadHandshakeAsync<SessionAccept>(clientReader, cancellationToken);
 
-        var toUpstream = PumpAsync(clientReader, upstreamStream, crypto.ClientCipher, pumps.Token);
-        var toClient = PumpAsync(upstreamReader, clientStream, null, pumps.Token);
+        var toUpstream = PumpAsync(clientReader, upstreamStream, crypto.ClientCipher, frame => frame, pumps.Token);
+        var toClient = PumpAsync(upstreamReader, clientStream, null, PointHandoffsAtProxy, pumps.Token);
         var first = await Task.WhenAny(toUpstream, toClient);
 
         await pumps.CancelAsync();
@@ -117,11 +119,68 @@ internal sealed class ProxyConnection {
     }
 
     private static async Task PumpAsync(FrameReader source, Stream destination, AesStreamCipher? encryptor,
-        CancellationToken cancellationToken) {
+        Func<byte[], byte[]> transform, CancellationToken cancellationToken) {
         while (await source.ReadFrameAsync(cancellationToken) is { } frame) {
-            var outgoing = encryptor?.Encrypt(frame) ?? frame;
-            await destination.WriteAsync(outgoing, cancellationToken);
+            var plain = transform(frame);
+            await destination.WriteAsync(encryptor?.Encrypt(plain) ?? plain, cancellationToken);
         }
+    }
+
+    private byte[] PointHandoffsAtProxy(byte[] frame) {
+        var undecoded = false;
+        IReadOnlyCollection<IMessage>? messages;
+        try {
+            messages = MessageEncoder.Decode(frame, (_, _, _) => undecoded = true);
+        }
+        catch (Exception) {
+            return frame;
+        }
+
+        if (messages is null || !messages.Any(IsHandoff)) {
+            return frame;
+        }
+        if (undecoded) {
+            // Re-encoding would drop the messages that did not decode, so the handoff goes out untouched.
+            _server.Log?.WriteLine($"[{_label}] a handoff shares its frame with a message that does not decode; not redirected");
+            return frame;
+        }
+
+        foreach (var message in messages) {
+            RedirectHandoff(message);
+        }
+        return messages.SelectMany(message => MessageEncoder.Encode(message)).ToArray();
+    }
+
+    private static bool IsHandoff(IMessage message)
+        => message is LOGIN_7_PROTOCOL.MSG_CHARACTERSELECTED or GAME_5_PROTOCOL.MSG_SERVERTRANSFER;
+
+    private void RedirectHandoff(IMessage message) {
+        switch (message) {
+            case LOGIN_7_PROTOCOL.MSG_CHARACTERSELECTED selected when !selected.IP.IsEmpty:
+                selected.TCPPort = ProxyPortFor(selected.IP, selected.TCPPort);
+                selected.IP = ProxyServer.LOOPBACK_HOST;
+                break;
+            case GAME_5_PROTOCOL.MSG_SERVERTRANSFER transfer:
+                RedirectServerTransfer(transfer);
+                break;
+        }
+    }
+
+    private void RedirectServerTransfer(GAME_5_PROTOCOL.MSG_SERVERTRANSFER transfer) {
+        if (!transfer.IP.IsEmpty) {
+            transfer.TCPPort = ProxyPortFor(transfer.IP, transfer.TCPPort);
+            transfer.IP = ProxyServer.LOOPBACK_HOST;
+        }
+        if (!transfer.FallbackIP.IsEmpty) {
+            transfer.FallbackTCPPort = ProxyPortFor(transfer.FallbackIP, transfer.FallbackTCPPort);
+            transfer.FallbackIP = ProxyServer.LOOPBACK_HOST;
+        }
+    }
+
+    private int ProxyPortFor(ByteString upstreamHost, int upstreamPort) {
+        var localPort = _server.ShardPort(upstreamHost, upstreamPort);
+        _server.Log?.WriteLine($"[{_label}] handoff to {(string) upstreamHost}:{upstreamPort} redirected to {ProxyServer.LOOPBACK_HOST}:{localPort}");
+        return localPort;
     }
 
 }

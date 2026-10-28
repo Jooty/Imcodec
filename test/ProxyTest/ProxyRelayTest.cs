@@ -73,6 +73,53 @@ public class ProxyRelayTest {
         }
     }
 
+    [Fact]
+    public async Task Handoff_IsRedirectedToALocalPortThatRelaysToTheNamedServer() {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(TEST_TIMEOUT_SECONDS));
+        var cancellationToken = timeout.Token;
+        var loginListener = StartUpstream(out var loginPort);
+        var shardListener = StartUpstream(out var shardPort);
+        try {
+            await using var proxy = new ProxyServer(SyntheticKeyring.Shared.Keyring);
+            var localLoginPort = proxy.StartLogin(LOOPBACK_HOST, loginPort);
+            using var login = await RelayedSession.OpenAsync(loginListener, localLoginPort, cancellationToken);
+
+            var handoff = CharacterSelected(shardPort);
+            await login.SendFromUpstreamAsync([MessageEncoder.Encode(handoff), MessageEncoder.Encode(handoff)], cancellationToken);
+            var first = DecodeSingle<LOGIN_7_PROTOCOL.MSG_CHARACTERSELECTED>(await login.ClientReader.ReadFrameAsync(cancellationToken));
+            var repeat = DecodeSingle<LOGIN_7_PROTOCOL.MSG_CHARACTERSELECTED>(await login.ClientReader.ReadFrameAsync(cancellationToken));
+
+            Assert.Equal(ProxyServer.LOOPBACK_HOST, (string) first.IP);
+            Assert.NotEqual(shardPort, first.TCPPort);
+            Assert.Equal(first.TCPPort, repeat.TCPPort);
+            Assert.Equal(handoff.CharID, first.CharID);
+            Assert.Equal((string) handoff.ZoneName, (string) first.ZoneName);
+
+            using var shard = await RelayedSession.OpenAsync(shardListener, first.TCPPort, cancellationToken);
+            var hello = MessageEncoder.Encode(CharacterInfo(CLIENT_PAYLOAD_LENGTH, seed: 4));
+            await shard.SendFromClientAsync([hello], cancellationToken);
+            Assert.Equal(hello, await shard.UpstreamReader.ReadFrameAsync(cancellationToken));
+        }
+        finally {
+            loginListener.Stop();
+            shardListener.Stop();
+        }
+    }
+
+    internal static LOGIN_7_PROTOCOL.MSG_CHARACTERSELECTED CharacterSelected(int shardPort) => new() {
+        IP = LOOPBACK_HOST,
+        TCPPort = shardPort,
+        UDPPort = shardPort,
+        Key = "handoff-key",
+        UserID = 11,
+        CharID = 22,
+        ZoneID = 33,
+        ZoneName = "TestZone",
+        Location = "Start",
+        Slot = 1,
+        LoginServer = "test-login",
+    };
+
     internal static TcpListener StartUpstream(out int port) {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();

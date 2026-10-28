@@ -31,10 +31,12 @@ namespace Imcodec.Proxy;
 public sealed class ProxyServer : IAsyncDisposable {
 
     public const string LOGIN_CONNECTION_LABEL = "login";
+    public const string LOOPBACK_HOST = "127.0.0.1";
 
     private readonly CancellationTokenSource _shutdown = new();
     private readonly List<TcpListener> _listeners = [];
     private readonly List<Task> _running = [];
+    private readonly Dictionary<(string Host, int Port), int> _shardPorts = [];
     private readonly Lock _gate = new();
 
     internal Keyring Keyring { get; }
@@ -60,8 +62,29 @@ public sealed class ProxyServer : IAsyncDisposable {
     /// <param name="upstreamPort">The port of the upstream login server.</param>
     /// <param name="listenPort">The local port, or 0 for any free one.</param>
     /// <returns>The local port the client connects to.</returns>
-    public int StartLogin(string upstreamHost, int upstreamPort, int listenPort = 0)
-        => StartListener(upstreamHost, upstreamPort, listenPort, LOGIN_CONNECTION_LABEL);
+    public int StartLogin(string upstreamHost, int upstreamPort, int listenPort = 0) {
+        lock (_gate) {
+            return StartListener(upstreamHost, upstreamPort, listenPort, LOGIN_CONNECTION_LABEL);
+        }
+    }
+
+    /// <summary>
+    /// The local port that relays to a server the client was handed off to, started on first use.
+    /// </summary>
+    /// <param name="upstreamHost">The host the upstream message named.</param>
+    /// <param name="upstreamPort">The port the upstream message named.</param>
+    internal int ShardPort(string upstreamHost, int upstreamPort) {
+        lock (_gate) {
+            if (_shardPorts.TryGetValue((upstreamHost, upstreamPort), out var known)) {
+                return known;
+            }
+
+            var started = StartListener(upstreamHost, upstreamPort, 0, $"{upstreamHost}:{upstreamPort}");
+            _shardPorts[(upstreamHost, upstreamPort)] = started;
+            Log?.WriteLine($"[{upstreamHost}:{upstreamPort}] relayed from {LOOPBACK_HOST}:{started}");
+            return started;
+        }
+    }
 
     public async ValueTask DisposeAsync() {
         await _shutdown.CancelAsync();
@@ -84,10 +107,8 @@ public sealed class ProxyServer : IAsyncDisposable {
     private int StartListener(string upstreamHost, int upstreamPort, int listenPort, string label) {
         var listener = new TcpListener(IPAddress.Loopback, listenPort);
         listener.Start();
-        lock (_gate) {
-            _listeners.Add(listener);
-            _running.Add(AcceptClientsAsync(listener, upstreamHost, upstreamPort, label));
-        }
+        _listeners.Add(listener);
+        _running.Add(AcceptClientsAsync(listener, upstreamHost, upstreamPort, label));
         return ((IPEndPoint) listener.LocalEndpoint).Port;
     }
 
