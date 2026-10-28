@@ -27,7 +27,7 @@ namespace Imcodec.Proxy;
 /// The OS-specific steps of catching the client: listing processes, reading a process's command line,
 /// freezing it, and launching the patcher or the client. One instance for the platform the proxy runs on.
 /// </summary>
-internal interface IClientPlatform {
+public interface IClientPlatform {
 
     /// <summary>
     /// Starts the patcher so the user can log in, inheriting the proxy's own environment.
