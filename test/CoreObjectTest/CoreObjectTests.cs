@@ -28,7 +28,7 @@ public class CoreObjectSerializerTest {
 
     private const string CoreObjectBlob
         = """
-        6A 00 00 00 78 DA 2B E6 AC EB 9F 94 C4 40 12 68 B0 67 60 20 5D 17 00 8A BB 05 3E
+        6A 00 00 00 78 DA 2B E6 AC EB 9F 94 C4 40 12 68 B0 27 5D 0F 03 03 00 8E BD 05 3E
         """;
 
     [Fact]
