@@ -5,11 +5,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <ImcodecInputKind>messages</ImcodecInputKind>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Imcodec.IO\Imcodec.IO.csproj" />
     <ProjectReference Include="..\Imcodec.Types\Imcodec.Types.csproj" />
+
+    <!-- Built before this project so the in-process generator-input task is available; its output
+         assembly is not referenced by this project. -->
+    <ProjectReference Include="..\Imcodec.BuildTools\Imcodec.BuildTools.csproj"
+                      ReferenceOutputAssembly="false" />
 
     <ProjectReference Include="..\Imcodec.MessageLayer.CodeGen\Imcodec.MessageLayer.CodeGen.csproj"
                       OutputItemType="Analyzer"
@@ -17,11 +23,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="GeneratorInput\*.xml" />
+    <AdditionalFiles Include="$(ImcodecMessageDefinitionDir)/*.xml" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
   </ItemGroup>
+
+  <Import Project="..\..\build\Imcodec.GeneratorInputs.targets" />
 
 </Project>

@@ -1,0 +1,17 @@
+{
+  "solution": {
+    "path": "Imcodec.sln",
+    "projects": [
+      "src\\Imcodec.BCD\\Imcodec.BCD.csproj",
+      "src\\Imcodec.BuildTools\\Imcodec.BuildTools.csproj",
+      "src\\Imcodec.Cryptography\\Imcodec.Cryptography.csproj",
+      "src\\Imcodec.IO\\Imcodec.IO.csproj",
+      "src\\Imcodec.Math\\Imcodec.Math.csproj",
+      "src\\Imcodec.MessageLayer.CodeGen\\Imcodec.MessageLayer.CodeGen.csproj",
+      "src\\Imcodec.ObjectProperty.CodeGen\\Imcodec.ObjectProperty.CodeGen.csproj",
+      "src\\Imcodec.POI\\Imcodec.POI.csproj",
+      "src\\Imcodec.Types\\Imcodec.Types.csproj",
+      "src\\Imcodec.Wad\\Imcodec.Wad.csproj"
+    ]
+  }
+}

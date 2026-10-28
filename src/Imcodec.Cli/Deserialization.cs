@@ -77,19 +77,23 @@ public static class Deserialization {
 
     public const string DeserializationSuffix = "_deser.json";
 
-    // Shared instance so Newtonsoft's per-resolver contract cache survives
-    // across serialization calls. A fresh resolver per call re-reflects every
-    // type in the object graph on every file, which is catastrophic in bulk.
     private static readonly JsonSerializerOptions s_jsonOptions = CreateJsonSerializerOptions();
     private static JsonSerializerOptions CreateJsonSerializerOptions() {
+        // A single shared resolver instance so the contract cache survives across serialization calls; a
+        // fresh resolver per call re-reflects every type in the object graph on every file, which is
+        // catastrophic in bulk.
         var resolver = new DefaultJsonTypeInfoResolver();
         resolver.Modifiers.Add(BaseFirstTypeResolver.OrderProperties);
+        resolver.Modifiers.Add(PropertyClassPolymorphism.Apply);
         return new JsonSerializerOptions {
             TypeInfoResolver = resolver,
             WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
+            Converters = { new JsonStringEnumConverter(), new Float2DArrayJsonConverter() },
+            AllowOutOfOrderMetadataProperties = true
         };
     }
+
+    internal static JsonSerializerOptions JsonOptions => s_jsonOptions;
 
     private static readonly List<uint> s_commonPropertyFlags = [
         1, 6, 7, 16, 19, 23, 24, 25, 27, 30, 31, 39,
@@ -108,17 +112,18 @@ public static class Deserialization {
     /// </summary>
     /// <param name="fileName">The name of the file being deserialized.</param>
     /// <param name="fileData">The data of the file being deserialized.</param>
+    /// <param name="verbose">Report the reason for a failed deserialization to standard error.</param>
     /// <returns>The deserialized object as a JSON string, or null if deserialization failed.</returns>
-    public static string? TryDeserializeFile(string fileName, byte[] fileData) {
+    public static string? TryDeserializeFile(string fileName, byte[] fileData, bool verbose = false) {
         // First, try to parse as BCD file if the extension suggests it
         var fileExt = IOUtility.ExtractFileExtension(fileName).ToLowerInvariant();
         if (fileExt == "bcd") {
-            return TryDeserializeBcdFile(fileName, fileData);
+            return TryDeserializeBcdFile(fileName, fileData, verbose);
         }
 
         // Try to parse as POI file if the extension suggests it
         if (fileExt is "poi" or "dat") {
-            var poiResult = TryDeserializePoiFile(fileName, fileData);
+            var poiResult = TryDeserializePoiFile(fileName, fileData, verbose);
             if (poiResult != null) {
                 return poiResult;
             }
@@ -147,10 +152,8 @@ public static class Deserialization {
             }
         }
         catch (Exception ex) {
-            Console.WriteLine("=== Deserialization failed ===");
-            Console.WriteLine($"Failed to deserialize file ({fileName}): {ex.Message} {ex.StackTrace}");
-            Console.WriteLine("===============================");
-            
+            ReportFailure("file", fileName, ex, verbose);
+
             return null;
         }
     }
@@ -160,8 +163,9 @@ public static class Deserialization {
     /// </summary>
     /// <param name="fileName">The name of the file being deserialized.</param>
     /// <param name="fileData">The data of the file being deserialized.</param>
+    /// <param name="verbose">Report the reason for a failed deserialization to standard error.</param>
     /// <returns>The deserialized BCD object as a JSON string, or null if deserialization failed.</returns>
-    public static string? TryDeserializeBcdFile(string fileName, byte[] fileData) {
+    public static string? TryDeserializeBcdFile(string fileName, byte[] fileData, bool verbose = false) {
         try {
             using var stream = new MemoryStream(fileData);
             var bcd = Bcd.Parse(stream);
@@ -180,10 +184,8 @@ public static class Deserialization {
             return jsonObj;
         }
         catch (Exception ex) {
-            Console.WriteLine("=== BCD Deserialization failed ===");
-            Console.WriteLine($"Failed to deserialize BCD file ({fileName}): {ex.Message}");
-            Console.WriteLine("===================================");
-            
+            ReportFailure("BCD file", fileName, ex, verbose);
+
             return null;
         }
     }
@@ -193,8 +195,9 @@ public static class Deserialization {
     /// </summary>
     /// <param name="fileName">The name of the file being deserialized.</param>
     /// <param name="fileData">The data of the file being deserialized.</param>
+    /// <param name="verbose">Report the reason for a failed deserialization to standard error.</param>
     /// <returns>The deserialized POI object as a JSON string, or null if deserialization failed.</returns>
-    public static string? TryDeserializePoiFile(string fileName, byte[] fileData) {
+    public static string? TryDeserializePoiFile(string fileName, byte[] fileData, bool verbose = false) {
         try {
             using var stream = new MemoryStream(fileData);
             var poi = Poi.Parse(stream);
@@ -211,12 +214,19 @@ public static class Deserialization {
             return jsonObj;
         }
         catch (Exception ex) {
-            Console.WriteLine("=== POI Deserialization failed ===");
-            Console.WriteLine($"Failed to deserialize POI file ({fileName}): {ex.Message}");
-            Console.WriteLine("===================================");
-            
+            ReportFailure("POI file", fileName, ex, verbose);
+
             return null;
         }
+    }
+
+    private static void ReportFailure(string kind, string fileName, Exception ex, bool verbose) {
+        if (!verbose) {
+            return;
+        }
+
+        Console.Error.WriteLine($"Failed to deserialize {kind} ({fileName}): {ex.Message}");
+        Console.Error.WriteLine(ex.StackTrace);
     }
 
     /// <summary>

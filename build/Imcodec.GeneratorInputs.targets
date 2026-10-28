@@ -1,0 +1,76 @@
+<Project>
+
+    <!--
+      Resolves the Imcodec source generators' inputs before CoreCompile.
+
+      Each generated-code project imports this file, sets ImcodecInputKind to either "messages" or "types",
+      and project-references Imcodec.BuildTools (output assembly not referenced) so it is built first. When
+      the drop folder is empty the build either:
+        * fails fast with a single actionable error (IMCB001 / IMCB002) when no client is configured, or
+        * runs Imcodec.BuildTools in-process - as an MSBuild task, not a separate executable - to produce
+          the inputs when ImcodecClientDir is set, then feeds them to the generator in the same build.
+
+      ImcodecClientDir may come from -p:ImcodecClientDir=... or the environment variable of the same name.
+      ImcodecMessageDefinitionDir / ImcodecTypeDumpDir override the per-project drop folders (e.g. to share
+      one type dump across worktrees from a location outside the repository).
+    -->
+
+    <PropertyGroup>
+        <ImcodecBuildToolsAssembly Condition="'$(ImcodecBuildToolsAssembly)' == ''">$(MSBuildThisFileDirectory)../src/Imcodec.BuildTools/bin/$(Configuration)/net10.0/Imcodec.BuildTools.dll</ImcodecBuildToolsAssembly>
+        <ImcodecMessageDefinitionDir Condition="'$(ImcodecMessageDefinitionDir)' == ''">$(MSBuildProjectDirectory)/GeneratorInput</ImcodecMessageDefinitionDir>
+        <ImcodecTypeDumpDir Condition="'$(ImcodecTypeDumpDir)' == ''">$(MSBuildProjectDirectory)/GeneratorInput</ImcodecTypeDumpDir>
+    </PropertyGroup>
+
+    <UsingTask TaskName="Imcodec.BuildTools.GenerateGeneratorInputsTask" AssemblyFile="$(ImcodecBuildToolsAssembly)" />
+
+    <Target Name="ImcodecExtractMessageDefinitions"
+            BeforeTargets="CoreCompile"
+            Condition="'$(ImcodecInputKind)' == 'messages'">
+        <ItemGroup>
+            <_ImcodecMessageDefinition Include="$(ImcodecMessageDefinitionDir)/*.xml" />
+        </ItemGroup>
+
+        <Error Code="IMCB001"
+               Condition="'@(_ImcodecMessageDefinition)' == '' and '$(ImcodecClientDir)' == ''"
+               Text="No message definitions in '$(ImcodecMessageDefinitionDir)'. Set the ImcodecClientDir property (or environment variable) to your client install directory to extract them automatically, or place the message definition XML files there yourself. See the README 'Building' section." />
+
+        <GenerateGeneratorInputsTask
+                Condition="'@(_ImcodecMessageDefinition)' == '' and '$(ImcodecClientDir)' != '' and '$(DesignTimeBuild)' != 'true'"
+                InputKind="messages"
+                ClientDirectory="$(ImcodecClientDir)"
+                OutputDirectory="$(ImcodecMessageDefinitionDir)">
+            <Output TaskParameter="WrittenFiles" ItemName="AdditionalFiles" />
+        </GenerateGeneratorInputsTask>
+    </Target>
+
+    <Target Name="ImcodecDumpClientTypes"
+            BeforeTargets="CoreCompile"
+            Condition="'$(ImcodecInputKind)' == 'types'">
+        <ItemGroup>
+            <_ImcodecTypeDump Include="$(ImcodecTypeDumpDir)/**/*.json" />
+        </ItemGroup>
+
+        <Error Code="IMCB002"
+               Condition="'@(_ImcodecTypeDump)' == '' and '$(ImcodecClientDir)' == ''"
+               Text="No client type dump in '$(ImcodecTypeDumpDir)'. Set the ImcodecClientDir property (or environment variable) to your client install directory to generate one automatically (requires the type dumper), or place a type dump JSON there yourself. See the README 'Building' section." />
+
+        <GenerateGeneratorInputsTask
+                Condition="'@(_ImcodecTypeDump)' == '' and '$(ImcodecClientDir)' != '' and '$(DesignTimeBuild)' != 'true'"
+                InputKind="types"
+                ClientDirectory="$(ImcodecClientDir)"
+                OutputDirectory="$(ImcodecTypeDumpDir)" />
+
+        <ItemGroup>
+            <_ImcodecTypeDumpAfterDump Include="$(ImcodecTypeDumpDir)/**/*.json" />
+        </ItemGroup>
+
+        <Error Code="IMCB002"
+               Condition="'@(_ImcodecTypeDump)' == '' and '@(_ImcodecTypeDumpAfterDump)' == '' and '$(ImcodecClientDir)' != '' and '$(DesignTimeBuild)' != 'true'"
+               Text="The automatic type dump produced no output - the static type dumper is not wired into this build yet. Place a type dump JSON in '$(ImcodecTypeDumpDir)'. See the README 'Building' section." />
+
+        <ItemGroup Condition="'@(_ImcodecTypeDump)' == '' and '@(_ImcodecTypeDumpAfterDump)' != ''">
+            <AdditionalFiles Include="$(ImcodecTypeDumpDir)/**/*.json" />
+        </ItemGroup>
+    </Target>
+
+</Project>

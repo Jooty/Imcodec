@@ -76,8 +76,27 @@ internal static class IOUtility {
     internal static string RemoveExtension(string path) {
         // Split on the last index of '.'.
         var idx = path.LastIndexOf('.');
-        
+
         return idx == -1 ? path : path[..idx];
+    }
+
+    /// <summary>
+    /// Resolves an output file path for a conversion command. A '.' output path keeps the input path with
+    /// its extension changed; a directory output path keeps the input's file name with the new extension;
+    /// any other output path is used as-is.
+    /// </summary>
+    internal static string ResolveOutputFilePath(string inputPath, string outputPath, string newExtension) {
+        if (outputPath == ".") {
+            return Path.ChangeExtension(inputPath, newExtension);
+        }
+
+        if (Directory.Exists(outputPath)) {
+            var fileName = Path.GetFileNameWithoutExtension(inputPath);
+
+            return Path.Combine(outputPath, fileName + newExtension);
+        }
+
+        return outputPath;
     }
 
 }

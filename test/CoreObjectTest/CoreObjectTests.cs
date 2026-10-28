@@ -28,7 +28,7 @@ public class CoreObjectSerializerTest {
 
     private const string CoreObjectBlob
         = """
-        6A 00 00 00 78 DA 2B E6 AC EB 9F 94 C4 40 12 68 B0 67 20 03 00 00 29 62 03 3D
+        6A 00 00 00 78 DA 2B E6 AC EB 9F 94 C4 40 12 68 B0 27 5D 0F 03 03 00 8E BD 05 3E
         """;
 
     [Fact]
@@ -37,6 +37,7 @@ public class CoreObjectSerializerTest {
         var serializer = new CoreObjectSerializer();
         var coreObject = new WizClientObjectItem {
             m_fScale = 1,
+            m_templateID = 1653772158,
         };
 
         // Act

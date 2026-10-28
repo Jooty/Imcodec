@@ -74,16 +74,19 @@ public class BindSerializer : ObjectSerializer {
             return false;
         }
 
-        // Create a new buffer with the size of the output buffer plus the size of the magic and flags.
-        var buffer = new byte[baseOutput.Length + (sizeof(uint) * 2)];
+        // Create a new buffer with the size of the output buffer plus the size of the magic. The flags are part
+        // of the base output.
+        var buffer = new byte[baseOutput.Length + sizeof(uint)];
 
-        // Write the magic header and serializer flags.
+        // Write the magic header.
         BinaryPrimitives.WriteUInt32LittleEndian(buffer, BiNDMagic);
 
         // Copy the output buffer to the new buffer.
-        var skipLen = sizeof(uint) * 2;
+        var skipLen = sizeof(uint);
         var bufferSpan = buffer.AsSpan(skipLen);
         ((byte[]) baseOutput).CopyTo(bufferSpan);
+
+        output = new ByteString(buffer);
 
         return true;
     }

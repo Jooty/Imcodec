@@ -22,10 +22,12 @@ using Cocona;
 
 namespace Imcodec.Cli;
 
+[HasSubCommands(typeof(BootstrapCommands), commandName: "bootstrap", Description = "Generate or refresh the source generator inputs from a client install.")]
 [HasSubCommands(typeof(ArchiveCommands), commandName: "wad", Description = "Archive related commands.")]
 [HasSubCommands(typeof(ObjectPropertyCommands), commandName: "op", Description = "Serialization related commands.")]
 [HasSubCommands(typeof(BcdCommands), commandName: "bcd", Description = "Binary Collision Data (BCD) file commands.")]
 [HasSubCommands(typeof(PoiCommands), commandName: "poi", Description = "Point of Interest (POI) file commands.")]
+[HasSubCommands(typeof(ProxyCommands), commandName: "proxy", Description = "Relay a client to the upstream servers.")]
 public class Program {
 
     public static void Main(string[] args)
