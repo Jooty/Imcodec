@@ -175,13 +175,13 @@ imcodec poi info <inputPath>
 
 **Note**: POI files within WAD archives are automatically detected and can be deserialized using the `--deser` flag with archive commands.
 
-## Proxy (work in progress)
-**Status: in progress and not yet usable end to end. The `imcodec proxy` command does not exist yet, so there is nothing to run. This section describes what is being built.**
+## Proxy
 
-The proxy is a genuine decrypting man-in-the-middle between a stock game client and the live servers. It does not hook the client or read its memory, and the goal is that the client executable is never patched. The client talks to the proxy in plaintext, using the same unencrypted session mode the server side already uses. Toward the live servers the proxy performs the real encrypted handshake itself, so it derives the real session keys. It then decrypts, logs, re-encrypts and forwards traffic in both directions, turning captured bytes into typed Imcodec messages.
+The proxy is a man-in-the-middle between a game client and the live servers. It does not hook the client or read its memory. The client talks to the proxy in plaintext, using the same unencrypted session mode the server side uses, while the proxy performs the encrypted handshake toward the live servers itself and derives the real session keys. It then decrypts, logs, re-encrypts and forwards traffic in both directions, turning the bytes into typed Imcodec messages.
 
-### Intended usage
-The planned entry point is a single command:
+> **Do not point this at the live servers.** Doing so is absolutely against the game's Terms of Service and may get your account banned. Imcodec is not responsible if you are banned or for any other consequence of its use.
+
+### Usage
 
 ```
 imcodec proxy --client <dir>
@@ -189,22 +189,7 @@ imcodec proxy --client <dir>
 
 * `--client`: the client install directory
 
-The command will read the server public keys from the client on disk, stand up the local endpoint, point the client at it, and write captures in the project's existing capture JSON format.
-
-### Current state
-Built so far:
-* The session cryptography: RSA OAEP and PKCS#1 v1.5 over SHA-1, and chunked AES-GCM.
-* The answer to the client's code-signature challenge.
-* Reading and parsing the server keyring from the client.
-* The session-handshake wiring.
-
-Not built yet:
-* The TCP relay.
-* Rewriting the messages that carry server addresses.
-* The capture writer.
-* The `imcodec proxy` command itself.
-
-None of it has been tested against the live servers, deliberately.
+The proxy reads the server public keys from the client on disk, stands up the local endpoint, points the client at it, and writes captures in the project's existing capture JSON format.
 
 ## License
 This project is licensed under the BSD 3-Clause License. See individual source files for the full license text.
