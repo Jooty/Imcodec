@@ -20,6 +20,7 @@ modification, are permitted provided that the following conditions are met:
 
 using Cocona;
 using Imcodec.BuildTools;
+using Imcodec.TypeDump;
 
 namespace Imcodec.Cli;
 
@@ -32,9 +33,9 @@ public sealed class BootstrapCommands {
     private const string CLIENT_DIRECTORY_ENVIRONMENT_VARIABLE = "ImcodecClientDir";
     private const string MESSAGE_DEFINITION_DIRECTORY = "src/Imcodec.MessageLayer/GeneratorInput";
     private const string TYPE_DUMP_DIRECTORY = "src/Imcodec.ObjectProperty/GeneratorInput";
+    private const string TYPE_DUMP_FILE_NAME = "typedump.json";
     private const int FAILURE_EXIT_CODE = 1;
     private const int MISSING_CLIENT_EXIT_CODE = 2;
-    private const int DUMPER_UNAVAILABLE_EXIT_CODE = 3;
 
     /// <summary>
     /// Extracts the message definitions from the client into the message generator's input folder.
@@ -62,27 +63,33 @@ public sealed class BootstrapCommands {
     }
 
     /// <summary>
-    /// Dumps the client's property class types into the object property generator's input folder.
+    /// Dumps the client's property class types into the object property generator's input folder. The
+    /// dumper runs in-process; <c>--extended</c> adds the extra per-type and per-property detail the
+    /// generator does not need but which is useful for inspecting the type system.
     /// </summary>
     [Command("types", Description = "Dump the client's property class types.")]
     public int Types(
             [Option("client", Description = "Client install directory. Defaults to the ImcodecClientDir environment variable.")] string? client = null,
-            [Option("out", Description = "Output directory.")] string outputDirectory = TYPE_DUMP_DIRECTORY) {
+            [Option("out", Description = "Output directory.")] string outputDirectory = TYPE_DUMP_DIRECTORY,
+            [Option("extended", Description = "Also emit the extended per-type and per-property detail.")] bool extended = false,
+            [Option("verbose", Description = "Report emulation progress to standard error.")] bool verbose = false) {
         var clientDirectory = ResolveClientDirectory(client);
         if (clientDirectory is null) {
             return MissingClient();
         }
 
         try {
-            var dumpPath = GeneratorInputBootstrapper.DumpTypes(clientDirectory, outputDirectory);
-            Console.WriteLine($"Wrote type dump to '{dumpPath}'.");
+            _ = Directory.CreateDirectory(outputDirectory);
+            var (manifest, extendedManifest) = TypeDumper.Dump(clientDirectory, extended, verbose ? Console.Error : null);
+
+            var dumpPath = Path.Combine(outputDirectory, TYPE_DUMP_FILE_NAME);
+            using (var dumpStream = File.Create(dumpPath)) {
+                TypeDumper.WriteJson(manifest, dumpStream, extended: extendedManifest);
+            }
+
+            Console.WriteLine($"Wrote type dump ({manifest.Classes.Count} types) to '{dumpPath}'.");
 
             return 0;
-        }
-        catch (NotSupportedException ex) {
-            Console.Error.WriteLine(ex.Message);
-
-            return DUMPER_UNAVAILABLE_EXIT_CODE;
         }
         catch (Exception ex) {
             Console.Error.WriteLine(ex.Message);
