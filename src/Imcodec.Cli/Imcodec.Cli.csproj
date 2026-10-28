@@ -24,6 +24,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Imcodec.BuildTools\Imcodec.BuildTools.csproj" />
+        <ProjectReference Include="..\Imcodec.TypeDump\Imcodec.TypeDump.csproj" />
         <ProjectReference Include="..\Imcodec.Wad\Imcodec.Wad.csproj" />
         <ProjectReference Include="..\Imcodec.ObjectProperty\Imcodec.ObjectProperty.csproj" />
         <ProjectReference Include="..\Imcodec.CoreObject\Imcodec.CoreObject.csproj" />

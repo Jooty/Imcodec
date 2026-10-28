@@ -33,7 +33,7 @@ public sealed class ArchiveCommands {
     /// Unpacks the given archive file to the specified output directory. When the output path is omitted
     /// the archive is extracted to a folder named after it, beside it.
     /// </summary>
-    [Command("unpack")]
+    [Command("unpack", Description = "Extract an archive's files to a directory.")]
     public int UnpackArchive(
             [Argument(Description = "The path to the archive file.")] string archivePath,
             [Argument(Description = "The path to the output directory")] string outputPath = ".",
@@ -74,6 +74,52 @@ public sealed class ArchiveCommands {
         WriteArchiveFilesToDisk(files, outputPath, attemptDeserialization, verbose);
 
         Console.WriteLine($"Successfully extracted '{archiveName}' to '{outputPath}'.");
+
+        return 0;
+    }
+
+    /// <summary>
+    /// Lists the entries in the given archive without extracting them. Entry metadata is read from the
+    /// header, so nothing is inflated; <c>--verbose</c> adds each entry's compressed and uncompressed size.
+    /// </summary>
+    [Command("list", Description = "List an archive's entries without extracting them.")]
+    public int ListArchive(
+            [Argument(Description = "The path to the archive file.")] string archivePath,
+            [Option("verbose", Description = "Show each entry's compressed and uncompressed size.")] bool verbose = false) {
+        if (!File.Exists(archivePath)) {
+            Console.Error.WriteLine($"The specified archive file '{archivePath}' does not exist.");
+
+            return FAILURE_EXIT_CODE;
+        }
+
+        using var archiveStream = File.OpenRead(archivePath);
+        Archive? archive;
+        try {
+            archive = ArchiveParser.Parse(archiveStream);
+        }
+        catch (InvalidArchiveFormatException) {
+            Console.Error.WriteLine("The specified archive file is not a valid WAD archive.");
+
+            return FAILURE_EXIT_CODE;
+        }
+
+        if (archive == null) {
+            Console.Error.WriteLine("The specified archive file is not a valid WAD archive.");
+
+            return FAILURE_EXIT_CODE;
+        }
+
+        foreach (var entryName in archive.Files.Keys.OrderBy(static name => name, StringComparer.Ordinal)) {
+            if (verbose) {
+                var entry = archive.Files[entryName].Value;
+                Console.WriteLine($"{entry.UncompressedSize,12} {entry.CompressedSize,12}  {entryName}");
+            }
+            else {
+                Console.WriteLine(entryName);
+            }
+        }
+
+        Console.WriteLine($"{archive.FileCount} entries in '{IOUtility.ExtractFileName(archivePath)}'.");
 
         return 0;
     }
