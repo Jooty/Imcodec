@@ -36,4 +36,7 @@ public partial class ClientGeneratedTypeRegistry : TypeRegistry {
         return type;
     }
 
+    public override IEnumerable<KeyValuePair<uint, System.Type>> GetRegisteredTypes()
+        => _typeMap;
+
 }

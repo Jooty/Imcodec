@@ -154,7 +154,7 @@ public sealed class ArchiveCommands {
             // Either write to the file, or attempt deserialization. If we fail to deserialize, we'll write
             // the bytes to disk.
             if (attemptDeserialization && s_deserExtIncludeList.Contains(fileExt)) {
-                var deserializedData = Deserialization.TryDeserializeFile(fileEntry.FileName!, fileData!);
+                var deserializedData = Deserialization.TryDeserializeFile(fileEntry.FileName!, fileData!, verbose);
                 if (deserializedData != null) {
                     // If we deserialized successfully, remove the existing extension and add the deserialization
                     // suffix.

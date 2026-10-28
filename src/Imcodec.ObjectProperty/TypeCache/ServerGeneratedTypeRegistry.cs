@@ -37,6 +37,9 @@ public partial class ServerGeneratedTypeRegistry : TypeRegistry {
     public override void RegisterType(uint hash, System.Type type)
         => _types[hash] = type;
 
+    public override IEnumerable<KeyValuePair<uint, System.Type>> GetRegisteredTypes()
+        => _types;
+
 }
 
 [PropertySerializationTarget]
