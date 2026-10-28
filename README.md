@@ -26,9 +26,9 @@ Point `ImcodecClientDir` at your client install and build. The build extracts th
 ImcodecClientDir=<client install directory> dotnet build Imcodec.sln
 ```
 
-`ImcodecClientDir` may be an environment variable (as above) or an MSBuild property (`dotnet build -p:ImcodecClientDir=<client install directory>`). The extraction is handled by a small, input-free build-tools step, so a fresh clone builds in one command without any generated code having to exist first.
+`ImcodecClientDir` may be an environment variable (as above) or an MSBuild property (`dotnet build -p:ImcodecClientDir=<client install directory>`). The extraction and the type dump are both handled by a small, input-free build-tools step, so a fresh clone builds in one command without any generated code having to exist first. The type dump is produced by reading the client executable directly; the client is never launched.
 
-> Automatic type dumping requires the type dumper component. If it is not part of your build, the message definitions are still extracted automatically and the build tells you to supply the type dump yourself - see the fallback below.
+> The type dumper is a sibling of the build-tools step and is built alongside it. In the unusual case that it is absent from your tree, the message definitions are still extracted automatically and the build tells you to supply the type dump yourself - see the fallback below.
 
 ### Supplying the inputs yourself
 If you would rather provide the inputs by hand, drop them into the generator input folders and build normally:
@@ -67,11 +67,15 @@ Generate or refresh the source generator inputs from a client install.
 ```
 imcodec bootstrap all [--client <dir>] [--messages-out <dir>] [--types-out <dir>]
 imcodec bootstrap messages [--client <dir>] [--out <dir>]
-imcodec bootstrap types [--client <dir>] [--out <dir>]
+imcodec bootstrap types [--client <dir>] [--out <dir>] [--extended] [--verbose]
 ```
 
 * `--client`: Client install directory. Defaults to the `ImcodecClientDir` environment variable.
 * `--out` / `--messages-out` / `--types-out`: Output directories. Default to the generator input folders.
+* `--extended` (`types` only): also emit the extended per-type and per-property detail (methods, notes, persistence hints, default values, static array counts, alternate hashes, and type sizes/flags). The generator ignores this section; it is there for inspecting the type system. Without the flag the dump is the plain manifest the generator consumes.
+* `--verbose` (`types` only): report the executable emulation progress to standard error.
+
+The type dump is produced in-process by emulating the client's type registration - the client is never launched. `imcodec bootstrap types` is the way to inspect the type system directly; `bootstrap all` and the one-command build run the same dumper to produce the generator input.
 
 ### Archive Commands (`wad`)
 ```
@@ -82,6 +86,15 @@ imcodec wad unpack <archivePath> [outputPath] [--deser] [--verbose]
 * `outputPath`: Optional path to the output directory. If this is not present, defaults to the archive name in the same directory.
 * `--deser`: Attempt to deserialize archive files
 * `--verbose`: Enable detailed output (may impact performance on large archives)
+
+```
+imcodec wad list <archivePath> [--verbose]
+```
+
+* `archivePath`: Path to the WAD archive file
+* `--verbose`: Also show each entry's uncompressed and compressed size
+
+Lists the entries in an archive without extracting them; nothing is inflated.
 
 ### Object Property Commands (`op`)
 ```
@@ -141,6 +154,26 @@ When parsing BCD files, Imcodec produces JSON output with metadata including:
 * Collision flags (Object, Walkable, Hitscan, Water, Trigger, etc.)
 
 **Note**: BCD files within WAD archives are automatically detected and can be deserialized using the `--deser` flag with archive commands.
+
+### Point of Interest Commands (`poi`)
+Point of Interest (`.poi`) files describe a zone's navigation data: zone names, goals, teleporters, and mobs.
+
+```
+imcodec poi parse <inputPath> [outputPath] [--verbose]
+```
+
+* `inputPath`: Path to the POI file to parse
+* `outputPath`: Optional path to save JSON output (defaults to input path with .json extension)
+* `--verbose`: Show a summary of each parsed section
+
+```
+imcodec poi info <inputPath>
+```
+
+* `inputPath`: Path to the POI file to inspect
+* Displays a section summary (zone names, goals, interactive goals, teleporters, goal adjectives, zone mobs) along with the zone list, teleporter destinations, and zone mobs.
+
+**Note**: POI files within WAD archives are automatically detected and can be deserialized using the `--deser` flag with archive commands.
 
 ## License
 This project is licensed under the BSD 3-Clause License. See individual source files for the full license text.
