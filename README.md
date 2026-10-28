@@ -184,13 +184,19 @@ The proxy is a man-in-the-middle between a game client and the live servers. It 
 ### Usage
 
 ```
-imcodec proxy --client <dir> --upstream <host:port> [--listen <port>] [--out <capture path>]
+imcodec proxy --client <dir> --patcher <exe> [--wine <cmd>] [--upstream <host:port>] [--listen <port>] [--out <capture path>]
 ```
 
 * `--client`: the client install directory, read only for the server public keys
-* `--upstream`: the upstream login endpoint
+* `--patcher`: the patcher executable to start and catch the client from
+* `--wine`: the command that runs the patcher on Linux (default: `wine`, inheriting your `WINEPREFIX`); not used on Windows
+* `--upstream`: the upstream login endpoint; without `--patcher` it is required, with `--patcher` it overrides the endpoint read from the client
 * `--listen`: the local port the client connects to (default: any free port, printed at startup)
 * `--out`: write a capture of every relayed message to this file
+
+With `--patcher`, the proxy starts the official patcher and you log in there as usual; the proxy never sees your password. When the patcher launches the client, the proxy catches it before it reaches the network by freezing it, reading the login endpoint off its command line, and relaunching it pointed at the local port instead. The login token on the command line is passed through unchanged and never logged. On Linux the patcher runs under `--wine`, which is required; on Windows it runs directly; other systems are not supported. The proxy exits when the client exits, and Ctrl+C tears everything down.
+
+Without `--patcher`, give `--upstream` and point the client at the printed local port yourself.
 
 The proxy listens on `127.0.0.1` and opens one upstream connection for each client that connects. Toward the upstream server it runs the encrypted handshake with the keys from the client install; toward the client it offers an unencrypted session. Frames are relayed byte for byte in both directions until either side closes. Pointing the client at the local port is up to you.
 

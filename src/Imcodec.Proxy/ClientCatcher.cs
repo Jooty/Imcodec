@@ -1,0 +1,173 @@
+/*
+BSD 3-Clause License
+
+Copyright (c) 2024, Jooty
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+*/
+
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+namespace Imcodec.Proxy;
+
+/// <summary>
+/// The command line, working directory and login endpoint read from the frozen client, ready to relaunch.
+/// </summary>
+public sealed record CaughtClient(string ClientExe, IReadOnlyList<string> Arguments, string WorkingDirectory, ClientLoginEndpoint Endpoint);
+
+/// <summary>
+/// Starts the official patcher, waits for it to launch the client, freezes the client before it reaches the
+/// network to read where it was told to connect, then relaunches it pointed at the proxy.
+/// </summary>
+/// <remarks>
+/// The proxy never sees the account password; it only reads the client's command line, whose login token
+/// is passed through unchanged and never logged.
+/// </remarks>
+public sealed class ClientCatcher {
+
+    public const string BIN_DIRECTORY_NAME = "Bin";
+    public const string EXECUTABLE_SEARCH_PATTERN = "*.exe";
+
+    private const int DETECTION_POLL_MILLISECONDS = 20;
+
+    private readonly string _clientDirectory;
+    private readonly string _patcherExe;
+    private readonly IClientPlatform _platform;
+    private readonly TextWriter? _log;
+
+    public ClientCatcher(string clientDirectory, string patcherExe, IClientPlatform platform, TextWriter? log = null) {
+        _clientDirectory = clientDirectory;
+        _patcherExe = patcherExe;
+        _platform = platform;
+        _log = log;
+    }
+
+    /// <summary>
+    /// The platform support for the host the proxy runs on, or null on an unsupported OS.
+    /// </summary>
+    /// <param name="wineCommand">The command that runs the patcher on Linux.</param>
+    public static IClientPlatform? PlatformFor(string wineCommand) {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+            return new LinuxClientPlatform(wineCommand);
+        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            return new WindowsClientPlatform();
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// The one-line reason the catcher cannot run, naming what to fix, or null when everything is in place.
+    /// </summary>
+    public string? PrerequisiteFailure() {
+        if (!Directory.Exists(_clientDirectory)) {
+            return $"The client directory '{_clientDirectory}' does not exist.";
+        }
+        if (ClientExecutableNames().Count == 0) {
+            return $"No '{EXECUTABLE_SEARCH_PATTERN}' found in the client's '{BIN_DIRECTORY_NAME}' directory under '{_clientDirectory}'.";
+        }
+        if (!File.Exists(_patcherExe)) {
+            return $"The patcher '{_patcherExe}' does not exist.";
+        }
+        return _platform.PrerequisiteFailure();
+    }
+
+    /// <summary>
+    /// Starts the patcher and returns once the client it launches has been frozen, read and killed.
+    /// </summary>
+    /// <exception cref="InvalidDataException">The client's command line has no login endpoint.</exception>
+    public async Task<CaughtClient> CatchAsync(CancellationToken cancellationToken) {
+        var executableNames = ClientExecutableNames();
+        using var patcher = _platform.StartPatcher(_patcherExe);
+        _log?.WriteLine("Patcher started; log in there as usual.");
+
+        var caught = await DetectAndFreezeAsync(executableNames, patcher.Id, cancellationToken);
+        _log?.WriteLine($"Caught the client: {caught.ClientExe} {ClientCommandLine.Redacted(caught.Arguments)}");
+        return caught;
+    }
+
+    /// <summary>
+    /// Relaunches the caught client with its login endpoint pointed at the proxy, and returns the process.
+    /// </summary>
+    public Process Relaunch(CaughtClient caught, int listenPort) {
+        var arguments = ClientCommandLine.WithLoginEndpoint(caught.Arguments, ProxyServer.LOOPBACK_HOST, listenPort);
+        _log?.WriteLine($"Relaunching the client: {caught.ClientExe} {ClientCommandLine.Redacted(arguments)}");
+        return _platform.StartClient(caught.ClientExe, arguments, caught.WorkingDirectory);
+    }
+
+    private async Task<CaughtClient> DetectAndFreezeAsync(IReadOnlyCollection<string> executableNames, int patcherPid,
+        CancellationToken cancellationToken) {
+        var known = _platform.ListProcessIds().ToHashSet();
+        known.Add(patcherPid);
+        while (true) {
+            cancellationToken.ThrowIfCancellationRequested();
+            foreach (var pid in _platform.ListProcessIds()) {
+                if (!known.Add(pid)) {
+                    continue;
+                }
+                if (TryCatch(pid, executableNames, out var caught)) {
+                    return caught;
+                }
+            }
+            await Task.Delay(DETECTION_POLL_MILLISECONDS, cancellationToken);
+        }
+    }
+
+    private bool TryCatch(int pid, IReadOnlyCollection<string> executableNames, out CaughtClient caught) {
+        caught = null!;
+        var commandLine = _platform.TryReadCommandLine(pid);
+        if (commandLine is null || commandLine.Count == 0 || !NamesClient(commandLine, executableNames)) {
+            return false;
+        }
+
+        // Freeze before anything else so the client cannot reach the network, then read and kill it.
+        _platform.Freeze(pid);
+        var clientExe = commandLine[0];
+        var arguments = commandLine.Skip(1).ToArray();
+        var workingDirectory = _platform.WorkingDirectoryFor(pid, clientExe);
+        var endpoint = ClientCommandLine.FindLoginEndpoint(arguments);
+        KillFrozen(pid);
+
+        caught = new CaughtClient(clientExe, arguments, workingDirectory, endpoint);
+        return true;
+    }
+
+    private IReadOnlyCollection<string> ClientExecutableNames() {
+        var binDirectory = Path.Combine(_clientDirectory, BIN_DIRECTORY_NAME);
+        if (!Directory.Exists(binDirectory)) {
+            return [];
+        }
+        return Directory.EnumerateFiles(binDirectory, EXECUTABLE_SEARCH_PATTERN)
+            .Select(Path.GetFileName)
+            .Where(name => name is not null)
+            .Select(name => name!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool NamesClient(IReadOnlyList<string> commandLine, IReadOnlyCollection<string> executableNames)
+        => commandLine.Any(token => executableNames.Contains(Path.GetFileName(token.Replace('\\', '/'))));
+
+    private void KillFrozen(int pid) {
+        try {
+            using var process = Process.GetProcessById(pid);
+            process.Kill();
+        }
+        catch (Exception ex) {
+            _log?.WriteLine($"Could not kill the frozen client {pid}: {ex.Message}");
+        }
+    }
+
+}
