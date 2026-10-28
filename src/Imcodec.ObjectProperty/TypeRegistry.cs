@@ -39,4 +39,9 @@ public abstract class TypeRegistry {
    /// <param name="dispatchedType">The type that was found.</param>
    public abstract System.Type? LookupType(uint hash);
 
+   /// <summary>
+   /// Enumerates every registered hash and the type registered under it.
+   /// </summary>
+   public abstract IEnumerable<KeyValuePair<uint, System.Type>> GetRegisteredTypes();
+
 }
