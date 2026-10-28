@@ -18,11 +18,21 @@ modification, are permitted provided that the following conditions are met:
    this software without specific prior written permission.
 */
 
+using System.Text.Json.Serialization;
+
 namespace Imcodec.BCD.GeomParams;
 
 /// <summary>
 /// Extra parameters for the encoded geometric shape.
 /// </summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "geomType")]
+[JsonDerivedType(typeof(BoxGeomParams), "box")]
+[JsonDerivedType(typeof(RayGeomParams), "ray")]
+[JsonDerivedType(typeof(SphereGeomParams), "sphere")]
+[JsonDerivedType(typeof(CylinderGeomParams), "cylinder")]
+[JsonDerivedType(typeof(TubeGeomParams), "tube")]
+[JsonDerivedType(typeof(PlaneGeomParams), "plane")]
+[JsonDerivedType(typeof(MeshGeomParams), "mesh")]
 public abstract class GeomParams {
     
     public abstract uint TypeId { get; }
