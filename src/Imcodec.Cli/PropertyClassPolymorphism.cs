@@ -22,6 +22,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Imcodec.ObjectProperty;
 using Imcodec.ObjectProperty.TypeCache;
+using Type = System.Type;
 
 namespace Imcodec.Cli;
 
