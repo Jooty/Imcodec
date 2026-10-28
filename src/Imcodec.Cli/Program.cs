@@ -27,6 +27,7 @@ namespace Imcodec.Cli;
 [HasSubCommands(typeof(ObjectPropertyCommands), commandName: "op", Description = "Serialization related commands.")]
 [HasSubCommands(typeof(BcdCommands), commandName: "bcd", Description = "Binary Collision Data (BCD) file commands.")]
 [HasSubCommands(typeof(PoiCommands), commandName: "poi", Description = "Point of Interest (POI) file commands.")]
+[HasSubCommands(typeof(ProxyCommands), commandName: "proxy", Description = "Relay a client to the upstream servers.")]
 public class Program {
 
     public static void Main(string[] args)

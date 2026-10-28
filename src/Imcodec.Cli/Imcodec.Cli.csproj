@@ -30,6 +30,7 @@
         <ProjectReference Include="..\Imcodec.CoreObject\Imcodec.CoreObject.csproj" />
         <ProjectReference Include="..\Imcodec.BCD\Imcodec.BCD.csproj" />
         <ProjectReference Include="..\Imcodec.POI\Imcodec.POI.csproj" />
+        <ProjectReference Include="..\Imcodec.Proxy\Imcodec.Proxy.csproj" />
     </ItemGroup>
 
     <ItemGroup>

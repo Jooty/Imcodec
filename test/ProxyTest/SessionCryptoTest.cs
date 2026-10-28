@@ -38,7 +38,7 @@ public class SessionCryptoTest {
     private const ushort HASH_REGION_LENGTH = 472;
     private const uint ECHO = 0xA1B2C3D4;
 
-    private static SessionOffer MakeSignedOffer(uint echo = ECHO, byte slot = KEY_SLOT, ushort regionLength = HASH_REGION_LENGTH) {
+    internal static SessionOffer MakeSignedOffer(uint echo = ECHO, byte slot = KEY_SLOT, ushort regionLength = HASH_REGION_LENGTH) {
         var challenge = new byte[17];
         BinaryPrimitives.WriteUInt16LittleEndian(challenge, HASH_REGION_OFFSET);
         BinaryPrimitives.WriteUInt16LittleEndian(challenge.AsSpan(2), regionLength);
