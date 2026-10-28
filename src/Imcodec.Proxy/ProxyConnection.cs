@@ -76,7 +76,7 @@ internal sealed class ProxyConnection {
         var clientReader = new FrameReader(clientStream);
         var upstreamReader = new FrameReader(upstreamStream);
 
-        var offer = await ReadHandshakeAsync<SessionOffer>(upstreamReader, cancellationToken);
+        var offer = await ReadHandshakeAsync<SessionOffer>(upstreamReader, CaptureWriter.SERVER_SENDER, cancellationToken);
         crypto.VerifyOffer(offer);
         await upstreamStream.WriteAsync(MessageEncoder.Encode(crypto.BuildAccept(offer)), cancellationToken);
         if (crypto.IsEncrypted) {
@@ -90,10 +90,10 @@ internal sealed class ProxyConnection {
             Milliseconds = offer.Milliseconds,
         };
         await clientStream.WriteAsync(MessageEncoder.Encode(plainOffer), cancellationToken);
-        await ReadHandshakeAsync<SessionAccept>(clientReader, cancellationToken);
+        await ReadHandshakeAsync<SessionAccept>(clientReader, CaptureWriter.CLIENT_SENDER, cancellationToken);
 
-        var toUpstream = PumpAsync(clientReader, upstreamStream, crypto.ClientCipher, frame => frame, pumps.Token);
-        var toClient = PumpAsync(upstreamReader, clientStream, null, PointHandoffsAtProxy, pumps.Token);
+        var toUpstream = PumpAsync(clientReader, upstreamStream, crypto.ClientCipher, CaptureWriter.CLIENT_SENDER, pumps.Token);
+        var toClient = PumpAsync(upstreamReader, clientStream, null, CaptureWriter.SERVER_SENDER, pumps.Token);
         var first = await Task.WhenAny(toUpstream, toClient);
 
         await pumps.CancelAsync();
@@ -107,39 +107,45 @@ internal sealed class ProxyConnection {
         }
     }
 
-    private static async Task<T> ReadHandshakeAsync<T>(FrameReader reader, CancellationToken cancellationToken)
+    private async Task<T> ReadHandshakeAsync<T>(FrameReader reader, string sender, CancellationToken cancellationToken)
         where T : class, IMessage {
         var frame = await reader.ReadFrameAsync(cancellationToken)
             ?? throw new EndOfStreamException($"The connection closed before the {typeof(T).Name}.");
-        var messages = MessageEncoder.Decode(frame);
-        if (messages is not { Count: 1 } || messages.First() is not T message) {
+        var (messages, undecoded) = DecodeFrame(frame);
+        _server.Capture?.Record(_label, sender, frame, messages, undecoded);
+        if (messages is not [T message] || undecoded.Count > 0) {
             throw new InvalidDataException($"Expected a {typeof(T).Name} to open the session.");
         }
         return message;
     }
 
-    private static async Task PumpAsync(FrameReader source, Stream destination, AesStreamCipher? encryptor,
-        Func<byte[], byte[]> transform, CancellationToken cancellationToken) {
+    private async Task PumpAsync(FrameReader source, Stream destination, AesStreamCipher? encryptor, string sender,
+        CancellationToken cancellationToken) {
         while (await source.ReadFrameAsync(cancellationToken) is { } frame) {
-            var plain = transform(frame);
-            await destination.WriteAsync(encryptor?.Encrypt(plain) ?? plain, cancellationToken);
+            var (messages, undecoded) = DecodeFrame(frame);
+            _server.Capture?.Record(_label, sender, frame, messages, undecoded);
+
+            var outgoing = sender == CaptureWriter.SERVER_SENDER ? PointHandoffsAtProxy(frame, messages, undecoded) : frame;
+            await destination.WriteAsync(encryptor?.Encrypt(outgoing) ?? outgoing, cancellationToken);
         }
     }
 
-    private byte[] PointHandoffsAtProxy(byte[] frame) {
-        var undecoded = false;
-        IReadOnlyCollection<IMessage>? messages;
-        try {
-            messages = MessageEncoder.Decode(frame, (_, _, _) => undecoded = true);
+    private static (IReadOnlyList<IMessage> Messages, List<(byte ServiceId, byte MessageId)> Undecoded) DecodeFrame(byte[] frame) {
+        var undecoded = new List<(byte ServiceId, byte MessageId)>();
+        var messages = new MessageStreamDecoder((serviceId, messageId, _) => undecoded.Add((serviceId, messageId))).Feed(frame);
+        if (messages.Count == 0 && undecoded.Count == 0) {
+            // A frame the decoder rejects outright still gets an entry, so nothing relayed is missing from a capture.
+            undecoded.Add((0, 0));
         }
-        catch (Exception) {
-            return frame;
-        }
+        return (messages, undecoded);
+    }
 
-        if (messages is null || !messages.Any(IsHandoff)) {
+    private byte[] PointHandoffsAtProxy(byte[] frame, IReadOnlyList<IMessage> messages,
+        IReadOnlyList<(byte ServiceId, byte MessageId)> undecoded) {
+        if (!messages.Any(IsHandoff)) {
             return frame;
         }
-        if (undecoded) {
+        if (undecoded.Count > 0) {
             // Re-encoding would drop the messages that did not decode, so the handoff goes out untouched.
             _server.Log?.WriteLine($"[{_label}] a handoff shares its frame with a message that does not decode; not redirected");
             return frame;

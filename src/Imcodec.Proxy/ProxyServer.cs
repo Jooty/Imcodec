@@ -42,6 +42,7 @@ public sealed class ProxyServer : IAsyncDisposable {
     internal Keyring Keyring { get; }
     internal ClientSignature? ClientSignature { get; }
     internal TextWriter? Log { get; }
+    internal CaptureWriter? Capture { get; }
 
     /// <summary>
     /// Creates a proxy with no listeners yet.
@@ -49,10 +50,13 @@ public sealed class ProxyServer : IAsyncDisposable {
     /// <param name="keyring">The server public keys of the client install.</param>
     /// <param name="clientSignature">Answers the offer's tamper challenge when the upstream server sends one.</param>
     /// <param name="log">Receives one line for each connection that opens, closes or fails.</param>
-    public ProxyServer(Keyring keyring, ClientSignature? clientSignature = null, TextWriter? log = null) {
+    /// <param name="capture">Records every message relayed in either direction; the caller disposes it.</param>
+    public ProxyServer(Keyring keyring, ClientSignature? clientSignature = null, TextWriter? log = null,
+        CaptureWriter? capture = null) {
         Keyring = keyring;
         ClientSignature = clientSignature;
         Log = log;
+        Capture = capture;
     }
 
     /// <summary>

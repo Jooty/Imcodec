@@ -184,12 +184,19 @@ The proxy is a man-in-the-middle between a game client and the live servers. It 
 ### Usage
 
 ```
-imcodec proxy --client <dir>
+imcodec proxy --client <dir> --upstream <host:port> [--listen <port>] [--out <capture path>]
 ```
 
-* `--client`: the client install directory
+* `--client`: the client install directory, read only for the server public keys
+* `--upstream`: the upstream login endpoint
+* `--listen`: the local port the client connects to (default: any free port, printed at startup)
+* `--out`: write a capture of every relayed message to this file
 
-The proxy reads the server public keys from the client on disk, stands up the local endpoint, points the client at it, and writes captures in the project's existing capture JSON format.
+The proxy listens on `127.0.0.1` and opens one upstream connection for each client that connects. Toward the upstream server it runs the encrypted handshake with the keys from the client install; toward the client it offers an unencrypted session. Frames are relayed byte for byte in both directions until either side closes. Pointing the client at the local port is up to you.
+
+When an upstream message hands the client to another server (character selection, server transfers), the proxy starts another local listener for that server, rewrites the address in the typed message to `127.0.0.1:<local port>` and forwards it. A server named again reuses its listener. Only TCP is relayed.
+
+The capture is a JSON array in the project's capture format, one entry per message with `sender` (`client` or `server`), `timestamp`, `connection` (`login` or the handed-off server's `host:port`), `service_id`, `message_id`, `raw` (the frame in hex) and `data` (the typed fields, or `null` when Imcodec cannot decode the message). Entries are flushed as they are written. Fields whose names look like credentials, tokens or keys are always replaced by `[REDACTED]`, as is the raw frame of any message that had one; there is no option to turn this off.
 
 ## License
 This project is licensed under the BSD 3-Clause License. See individual source files for the full license text.

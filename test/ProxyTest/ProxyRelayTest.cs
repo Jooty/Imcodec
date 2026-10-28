@@ -20,6 +20,7 @@ modification, are permitted provided that the following conditions are met:
 
 using System.Net;
 using System.Net.Sockets;
+using System.Text.Json;
 using Imcodec.Cryptography;
 using Imcodec.MessageLayer;
 using Imcodec.MessageLayer.Generated;
@@ -34,6 +35,7 @@ public class ProxyRelayTest {
     private const int TEST_TIMEOUT_SECONDS = 20;
     private const int CLIENT_PAYLOAD_LENGTH = 20_000;
     private const int UPSTREAM_PAYLOAD_LENGTH = 40_000;
+    private const string TEST_PASS_KEY = "not-a-real-pass-key";
 
     [Fact]
     public async Task Relay_ForwardsFramesByteExactBothWays_AndClosesWithTheClient() {
@@ -105,6 +107,58 @@ public class ProxyRelayTest {
             shardListener.Stop();
         }
     }
+
+    [Fact]
+    public async Task Capture_RecordsBothDirections_AndRedactsCredentials() {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(TEST_TIMEOUT_SECONDS));
+        var cancellationToken = timeout.Token;
+        var capturePath = Path.Combine(Path.GetTempPath(), $"imcodec-proxy-{Guid.NewGuid():N}.json");
+        var upstreamListener = StartUpstream(out var upstreamPort);
+        try {
+            using (var capture = new CaptureWriter(capturePath)) {
+                await using var proxy = new ProxyServer(SyntheticKeyring.Shared.Keyring, capture: capture);
+                var localPort = proxy.StartLogin(LOOPBACK_HOST, upstreamPort);
+                using var session = await RelayedSession.OpenAsync(upstreamListener, localPort, cancellationToken);
+
+                var validate = MessageEncoder.Encode(new LOGIN_7_PROTOCOL.MSG_USER_VALIDATE {
+                    UserID = 5, PassKey3 = TEST_PASS_KEY, MachineID = 6, Locale = "en", PatchClientID = "p", PlatformChatID = "c",
+                });
+                await session.SendFromClientAsync([validate], cancellationToken);
+                Assert.Equal(validate, await session.UpstreamReader.ReadFrameAsync(cancellationToken));
+
+                var info = MessageEncoder.Encode(CharacterInfo(CLIENT_PAYLOAD_LENGTH, seed: 5));
+                await session.SendFromUpstreamAsync([info], cancellationToken);
+                Assert.Equal(info, await session.ClientReader.ReadFrameAsync(cancellationToken));
+            }
+
+            var text = await File.ReadAllTextAsync(capturePath, cancellationToken);
+            Assert.DoesNotContain(TEST_PASS_KEY, text);
+
+            using var document = JsonDocument.Parse(text);
+            var entries = document.RootElement.EnumerateArray().ToArray();
+            Assert.Contains(entries, entry => entry.GetProperty("sender").GetString() == CaptureWriter.CLIENT_SENDER);
+            Assert.Contains(entries, entry => entry.GetProperty("sender").GetString() == CaptureWriter.SERVER_SENDER);
+            Assert.All(entries, entry => Assert.Equal(ProxyServer.LOGIN_CONNECTION_LABEL, entry.GetProperty("connection").GetString()));
+
+            var validateEntry = Assert.Single(entries, entry => NameOf(entry) == nameof(LOGIN_7_PROTOCOL.MSG_USER_VALIDATE));
+            var fields = validateEntry.GetProperty("data").GetProperty("fields");
+            Assert.Equal(CaptureWriter.REDACTED_MARKER, fields.GetProperty("PassKey3").GetProperty("value").GetString());
+            Assert.Equal(5UL, fields.GetProperty("UserID").GetProperty("value").GetUInt64());
+            Assert.Equal(CaptureWriter.REDACTED_MARKER, validateEntry.GetProperty("raw").GetString());
+
+            var offerEntry = Assert.Single(entries, entry => NameOf(entry) == nameof(SessionOffer));
+            Assert.Equal(CaptureWriter.REDACTED_MARKER,
+                offerEntry.GetProperty("data").GetProperty("fields").GetProperty("CryptoPayload").GetProperty("value").GetString());
+            Assert.Single(entries, entry => NameOf(entry) == nameof(LOGIN_7_PROTOCOL.MSG_CHARACTERINFO));
+        }
+        finally {
+            upstreamListener.Stop();
+            File.Delete(capturePath);
+        }
+    }
+
+    internal static string? NameOf(JsonElement entry)
+        => entry.GetProperty("data") is { ValueKind: JsonValueKind.Object } data ? data.GetProperty("name").GetString() : null;
 
     internal static LOGIN_7_PROTOCOL.MSG_CHARACTERSELECTED CharacterSelected(int shardPort) => new() {
         IP = LOOPBACK_HOST,

@@ -36,11 +36,13 @@ public sealed class ProxyCommands {
     /// <param name="client">The client install directory, read for the server public keys.</param>
     /// <param name="upstream">The upstream login endpoint as host:port.</param>
     /// <param name="listen">The local port the client connects to, or 0 for any free one.</param>
+    /// <param name="out">The capture file to write, with credentials redacted.</param>
     [PrimaryCommand]
     public async Task<int> Run(
         [Option("client", Description = "The client install directory.")] string client,
         [Option("upstream", Description = "The upstream login endpoint as host:port.")] string? upstream = null,
-        [Option("listen", Description = "The local port the client connects to, 0 for any free one.")] int listen = 0) {
+        [Option("listen", Description = "The local port the client connects to, 0 for any free one.")] int listen = 0,
+        [Option("out", Description = "The capture file to write, with credentials redacted.")] string? @out = null) {
         if (!Directory.Exists(client)) {
             Console.Error.WriteLine($"The client directory '{client}' does not exist.");
             return FAILURE_EXIT_CODE;
@@ -65,9 +67,13 @@ public sealed class ProxyCommands {
             stop.Cancel();
         };
 
-        await using var proxy = new ProxyServer(keyring, log: Console.Out);
+        using var capture = @out is null ? null : new CaptureWriter(@out);
+        await using var proxy = new ProxyServer(keyring, log: Console.Out, capture: capture);
         var port = proxy.StartLogin(upstreamHost, upstreamPort, listen);
-        Console.WriteLine($"Listening on 127.0.0.1:{port}, relaying to {upstreamHost}:{upstreamPort}. Ctrl+C stops.");
+        Console.WriteLine($"Listening on {ProxyServer.LOOPBACK_HOST}:{port}, relaying to {upstreamHost}:{upstreamPort}. Ctrl+C stops.");
+        if (@out is not null) {
+            Console.WriteLine($"Writing the capture to '{@out}'.");
+        }
 
         try {
             await Task.Delay(Timeout.Infinite, stop.Token);
