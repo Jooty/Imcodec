@@ -87,7 +87,7 @@ public static class Deserialization {
         return new JsonSerializerOptions {
             TypeInfoResolver = resolver,
             WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
+            Converters = { new JsonStringEnumConverter(), new Float2DArrayJsonConverter() }
         };
     }
 

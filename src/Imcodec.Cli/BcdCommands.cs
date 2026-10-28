@@ -80,7 +80,7 @@ public sealed class BcdCommands {
             // Serialize to JSON with nice formatting
             var jsonOptions = new JsonSerializerOptions {
                 WriteIndented = true,
-                Converters = { new JsonStringEnumConverter() }
+                Converters = { new JsonStringEnumConverter(), new Float2DArrayJsonConverter() }
             };
             var json = JsonSerializer.Serialize(bcdInfo, jsonOptions);
 
@@ -124,7 +124,7 @@ public sealed class BcdCommands {
         try {
             var jsonOptions = new JsonSerializerOptions {
                 PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter() }
+                Converters = { new JsonStringEnumConverter(), new Float2DArrayJsonConverter() }
             };
             var bcd = new Bcd();
             // Parse JSON using JsonDocument for fast, zero-allocation inspection
