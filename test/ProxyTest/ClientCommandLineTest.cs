@@ -29,6 +29,10 @@ public class ClientCommandLineTest {
     private const string PROXY_HOST = "127.0.0.1";
     private const int PROXY_PORT = 51000;
     private const string LOGIN_TOKEN = "secret-login-token";
+    private const string CLIENT_EXE_NAME = "client.exe";
+    private const string REPORTER_EXE_NAME = "reporter.exe";
+    private const string CLIENT_EXE_PATH = "C:\\game\\Bin\\client.exe";
+    private const string REPORTER_EXE_PATH = "C:\\game\\Bin\\reporter.exe";
 
     private static string[] CommandLine(params string[] before)
         => [.. before, "-L", LOGIN_HOST, LOGIN_PORT.ToString(), "-A", LOGIN_TOKEN];
@@ -79,6 +83,69 @@ public class ClientCommandLineTest {
 
         Assert.DoesNotContain(LOGIN_TOKEN, redacted);
         Assert.Equal($"{ClientCommandLine.REDACTED_ARGUMENT} {ClientCommandLine.REDACTED_ARGUMENT}", redacted);
+    }
+
+    [Fact]
+    public void IsClientCommandLine_BinExecutableWithLoginFlag_IsTheClient()
+        => Assert.True(ClientCatcher.IsClientCommandLine([CLIENT_EXE_PATH, .. CommandLine()], [CLIENT_EXE_NAME]));
+
+    [Fact]
+    public void IsClientCommandLine_BinExecutableWithoutLoginFlag_IsIgnored()
+        => Assert.False(ClientCatcher.IsClientCommandLine([REPORTER_EXE_PATH, "-A", LOGIN_TOKEN], [CLIENT_EXE_NAME, REPORTER_EXE_NAME]));
+
+    [Fact]
+    public void IsClientCommandLine_LoginFlagWithoutBinExecutable_IsIgnored()
+        => Assert.False(ClientCatcher.IsClientCommandLine(["other.exe", .. CommandLine()], [CLIENT_EXE_NAME]));
+
+    [Fact]
+    public void TryFindEntryExecutable_OneExecutable_ReturnsItsFullPath() {
+        using var install = new TempInstall("entry.exe");
+
+        Assert.True(ClientCatcher.TryFindEntryExecutable(install.Root, out var entryExe, out var failure));
+        Assert.Equal(Path.GetFullPath(Path.Combine(install.Root, "entry.exe")), entryExe);
+        Assert.Null(failure);
+    }
+
+    [Fact]
+    public void TryFindEntryExecutable_NoExecutable_NamesWhatWasFound() {
+        using var install = new TempInstall("readme.txt");
+
+        Assert.False(ClientCatcher.TryFindEntryExecutable(install.Root, out var entryExe, out var failure));
+        Assert.Null(entryExe);
+        Assert.Contains("found none", failure);
+    }
+
+    [Fact]
+    public void TryFindEntryExecutable_SeveralExecutables_NamesEachOne() {
+        using var install = new TempInstall("a.exe", "b.exe");
+
+        Assert.False(ClientCatcher.TryFindEntryExecutable(install.Root, out var entryExe, out var failure));
+        Assert.Null(entryExe);
+        Assert.Contains("found 2: a.exe, b.exe", failure);
+    }
+
+    [Fact]
+    public void TryFindEntryExecutable_IgnoresExecutablesInBin() {
+        using var install = new TempInstall("entry.exe", Path.Combine("Bin", CLIENT_EXE_NAME));
+
+        Assert.True(ClientCatcher.TryFindEntryExecutable(install.Root, out var entryExe, out _));
+        Assert.Equal(Path.GetFullPath(Path.Combine(install.Root, "entry.exe")), entryExe);
+    }
+
+    private sealed class TempInstall : IDisposable {
+
+        public string Root { get; } = Directory.CreateTempSubdirectory().FullName;
+
+        public TempInstall(params string[] files) {
+            foreach (var file in files) {
+                var path = Path.Combine(Root, file);
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllBytes(path, []);
+            }
+        }
+
+        public void Dispose() => Directory.Delete(Root, recursive: true);
+
     }
 
 }

@@ -19,6 +19,7 @@ modification, are permitted provided that the following conditions are met:
 */
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Imcodec.Proxy;
@@ -29,7 +30,7 @@ namespace Imcodec.Proxy;
 public sealed record CaughtClient(string ClientExe, IReadOnlyList<string> Arguments, string WorkingDirectory, ClientLoginEndpoint Endpoint);
 
 /// <summary>
-/// Starts the official patcher, waits for it to launch the client, freezes the client before it reaches the
+/// Starts the official patcher from the client install, waits for it to launch the client, freezes the client before it reaches the
 /// network to read where it was told to connect, then relaunches it pointed at the proxy.
 /// </summary>
 /// <remarks>
@@ -44,13 +45,11 @@ public sealed class ClientCatcher {
     private const int DETECTION_POLL_MILLISECONDS = 20;
 
     private readonly string _clientDirectory;
-    private readonly string _patcherExe;
     private readonly IClientPlatform _platform;
     private readonly TextWriter? _log;
 
-    public ClientCatcher(string clientDirectory, string patcherExe, IClientPlatform platform, TextWriter? log = null) {
+    public ClientCatcher(string clientDirectory, IClientPlatform platform, TextWriter? log = null) {
         _clientDirectory = clientDirectory;
-        _patcherExe = patcherExe;
         _platform = platform;
         _log = log;
     }
@@ -79,19 +78,49 @@ public sealed class ClientCatcher {
         if (ClientExecutableNames().Count == 0) {
             return $"No '{EXECUTABLE_SEARCH_PATTERN}' found in the client's '{BIN_DIRECTORY_NAME}' directory under '{_clientDirectory}'.";
         }
-        if (!File.Exists(_patcherExe)) {
-            return $"The patcher '{_patcherExe}' does not exist.";
+        if (!TryFindEntryExecutable(_clientDirectory, out _, out var entryFailure)) {
+            return entryFailure;
         }
         return _platform.PrerequisiteFailure();
     }
 
     /// <summary>
+    /// Finds the single executable in the install root, the entry stub a shortcut runs, which owns the
+    /// patcher's bank selection and self-update.
+    /// </summary>
+    public static bool TryFindEntryExecutable(string clientDirectory, [NotNullWhen(true)] out string? entryExe,
+        [NotNullWhen(false)] out string? failure) {
+        var found = Directory.Exists(clientDirectory)
+            ? Directory.EnumerateFiles(clientDirectory, EXECUTABLE_SEARCH_PATTERN).Order().ToArray()
+            : [];
+        entryExe = found.Length == 1 ? Path.GetFullPath(found[0]) : null;
+        failure = found.Length switch {
+            1 => null,
+            0 => $"Expected exactly one '{EXECUTABLE_SEARCH_PATTERN}' in the install root '{clientDirectory}', found none.",
+            _ => $"Expected exactly one '{EXECUTABLE_SEARCH_PATTERN}' in the install root '{clientDirectory}', found {found.Length}: {string.Join(", ", found.Select(Path.GetFileName))}."
+        };
+        return entryExe is not null;
+    }
+
+    /// <summary>
+    /// Whether a command line, executable first, is the game client: it names one of the client's
+    /// executables and carries the login endpoint. A process without the endpoint, such as the bug
+    /// reporter, is not the client.
+    /// </summary>
+    public static bool IsClientCommandLine(IReadOnlyList<string> commandLine, IReadOnlyCollection<string> executableNames)
+        => NamesClient(commandLine, executableNames) && ClientCommandLine.TryFindLoginEndpoint(commandLine) is not null;
+
+    /// <summary>
     /// Starts the patcher and returns once the client it launches has been frozen, read and killed.
     /// </summary>
-    /// <exception cref="InvalidDataException">The client's command line has no login endpoint.</exception>
+    /// <exception cref="InvalidDataException">The install root has no single entry executable.</exception>
     public async Task<CaughtClient> CatchAsync(CancellationToken cancellationToken) {
         var executableNames = ClientExecutableNames();
-        using var patcher = _platform.StartPatcher(_patcherExe);
+        if (!TryFindEntryExecutable(_clientDirectory, out var entryExe, out var failure)) {
+            throw new InvalidDataException(failure);
+        }
+
+        using var patcher = _platform.StartPatcher(entryExe);
         _log?.WriteLine("Patcher started; log in there as usual.");
 
         var caught = await DetectAndFreezeAsync(executableNames, patcher.Id, cancellationToken);
@@ -129,7 +158,7 @@ public sealed class ClientCatcher {
     private bool TryCatch(int pid, IReadOnlyCollection<string> executableNames, out CaughtClient caught) {
         caught = null!;
         var commandLine = _platform.TryReadCommandLine(pid);
-        if (commandLine is null || commandLine.Count == 0 || !NamesClient(commandLine, executableNames)) {
+        if (commandLine is null || commandLine.Count == 0 || !IsClientCommandLine(commandLine, executableNames)) {
             return false;
         }
 

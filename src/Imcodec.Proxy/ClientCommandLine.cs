@@ -76,7 +76,10 @@ public static class ClientCommandLine {
         return string.Join(' ', shown);
     }
 
-    private static ClientLoginEndpoint? TryFindLoginEndpoint(IReadOnlyList<string> arguments) {
+    /// <summary>
+    /// Like <see cref="FindLoginEndpoint"/>, but returns null instead of throwing when there is none.
+    /// </summary>
+    public static ClientLoginEndpoint? TryFindLoginEndpoint(IReadOnlyList<string> arguments) {
         try {
             return FindLoginEndpoint(arguments);
         }

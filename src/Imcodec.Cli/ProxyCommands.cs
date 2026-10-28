@@ -33,19 +33,17 @@ public sealed class ProxyCommands {
     private const int FAILURE_EXIT_CODE = 1;
 
     /// <summary>
-    /// Starts the patcher, catches the client it launches and relays it to the upstream servers.
-    /// With no patcher, relays a local port to the given upstream until Ctrl+C.
+    /// Starts the patcher from the client install, catches the client it launches and relays it to the
+    /// upstream servers.
     /// </summary>
-    /// <param name="client">The client install directory, read for the server public keys.</param>
-    /// <param name="patcher">The patcher executable to start and catch the client from.</param>
+    /// <param name="client">The client install directory, which holds the patcher and the server public keys.</param>
     /// <param name="wine">The command that runs the patcher on Linux.</param>
-    /// <param name="upstream">The upstream login endpoint as host:port; with a patcher, overrides the caught one.</param>
+    /// <param name="upstream">The upstream login endpoint as host:port, overriding the one read from the client.</param>
     /// <param name="listen">The local port the client connects to, or 0 for any free one.</param>
     /// <param name="out">The capture file to write, with credentials redacted.</param>
     [PrimaryCommand]
     public async Task<int> Run(
         [Option("client", Description = "The client install directory.")] string client,
-        [Option("patcher", Description = "The patcher executable to start and catch the client from.")] string? patcher = null,
         [Option("wine", Description = "The command that runs the patcher on Linux.")] string wine = DEFAULT_WINE_COMMAND,
         [Option("upstream", Description = "The upstream login endpoint as host:port.")] string? upstream = null,
         [Option("listen", Description = "The local port the client connects to, 0 for any free one.")] int listen = 0,
@@ -55,13 +53,8 @@ public sealed class ProxyCommands {
             return FAILURE_EXIT_CODE;
         }
 
-        var upstreamGiven = upstream is not null;
-        if (upstreamGiven && !TryParseEndpoint(upstream, out _, out _)) {
+        if (upstream is not null && !TryParseEndpoint(upstream, out _, out _)) {
             Console.Error.WriteLine("Give the upstream login endpoint as --upstream host:port.");
-            return FAILURE_EXIT_CODE;
-        }
-        if (patcher is null && !upstreamGiven) {
-            Console.Error.WriteLine("Give --patcher <exe> to catch the client, or --upstream host:port to relay a port.");
             return FAILURE_EXIT_CODE;
         }
 
@@ -86,31 +79,18 @@ public sealed class ProxyCommands {
             Console.WriteLine($"Writing the capture to '{@out}'.");
         }
 
-        return patcher is null
-            ? await RelayManuallyAsync(proxy, upstream!, listen, stop.Token)
-            : await CatchAndRelayAsync(proxy, client, patcher, wine, upstream, listen, stop.Token);
+        return await CatchAndRelayAsync(proxy, client, wine, upstream, listen, stop.Token);
     }
 
-    private async Task<int> RelayManuallyAsync(ProxyServer proxy, string upstream, int listen, CancellationToken cancellationToken) {
-        _ = TryParseEndpoint(upstream, out var upstreamHost, out var upstreamPort);
-        if (!TryStartLogin(proxy, upstreamHost, upstreamPort, listen, out var port)) {
-            return FAILURE_EXIT_CODE;
-        }
-
-        Console.WriteLine($"Listening on {ProxyServer.LOOPBACK_HOST}:{port}, relaying to {upstreamHost}:{upstreamPort}. Point the client there. Ctrl+C stops.");
-        await WaitForCancellationAsync(cancellationToken);
-        return 0;
-    }
-
-    private async Task<int> CatchAndRelayAsync(ProxyServer proxy, string client, string patcher, string wine,
+    private async Task<int> CatchAndRelayAsync(ProxyServer proxy, string client, string wine,
         string? upstream, int listen, CancellationToken cancellationToken) {
         var platform = ClientCatcher.PlatformFor(wine);
         if (platform is null) {
-            Console.Error.WriteLine("Catching the client with a patcher is only supported on Windows and Linux.");
+            Console.Error.WriteLine("Catching the client is only supported on Windows and Linux.");
             return FAILURE_EXIT_CODE;
         }
 
-        var catcher = new ClientCatcher(client, patcher, platform, Console.Out);
+        var catcher = new ClientCatcher(client, platform, Console.Out);
         if (catcher.PrerequisiteFailure() is { } failure) {
             Console.Error.WriteLine(failure);
             return FAILURE_EXIT_CODE;
@@ -164,15 +144,6 @@ public sealed class ProxyCommands {
         catch (OperationCanceledException) {
             Console.WriteLine("Stopping.");
             TryKill(client);
-        }
-    }
-
-    private static async Task WaitForCancellationAsync(CancellationToken cancellationToken) {
-        try {
-            await Task.Delay(Timeout.Infinite, cancellationToken);
-        }
-        catch (OperationCanceledException) {
-            Console.WriteLine("Stopping.");
         }
     }
 
