@@ -177,9 +177,9 @@ imcodec poi info <inputPath>
 
 ## Proxy
 
-The proxy is a man-in-the-middle between a game client and the live servers. It does not hook the client or read its memory. The client talks to the proxy in plaintext, using the same unencrypted session mode the server side uses, while the proxy performs the encrypted handshake toward the live servers itself and derives the real session keys. It then decrypts, logs, re-encrypts and forwards traffic in both directions, turning the bytes into typed Imcodec messages.
+A man-in-the-middle relay between the game client and its servers that decodes the traffic into typed Imcodec messages. It does not hook the client or read its memory: it gives the client an unencrypted session and runs the encrypted handshake upstream with the keys from the client install.
 
-> **Do not point this at the live servers.** Doing so is absolutely against the game's Terms of Service and may get your account banned. Imcodec is not responsible if you are banned or for any other consequence of its use.
+> **Do not point this at the live servers.** It is against the game's Terms of Service and may get your account banned. Imcodec is not responsible for any consequence of its use.
 
 ### Usage
 
@@ -187,19 +187,15 @@ The proxy is a man-in-the-middle between a game client and the live servers. It 
 imcodec proxy --client <dir> [--wine <cmd>] [--upstream <host:port>] [--listen <port>] [--out <capture path>]
 ```
 
-* `--client`: the client install directory; the proxy reads the server public keys from it and starts the patcher from it
-* `--wine`: the command that runs the patcher on Linux (default: `wine`, inheriting your `WINEPREFIX`); not used on Windows
-* `--upstream`: overrides the upstream login endpoint read from the client
-* `--listen`: the local port the client connects to (default: any free port, printed at startup)
-* `--out`: write a capture of every relayed message to this file
+* `--client`: Client install directory, used for the server keys and the patcher
+* `--wine`: Command that runs the patcher on Linux (default: `wine`, using your `WINEPREFIX`)
+* `--upstream`: Override the login server read from the client
+* `--listen`: Local port for the client (default: a free port, printed at startup)
+* `--out`: Write a capture of every relayed message to this file
 
-The proxy starts the install's own patcher, the single `*.exe` in the install root that a shortcut would run, and you log in there as usual; the proxy never sees your password. When the patcher launches the client (a new process that names one of the `Bin/*.exe` files and carries `-L`; other processes such as the bug reporter are left alone), the proxy catches it before it reaches the network by freezing it, reading the login endpoint off its command line, and relaunching it pointed at the local port instead. The login token on the command line is passed through unchanged and never logged. On Linux the patcher runs under `--wine`, which is required; on Windows it runs directly; other systems are not supported. The proxy exits when the client exits, and Ctrl+C tears everything down.
+Log in through the patcher as usual; the proxy never sees your password. When the patcher starts the client, the proxy points it at the local port and passes the login token through without logging it. Server handoffs (character selection, transfers) get their own local listener. Runs on Windows and Linux, relays TCP only, and exits with the client; Ctrl+C stops everything.
 
-The proxy listens on `127.0.0.1` and opens one upstream connection for each client that connects. Toward the upstream server it runs the encrypted handshake with the keys from the client install; toward the client it offers an unencrypted session. Frames are relayed byte for byte in both directions until either side closes. Pointing the client at the local port is up to you.
-
-When an upstream message hands the client to another server (character selection, server transfers), the proxy starts another local listener for that server, rewrites the address in the typed message to `127.0.0.1:<local port>` and forwards it. A server named again reuses its listener. Only TCP is relayed.
-
-The capture is a JSON array in the project's capture format, one entry per message with `sender` (`client` or `server`), `timestamp`, `connection` (`login` or the handed-off server's `host:port`), `service_id`, `message_id`, `raw` (the frame in hex) and `data` (the typed fields, or `null` when Imcodec cannot decode the message). Entries are flushed as they are written. Fields whose names look like credentials, tokens or keys are always replaced by `[REDACTED]`, as is the raw frame of any message that had one; there is no option to turn this off.
+The capture is a JSON array with one entry per message: `sender`, `timestamp`, `connection`, `service_id`, `message_id`, `raw` (hex) and `data` (typed fields, or `null` if undecodable). Credential, token and key fields are always `[REDACTED]`, as is the raw frame of any message that contains one.
 
 ## License
 This project is licensed under the BSD 3-Clause License. See individual source files for the full license text.
