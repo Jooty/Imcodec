@@ -72,7 +72,23 @@ public sealed class BootstrapCommands {
             [Option("client", Description = "Client install directory. Defaults to the ImcodecClientDir environment variable.")] string? client = null,
             [Option("out", Description = "Output directory.")] string outputDirectory = TYPE_DUMP_DIRECTORY,
             [Option("extended", Description = "Also emit the extended per-type and per-property detail.")] bool extended = false,
-            [Option("verbose", Description = "Report emulation progress to standard error.")] bool verbose = false) {
+            [Option("verbose", Description = "Report emulation progress to standard error.")] bool verbose = false)
+        => DumpTypes(client, outputDirectory, extended, verbose);
+
+    /// <summary>
+    /// Refreshes both the message definitions and the client type dump. Run this after a client update.
+    /// </summary>
+    [Command("all", Description = "Refresh both the message definitions and the client type dump.")]
+    public int All(
+            [Option("client", Description = "Client install directory. Defaults to the ImcodecClientDir environment variable.")] string? client = null,
+            [Option("messages-out", Description = "Message definition output directory.")] string messageDefinitionDirectory = MESSAGE_DEFINITION_DIRECTORY,
+            [Option("types-out", Description = "Type dump output directory.")] string typeDumpDirectory = TYPE_DUMP_DIRECTORY) {
+        var messagesResult = Messages(client, messageDefinitionDirectory);
+
+        return messagesResult != 0 ? messagesResult : Types(client, typeDumpDirectory);
+    }
+
+    internal static int DumpTypes(string? client, string outputDirectory, bool extended, bool verbose) {
         var clientDirectory = ResolveClientDirectory(client);
         if (clientDirectory is null) {
             return MissingClient();
@@ -96,19 +112,6 @@ public sealed class BootstrapCommands {
 
             return FAILURE_EXIT_CODE;
         }
-    }
-
-    /// <summary>
-    /// Refreshes both the message definitions and the client type dump. Run this after a client update.
-    /// </summary>
-    [Command("all", Description = "Refresh both the message definitions and the client type dump.")]
-    public int All(
-            [Option("client", Description = "Client install directory. Defaults to the ImcodecClientDir environment variable.")] string? client = null,
-            [Option("messages-out", Description = "Message definition output directory.")] string messageDefinitionDirectory = MESSAGE_DEFINITION_DIRECTORY,
-            [Option("types-out", Description = "Type dump output directory.")] string typeDumpDirectory = TYPE_DUMP_DIRECTORY) {
-        var messagesResult = Messages(client, messageDefinitionDirectory);
-
-        return messagesResult != 0 ? messagesResult : Types(client, typeDumpDirectory);
     }
 
     private static string? ResolveClientDirectory(string? client)

@@ -22,6 +22,7 @@ using Cocona;
 
 namespace Imcodec.Cli;
 
+[HasSubCommands(typeof(TypeDumpCommands), commandName: "typedump", Description = "Dump the client's property class types for inspection.")]
 [HasSubCommands(typeof(BootstrapCommands), commandName: "bootstrap", Description = "Generate or refresh the source generator inputs from a client install.")]
 [HasSubCommands(typeof(ArchiveCommands), commandName: "wad", Description = "Archive related commands.")]
 [HasSubCommands(typeof(ObjectPropertyCommands), commandName: "op", Description = "Serialization related commands.")]
