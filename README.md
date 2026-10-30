@@ -61,6 +61,17 @@ Run `dotnet publish -c Release` to create a publishable, self-contained executab
 
 ## Command Structure
 
+### Type Dump (`typedump`)
+Dump the client's property class types to `typedump.json` for inspection.
+
+```
+imcodec typedump [--client <dir>] [--out <dir>] [--extended] [--verbose]
+```
+
+* `--out`: Output directory. Defaults to the current directory.
+
+The other options work as they do for `bootstrap types`.
+
 ### Bootstrap Commands (`bootstrap`)
 Generate or refresh the source generator inputs from a client install.
 
@@ -75,7 +86,7 @@ imcodec bootstrap types [--client <dir>] [--out <dir>] [--extended] [--verbose]
 * `--extended` (`types` only): also emit the extended per-type and per-property detail (methods, notes, persistence hints, default values, static array counts, alternate hashes, and type sizes/flags). The generator ignores this section; it is there for inspecting the type system. Without the flag the dump is the plain manifest the generator consumes.
 * `--verbose` (`types` only): report the executable emulation progress to standard error.
 
-The type dump is produced in-process by emulating the client's type registration - the client is never launched. `imcodec bootstrap types` is the way to inspect the type system directly; `bootstrap all` and the one-command build run the same dumper to produce the generator input.
+The type dump is produced in-process by emulating the client's type registration - the client is never launched. `imcodec typedump` is the way to inspect the type system directly; `bootstrap all` and the one-command build run the same dumper to produce the generator input.
 
 ### Archive Commands (`wad`)
 ```
