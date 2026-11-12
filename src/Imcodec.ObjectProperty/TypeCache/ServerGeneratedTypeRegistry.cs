@@ -1050,6 +1050,8 @@ public partial record InteractableBehaviorTemplate : BehaviorTemplate {
     public override uint GetHash() => 0x42CF875B;
 
     [PropertyField(0x1E1748E2, 31)] public List<InteractOptionTemplate?> m_interactOptions { get; set; } = [];
+    // The press-X prompt the client shows for the object ("GUI_00005578", Press X to Teleport).
+    [PropertyField(0x7C6511DA, 31)] public string m_interactTextOverride { get; set; } = "";
 
 }
 
