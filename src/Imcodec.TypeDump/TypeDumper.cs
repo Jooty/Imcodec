@@ -70,6 +70,14 @@ public static class TypeDumper {
         // fill in the per-type detail the initializers leave for first access.
         using var emulator = new TypeSystemEmulator(exe, runtime);
         var started = DateTime.UtcNow;
+        // Run the C initializers first, as startup does. Newer toolsets' thread-safe statics only work
+        // once the CRT has set up their wake-up state there; without it every guarded static faults.
+        if (anchors.CInitializerTable.Start != 0) {
+            foreach (var function in anchors.ReadTable(anchors.CInitializerTable)) {
+                emulator.Run(function);
+            }
+        }
+
         foreach (var function in anchors.ReadTable(anchors.InitializerTable)) {
             emulator.Run(function);
         }
@@ -82,6 +90,14 @@ public static class TypeDumper {
             $"{emulator.Failures.Count} failed calls, {emulator.HeapBytesUsed >> 20} MiB heap");
         foreach (var (function, reason) in emulator.Failures.Take(20)) {
             log?.WriteLine($"  failed {function:x}: {reason}");
+        }
+
+        foreach (var (name, count) in emulator.UnknownImports.OrderByDescending(p => p.Value).Take(20)) {
+            log?.WriteLine($"  unmodelled import {name} called {count} times");
+        }
+
+        foreach (var access in emulator.UnmappedAccesses.Take(5)) {
+            log?.WriteLine($"  unmapped access {access}");
         }
 
         // One initializer loads its enum options from a data file instead of hard-coding them, so it

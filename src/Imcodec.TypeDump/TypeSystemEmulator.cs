@@ -82,7 +82,7 @@ internal sealed partial class TypeSystemEmulator : IDisposable {
         "_crt_atexit", "_register_onexit_function", "atexit", "_initialize_onexit_table",
         "Sleep", "EnterCriticalSection", "LeaveCriticalSection", "AcquireSRWLockExclusive",
         "ReleaseSRWLockExclusive", "WakeAllConditionVariable", "SleepConditionVariableSRW",
-        "InitializeCriticalSectionAndSpinCount", "SetLastError",
+        "InitializeCriticalSectionAndSpinCount", "SetLastError", "CreateEventW", "CreateEventExW", "GetModuleHandleW",
     ];
     private static readonly HashSet<string> FATAL_IMPORTS = [
         "_invalid_parameter_noinfo_noreturn", "abort", "terminate", "?_Xlength_error@std@@YAXPEBD@Z", "_CxxThrowException",

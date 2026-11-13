@@ -32,6 +32,7 @@ namespace Imcodec.TypeDump;
 internal sealed class RegistrationAnchors {
 
     private const string STATIC_INITIALIZER_TABLE_IMPORT = "_initterm";
+    private const string C_INITIALIZER_TABLE_IMPORT = "_initterm_e";
     private const int ENTRY_POINT_DECODE_LIMIT = 64;
     private const int MAIN_FUNCTION_FALLBACK_LENGTH = 0x4000;
     private const int INITIALIZER_TABLE_ENTRY_SIZE = 8;
@@ -51,10 +52,23 @@ internal sealed class RegistrationAnchors {
     private static readonly byte[] INITIALIZER_STUB_PREFIX = [0x48, 0x83, 0xEC, 0x28, 0xE8];
     private static readonly byte[] INITIALIZER_STUB_MIDDLE = [0x48, 0x83, 0xC4, 0x28, 0xE9];
     private static readonly byte[] REGISTRY_ANCHOR_TAIL = [0x48, 0x3B, 0x38, 0x74, 0x12];
+    private static readonly byte[] TLS_ARRAY_LOAD = [0x65, 0x48, 0x8B, 0x04, 0x25, 0x58, 0x00, 0x00, 0x00];
+    private static readonly byte[] MAP_ALLOCATION = [0xB9, 0x10, 0x00, 0x00, 0x00, 0xE8];
+    private static readonly byte[] MAP_NODE_ALLOCATION = [0xB9, 0x30, 0x00, 0x00, 0x00, 0xE8];
+    private const int MAP_SINGLETON_BODY_LENGTH = 0xC0;
+    private static readonly Register[] VOLATILE_REGISTERS = [
+        Register.RAX, Register.RCX, Register.RDX, Register.R8, Register.R9, Register.R10, Register.R11,
+    ];
 
     private readonly ClientImage _exe;
 
     public (ulong Start, ulong End) InitializerTable { get; private set; }
+
+    /// <summary>
+    /// The C initializer table startup runs, through _initterm_e, before <see cref="InitializerTable"/>.
+    /// It holds CRT setup such as the thread-safe-statics state that newer toolsets need. Empty if absent.
+    /// </summary>
+    public (ulong Start, ulong End) CInitializerTable { get; private set; }
 
     public int InitializerSlotCount { get; private set; }
 
@@ -120,16 +134,16 @@ internal sealed class RegistrationAnchors {
 
     private void FindInitializerTables() {
         var thunkImports = _exe.Imports
-            .Where(i => i.Name == STATIC_INITIALIZER_TABLE_IMPORT)
+            .Where(i => i.Name is STATIC_INITIALIZER_TABLE_IMPORT or C_INITIALIZER_TABLE_IMPORT)
             .ToDictionary(i => i.SlotRva, i => i.Name);
         var mainRva = FollowEntryPointJump();
         var endRva = _exe.TryFindFunction(mainRva, out _, out var functionEnd)
             ? functionEnd
             : mainRva + MAIN_FUNCTION_FALLBACK_LENGTH;
 
-        // Startup calls _initterm(begin, end) to run the static initializers. Walk the startup function
-        // tracking the addresses the last lea loads into rcx and rdx, and grab them as the table bounds
-        // at the point execution reaches the call through the _initterm import thunk.
+        // Startup calls _initterm_e(begin, end) for the C initializers and then _initterm(begin, end) for
+        // the C++ static initializers. Walk the startup function tracking the addresses the last lea loads
+        // into rcx and rdx, and grab them as the table bounds at each call through those import thunks.
         ulong rcx = 0, rdx = 0;
         foreach (var instruction in Decode(mainRva, endRva)) {
             if (instruction.Code == Code.Lea_r64_m && instruction.MemoryBase == Register.RIP) {
@@ -140,8 +154,12 @@ internal sealed class RegistrationAnchors {
                 }
             } else if (instruction.FlowControl == FlowControl.Call && instruction.Op0Kind == OpKind.NearBranch64) {
                 var slot = ImportSlotBehindThunk((uint) (instruction.NearBranchTarget - _exe.Base));
-                if (slot is { } importSlot && thunkImports.ContainsKey(importSlot)) {
-                    InitializerTable = (rcx, rdx);
+                if (slot is { } importSlot && thunkImports.TryGetValue(importSlot, out var import)) {
+                    if (import == STATIC_INITIALIZER_TABLE_IMPORT) {
+                        InitializerTable = (rcx, rdx);
+                    } else if (rdx > rcx) {
+                        CInitializerTable = (rcx, rdx);
+                    }
                 }
             }
         }
@@ -261,11 +279,60 @@ internal sealed class RegistrationAnchors {
             }
         }
 
-        if (hits.Count < MINIMUM_REGISTRY_ANCHOR_HITS) {
-            throw new InvalidOperationException("The type name registry anchor was not found.");
+        if (hits.Count >= MINIMUM_REGISTRY_ANCHOR_HITS) {
+            NameRegistryGetter = _exe.Base + hits.MaxBy(p => p.Value).Key;
+            return;
         }
 
-        NameRegistryGetter = _exe.Base + hits.MaxBy(p => p.Value).Key;
+        // Newer clients compile the caller differently and the return-site signature is gone, so fall
+        // back to the getter itself: a function-local static `new std::map` behind a thread-safe init
+        // guard. Of the few such map singletons, the type-name registry is by far the most called.
+        NameRegistryGetter = _exe.Base + FindMapSingletonGetter()
+            ?? throw new InvalidOperationException("The type name registry anchor was not found.");
+    }
+
+    private uint? FindMapSingletonGetter() {
+        // The guard reads the thread's TLS array (`mov rax, gs:[58h]`), and on first use the body allocates
+        // the map (0x10 bytes) and then its sentinel node (0x30 bytes): `mov ecx, imm32 / call operator new`.
+        var memory = _exe.Memory.AsSpan();
+        var getters = new HashSet<uint>();
+        foreach (var section in _exe.Sections.Where(s => s.Executable)) {
+            var code = memory.Slice((int) section.Rva, (int) section.Size);
+            for (var offset = 0; offset < code.Length;) {
+                var found = code[offset..].IndexOf(TLS_ARRAY_LOAD);
+                if (found < 0) {
+                    break;
+                }
+
+                var site = offset + found;
+                offset = site + 1;
+                var body = code.Slice(site, System.Math.Min(MAP_SINGLETON_BODY_LENGTH, code.Length - site));
+                var mapAllocation = body.IndexOf(MAP_ALLOCATION);
+                var nodeAllocation = body.IndexOf(MAP_NODE_ALLOCATION);
+                if (mapAllocation < 0 || nodeAllocation < mapAllocation) {
+                    continue;
+                }
+
+                if (_exe.TryFindFunction(section.Rva + (uint) site, out var begin, out _)) {
+                    getters.Add(begin);
+                }
+            }
+        }
+
+        if (getters.Count == 0) {
+            return null;
+        }
+
+        var callers = getters.ToDictionary(g => g, _ => 0);
+        foreach (var section in _exe.Sections.Where(s => s.Executable)) {
+            foreach (var (_, target) in NearCalls(section.Rva, section.Rva + section.Size)) {
+                if (callers.TryGetValue(target, out var count)) {
+                    callers[target] = count + 1;
+                }
+            }
+        }
+
+        return callers.MaxBy(p => p.Value).Key;
     }
 
     private void FindRuntimeEnumInitializer() {
@@ -335,6 +402,39 @@ internal sealed class RegistrationAnchors {
             recent.Enqueue(instruction);
             if (recent.Count > RECENT_INSTRUCTION_WINDOW) {
                 recent.Dequeue();
+            }
+        }
+
+        return FindAssetRequestCalleeThroughRegister(begin, end);
+    }
+
+    private uint? FindAssetRequestCalleeThroughRegister(uint begin, uint end) {
+        // Newer clients load the global into a callee-saved register first and copy it into rcx just
+        // before the call (`mov rbx, [rip+...]` ... `mov rcx, rbx`). Track which registers currently hold a
+        // value loaded from a rip-relative global, and return the first call made while rcx holds one.
+        var fromGlobal = new HashSet<Register>();
+        foreach (var instruction in Decode(begin, end)) {
+            if (instruction.FlowControl == FlowControl.Call) {
+                if (instruction.Op0Kind == OpKind.NearBranch64 && fromGlobal.Contains(Register.RCX)) {
+                    return (uint) (instruction.NearBranchTarget - _exe.Base);
+                }
+
+                fromGlobal.ExceptWith(VOLATILE_REGISTERS);
+                continue;
+            }
+
+            if (instruction.OpCount == 0 || instruction.Op0Kind != OpKind.Register) {
+                continue;
+            }
+
+            var destination = instruction.Op0Register.GetFullRegister();
+            if (instruction.Code == Code.Mov_r64_rm64 && instruction.Op1Kind == OpKind.Memory && instruction.MemoryBase == Register.RIP) {
+                fromGlobal.Add(destination);
+            } else if (instruction.Code == Code.Mov_r64_rm64 && instruction.Op1Kind == OpKind.Register
+                    && fromGlobal.Contains(instruction.Op1Register)) {
+                fromGlobal.Add(destination);
+            } else if (!(instruction.Mnemonic is Mnemonic.Cmp or Mnemonic.Test)) {
+                fromGlobal.Remove(destination);
             }
         }
 
