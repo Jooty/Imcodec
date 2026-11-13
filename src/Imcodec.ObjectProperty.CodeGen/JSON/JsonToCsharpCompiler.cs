@@ -163,8 +163,17 @@ internal class JsonToCsharpCompiler : ExternToCsharpCompiler {
             classDefinition.AddBaseClass(baseClass);
         }
 
+        // Stripping `.m_full` can make a GID property share its name with a plain property of the same
+        // class (SandboxGameObjectInfo has `m_templateID.m_full` from CoreObjectInfo and its own 32-bit
+        // `m_templateID`). The GID keeps the name, as the base class declares it; the other is suffixed.
+        var fullSuffixedNames = new HashSet<string>(dumpedClass.Properties.Keys
+            .Where(k => k.EndsWith(".m_full", StringComparison.Ordinal))
+            .Select(k => k.Substring(0, k.Length - ".m_full".Length)));
         foreach (var dumpedProperty in dumpedClass.Properties) {
-            var propertyDefinition = GetPropertyDefinition(dumpedProperty.Key, dumpedProperty.Value);
+            var propertyName = fullSuffixedNames.Contains(dumpedProperty.Key)
+                ? $"{dumpedProperty.Key}_{dumpedProperty.Value.Hash:X8}"
+                : dumpedProperty.Key;
+            var propertyDefinition = GetPropertyDefinition(propertyName, dumpedProperty.Value);
             if (propertyDefinition == null) {
                 continue;
             }
